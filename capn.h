@@ -19,31 +19,34 @@ extern "C" {
 #endif
 
 /* struct capn is a common structure shared between segments in the same
- * session/context so that far pointers between the segments will be created.
+ * session/context so that far pointers between segments will be created.
  *
  * lookup is used to lookup segments by id when derefencing a far pointer
  *
  * create is used to create or lookup an alternate segment that has at least
  * sz available (ie returned seg->len + sz <= seg->cap)
  *
+ * create_local is used to create a segment for the copy tree and should be
+ * allocated in the local memory space.
+ *
  * Allocated segments must be zero initialized.
  *
  * create and lookup can be NULL if you don't need multiple segments and don't
  * want to support copying
  *
- * create is also used to allocate room for the copy tree with id ==
- * CAPN_SEGID_LOCAL. This data should be allocated in the local memory space
- *
  * seglist and copylist are linked lists which can be used to free up segments
- * on cleanup
+ * on cleanup, but should not be modified by the user.
  *
- * lookup, create, and user can be set by the user. Other values should be
- * zero initialized.
+ * lookup, create, create_local, and user can be set by the user. Other values
+ * should be zero initialized.
  */
 struct capn {
+	/* user settable */
 	struct capn_segment *(*lookup)(void* /*user*/, uint32_t /*id */);
 	struct capn_segment *(*create)(void* /*user*/, uint32_t /*id */, int /*sz*/);
+	struct capn_segment *(*create_local)(void* /*user*/, uint32_t /*id */, int /*sz*/);
 	void *user;
+	/* zero initialized, user should not modify */
 	uint32_t segnum;
 	struct capn_tree *copy;
 	struct capn_tree *segtree;
@@ -51,32 +54,43 @@ struct capn {
 	struct capn_segment *copylist;
 };
 
+/* struct capn_tree is a rb tree header used internally for the segment id
+ * lookup and copy tree */
 struct capn_tree {
 	struct capn_tree *parent, *link[2];
 	unsigned int red : 1;
 };
 
 /* struct capn_segment contains the information about a single segment.
- * capn should point to a struct capn that is shared between segments in the
+ *
+ * capn points to a struct capn that is shared between segments in the
  * same session
+ *
  * id specifies the segment id, used for far pointers
+ *
  * data specifies the segment data. This should not move after creation.
- * len specifies the current segment length. This should be 0 for a blank
+ *
+ * len specifies the current segment length. This is 0 for a blank
  * segment.
+ *
  * cap specifies the segment capacity.
+ *
  * When creating new structures len will be incremented until it reaces cap,
- * at which point a new segment will be requested via capn->create.
+ * at which point a new segment will be requested via capn->create. The
+ * create callback can either create a new segment or expand an existing
+ * one by incrementing cap and returning the expanded segment.
  *
  * data, len, and cap must all by 8 byte aligned
  *
- * data, len, cap should all set by the user. Other values should be zero
- * initialized.
+ * data, len, cap, and user should all set by the user. Other values
+ * should be zero initialized.
  */
 struct capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;
 	struct capn *capn;
 	uint32_t id;
+	/* user settable */
 	char *data;
 	int len, cap;
 	void *user;
