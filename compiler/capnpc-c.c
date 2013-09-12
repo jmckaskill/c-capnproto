@@ -398,9 +398,13 @@ static const char *xor_member(struct field *f) {
 			return strf(&buf, " ^ %d", (int32_t) f->v.intval);
 
 		case Value_uint8:
+			return strf(&buf, " ^ %uu", (uint8_t) f->v.intval);
+
 		case Value_uint16:
-		case Value_uint32:
 		case Value_enum:
+			return strf(&buf, " ^ %uu", (uint16_t) f->v.intval);
+
+		case Value_uint32:
 			return strf(&buf, " ^ %uu", (uint32_t) f->v.intval);
 
 		case Value_float32:
@@ -591,11 +595,49 @@ struct strings {
 	struct str var;
 };
 
+static const char *field_name(struct field *f) {
+	static struct str buf = STR_INIT;
+	static const char *reserved[] = {
+		/* C++11 reserved words */
+		"alignas", "alignof", "and", "and_eq", "asm",
+		"auto", "bitand", "bitor", "bool", "break",
+		"case", "catch", "char", "char16_t", "char32_t",
+		"class", "compl", "const", "constexpr", "const_cast",
+		"continue", "decltype", "default", "delete", "do",
+		"double", "dynamic_cast", "else", "enum", "explicit",
+		"export", "extern", "false", "float", "for",
+		"friend", "goto", "if", "inline", "int",
+		"long", "mutable", "namespace", "new", "noexcept",
+		"not", "not_eq", "nullptr", "operator", "or",
+		"or_eq", "private", "protected", "public", "register",
+		"reinterpret_cast", "return", "short", "signed", "sizeof",
+		"static", "static_assert", "static_cast", "struct", "switch",
+		"template", "this", "thread_local", "throw", "true",
+		"try", "typedef", "typeid", "typename", "union",
+		"unsigned", "using", "virtual", "void", "volatile",
+		"wchar_t", "while", "xor", "xor_eq",
+		/* COM reserved words */
+		"interface", "module", "import",
+		/* capn reserved otherwise Value_ptr enum and type collide */
+		"ptr", "list",
+	};
+
+	int i;
+	const char *s = f->f.name.str;
+	for (i = 0; i < sizeof(reserved)/sizeof(reserved[0]); i++) {
+		if (!strcmp(s, reserved[i])) {
+			return strf(&buf, "_%s", s);
+		}
+	}
+
+	return s;
+}
+
 static void union_block(struct strings *s, struct field *f) {
 	static struct str buf = STR_INIT;
 	str_add(&s->ftab, "\t", -1);
-	set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
-	get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+	set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, field_name(f)));
+	get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, field_name(f)));
 	str_addf(&s->set, "%sbreak;\n", s->ftab.str);
 	str_addf(&s->get, "%sbreak;\n", s->ftab.str);
 	str_setlen(&s->ftab, s->ftab.len-1);
@@ -618,8 +660,8 @@ static void union_cases(struct strings *s, struct node *n, struct field *first_f
 			continue;
 
 		u = f;
-		str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
-		str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+		str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
+		str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 	}
 
 	if (u)
@@ -631,10 +673,10 @@ static void declare_slot(struct strings *s, struct field *f) {
 	case Type_void:
 		break;
 	case Type_bool:
-		str_addf(&s->decl, "%s%s %s : 1;\n", s->dtab.str, f->v.tname, f->f.name.str);
+		str_addf(&s->decl, "%s%s %s : 1;\n", s->dtab.str, f->v.tname, field_name(f));
 		break;
 	default:
-		str_addf(&s->decl, "%s%s %s;\n", s->dtab.str, f->v.tname, f->f.name.str);
+		str_addf(&s->decl, "%s%s %s;\n", s->dtab.str, f->v.tname, field_name(f));
 		break;
 	}
 }
@@ -688,14 +730,14 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 			str_addf(&enums, ",");
 		}
 
-		str_addf(&enums, "\n\t%s_%s = %d", n->name.str, f->f.name.str, f->f.discriminantValue);
+		str_addf(&enums, "\n\t%s_%s = %d", n->name.str, field_name(f), f->f.discriminantValue);
 
 		switch (f->f.which) {
 		case Field_group:
-			str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
-			str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+			str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
+			str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 			str_add(&s->ftab, "\t", -1);
-			define_group(s, f->group, f->f.name.str);
+			define_group(s, f->group, field_name(f));
 			str_addf(&s->get, "%sbreak;\n", s->ftab.str);
 			str_addf(&s->set, "%sbreak;\n", s->ftab.str);
 			str_setlen(&s->ftab, s->ftab.len-1);
@@ -704,8 +746,8 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 		case Field_slot:
 			declare_slot(s, f);
 			if (f->v.ptrval.type || f->v.intval) {
-				str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
-				str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+				str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
+				str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 				union_block(s, f);
 			}
 			break;
@@ -737,12 +779,12 @@ static void define_field(struct strings *s, struct field *f) {
 	switch (f->f.which) {
 	case Field_slot:
 		declare_slot(s, f);
-		set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
-		get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+		set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, field_name(f)));
+		get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, field_name(f)));
 		break;
 
 	case Field_group:
-		define_group(s, f->group, f->f.name.str);
+		define_group(s, f->group, field_name(f));
 		break;
 	}
 }
