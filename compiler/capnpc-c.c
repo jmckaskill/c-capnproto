@@ -375,13 +375,8 @@ static void decode_field(struct field *fields, Field_list l, int i) {
 		exit(3);
 	}
 
-	switch (f.f.which) {
-	case Field_slot:
-		decode_value(&f.v, f.f.slot.type, f.f.slot.defaultValue, NULL);
-		break;
-	case Field_group:
+	if (f.f.which == Field_group) {
 		f.group = find_node(f.f.group.typeId);
-		break;
 	}
 
 	memcpy(&fields[f.f.codeOrder], &f, sizeof(f));
@@ -804,6 +799,10 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 
 	if (group_name) {
 		str_addf(&s->var, "%s.", group_name);
+	}
+
+	for (f = n->fields; f < n->fields + flen; f++) {
+		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
 	}
 
 	/* fields before the union members */
