@@ -23,9 +23,14 @@ static struct capn_segment *create(void *u, uint32_t id, int sz) {
 	return s;
 }
 
+static struct capn_segment *create_local(void *u, int sz) {
+	return create(u, 0, sz);
+}
+
 void capn_init_malloc(struct capn *c) {
 	memset(c, 0, sizeof(*c));
 	c->create = &create;
+	c->create_local = &create_local;
 }
 
 void capn_free(struct capn *c) {

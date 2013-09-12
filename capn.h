@@ -10,8 +10,6 @@
 extern "C" {
 #endif
 
-#define CAPN_SEGID_LOCAL 0xFFFFFFFF
-
 #if defined(__cplusplus) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
 #define CAPN_INLINE static inline
 #else
@@ -44,7 +42,7 @@ struct capn {
 	/* user settable */
 	struct capn_segment *(*lookup)(void* /*user*/, uint32_t /*id */);
 	struct capn_segment *(*create)(void* /*user*/, uint32_t /*id */, int /*sz*/);
-	struct capn_segment *(*create_local)(void* /*user*/, uint32_t /*id */, int /*sz*/);
+	struct capn_segment *(*create_local)(void* /*user*/, int /*sz*/);
 	void *user;
 	/* zero initialized, user should not modify */
 	uint32_t segnum;

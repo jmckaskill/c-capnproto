@@ -662,7 +662,7 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 
 		/* need to allocate a struct copy */
 		if (!cs || cs->len + sizeof(*n) > cs->cap) {
-			cs = c->create ? c->create(c->user, CAPN_SEGID_LOCAL, sizeof(*n)) : NULL;
+			cs = c->create_local ? c->create_local(c->user, sizeof(*n)) : NULL;
 			if (!cs) {
 				/* can't allocate a copy structure */
 				return -1;
