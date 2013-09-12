@@ -1144,20 +1144,20 @@ int main() {
 		declare(file_node, "typedef struct {capn_ptr p;} %s_list;\n", 1);
 
 		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
-			switch (n->n.which) {
-			case Node_struct:
-				if (!n->n._struct.isGroup) {
-					define_struct(n);
-				}
-				break;
-			case Node_enum:
+			if (n->n.which == Node_enum) {
 				define_enum(n);
-				break;
-			case Node_const:
+			}
+		}
+
+		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
+			if (n->n.which == Node_const) {
 				define_const(n);
-				break;
-			default:
-				break;
+			}
+		}
+
+		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
+			if (n->n.which == Node_struct && !n->n._struct.isGroup) {
+				define_struct(n);
 			}
 		}
 
