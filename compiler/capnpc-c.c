@@ -4,22 +4,31 @@
 #include <string.h>
 #include <errno.h>
 
+struct value {
+	struct Type t;
+	const char *tname;
+	struct str tname_buf;
+	struct Value v;
+	capn_ptr ptrval;
+	int64_t intval;
+};
+
+struct field {
+	struct Field f;
+	struct value v;
+	struct node *group;
+};
+
 struct node {
 	struct capn_tree hdr;
 	struct Node n;
 	struct node *next;
-	struct node *first_child, *next_child;
+	struct node *file_nodes, *next_file_node;
 	struct str name;
-	struct StructNode s;
-	struct EnumNode e;
-	struct InterfaceNode i;
-	struct ConstNode c;
-	struct FileNode f;
+	struct field *fields;
 };
 
-static struct node *g_files;
-static FILE *HDR;
-static struct str SRC;
+static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
 static int g_valc;
@@ -49,184 +58,181 @@ static void insert_node(struct node *s) {
 	g_node_tree = capn_tree_insert(g_node_tree, &s->hdr);
 }
 
+/* resolve_names recursively follows the nestedNodes tree in order to
+ * set node->name.
+ * It also builds up the list of nodes within a file (file_nodes and
+ * next_file_node). */
 static void resolve_names(struct str *b, struct node *n, capn_text name, struct node *file) {
 	int i, sz = b->len;
 	str_add(b, name.str, name.len);
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
 
-	for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
+	for (i = 0; i < n->n.nestedNodes.p.len; i++) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 		resolve_names(b, find_node(nest.id), nest.name, file);
 	}
 
-	n->next_child = file->first_child;
-	file->first_child = n;
+	if (n->n.which == Node_struct) {
+		for (i = 0; i < n->n._struct.fields.p.len; i++) {
+			if (n->fields[i].group) {
+				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
+			}
+		}
+	}
+
+	if (n->n.which != Node_struct || !n->n._struct.isGroup) {
+		n->next_file_node = file->file_nodes;
+		file->file_nodes = n;
+	}
+
 	str_setlen(b, sz);
 }
 
 static void define_enum(struct node *n) {
 	int i;
 
-	fprintf(HDR, "\nenum %s {", n->name.str);
-	for (i = 0; i < n->e.enumerants.p.len; i++) {
-		struct EnumNode_Enumerant ee;
-		get_EnumNode_Enumerant(&ee, n->e.enumerants, i);
+	str_addf(&HDR, "\nenum %s {", n->name.str);
+	for (i = 0; i < n->n._enum.enumerants.p.len; i++) {
+		struct Enumerant e;
+		get_Enumerant(&e, n->n._enum.enumerants, i);
 		if (i) {
-			fprintf(HDR, ",");
+			str_addf(&HDR, ",");
 		}
-		fprintf(HDR, "\n\t%s_%s = %d", n->name.str, ee.name.str, i);
+		str_addf(&HDR, "\n\t%s_%s = %d", n->name.str, e.name.str, i);
 	}
-	fprintf(HDR, "\n};\n");
+	str_addf(&HDR, "\n};\n");
 }
 
-struct value {
-	struct Type t;
-	const char *tname;
-	struct str buf;
-	struct Value v;
-	capn_ptr ptr;
-	int64_t num;
-};
-
 static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const char *symbol) {
-	struct Type lt;
+	struct Type list_type;
 	memset(v, 0, sizeof(*v));
 	read_Type(&v->t, type);
 	read_Value(&v->v, value);
 
-	switch (v->t.body_tag) {
-	case Type_voidType:
+	switch (v->t.which) {
+	case Type_void:
 		v->tname = "void";
 		break;
-	case Type_boolType:
+	case Type_bool:
 		v->tname = "unsigned";
 		break;
-	case Type_int8Type:
+	case Type_int8:
 		v->tname = "int8_t";
 		break;
-	case Type_int16Type:
+	case Type_int16:
 		v->tname = "int16_t";
 		break;
-	case Type_int32Type:
+	case Type_int32:
 		v->tname = "int32_t";
 		break;
-	case Type_int64Type:
+	case Type_int64:
 		v->tname = "int64_t";
 		break;
-	case Type_uint8Type:
+	case Type_uint8:
 		v->tname = "uint8_t";
 		break;
-	case Type_uint16Type:
+	case Type_uint16:
 		v->tname = "uint16_t";
 		break;
-	case Type_uint32Type:
+	case Type_uint32:
 		v->tname = "uint32_t";
 		break;
-	case Type_uint64Type:
+	case Type_uint64:
 		v->tname = "uint64_t";
 		break;
-	case Type_float32Type:
+	case Type_float32:
 		v->tname = "float";
 		break;
-	case Type_float64Type:
+	case Type_float64:
 		v->tname = "double";
 		break;
-	case Type_textType:
+	case Type_text:
 		v->tname = "capn_text";
 		break;
-	case Type_dataType:
+	case Type_data:
 		v->tname = "capn_data";
 		break;
-	case Type_enumType:
-		v->tname = strf(&v->buf, "enum %s", find_node(v->t.body.enumType)->name.str);
+	case Type_enum:
+		v->tname = strf(&v->tname_buf, "enum %s", find_node(v->t._enum.typeId)->name.str);
 		break;
-	case Type_structType:
-	case Type_interfaceType:
-		v->tname = strf(&v->buf, "%s_ptr", find_node(v->t.body.structType)->name.str);
+	case Type_struct:
+	case Type_interface:
+		v->tname = strf(&v->tname_buf, "%s_ptr", find_node(v->t._struct.typeId)->name.str);
 		break;
-	case Type_objectType:
+	case Type_object:
 		v->tname = "capn_ptr";
 		break;
-	case Type_listType:
-		read_Type(&lt, v->t.body.listType);
+	case Type__list:
+		read_Type(&list_type, v->t.list.elementType);
 
-		switch (lt.body_tag) {
-		case Type_voidType:
+		switch (list_type.which) {
+		case Type_void:
 			v->tname = "capn_ptr";
 			break;
-		case Type_boolType:
+		case Type_bool:
 			v->tname = "capn_list1";
 			break;
-		case Type_int8Type:
-		case Type_uint8Type:
+		case Type_int8:
+		case Type_uint8:
 			v->tname = "capn_list8";
 			break;
-		case Type_int16Type:
-		case Type_uint16Type:
-		case Type_enumType:
+		case Type_int16:
+		case Type_uint16:
+		case Type_enum:
 			v->tname = "capn_list16";
 			break;
-		case Type_int32Type:
-		case Type_uint32Type:
-		case Type_float32Type:
+		case Type_int32:
+		case Type_uint32:
+		case Type_float32:
 			v->tname = "capn_list32";
 			break;
-		case Type_int64Type:
-		case Type_uint64Type:
-		case Type_float64Type:
+		case Type_int64:
+		case Type_uint64:
+		case Type_float64:
 			v->tname = "capn_list64";
 			break;
-		case Type_textType:
-		case Type_dataType:
-		case Type_objectType:
-		case Type_listType:
+		case Type_text:
+		case Type_data:
+		case Type_object:
+		case Type__list:
 			v->tname = "capn_ptr";
 			break;
-		case Type_structType:
-		case Type_interfaceType:
-			v->tname = strf(&v->buf, "%s_list", find_node(lt.body.structType)->name.str);
+		case Type_struct:
+		case Type_interface:
+			v->tname = strf(&v->tname_buf, "%s_list", find_node(list_type._struct.typeId)->name.str);
 			break;
 		}
 	}
 
-	switch (v->v.body_tag) {
-	case Value_boolValue:
-		v->num = v->v.body.boolValue;
+	switch (v->v.which) {
+	case Value_bool:
+		v->intval = v->v._bool;
 		break;
-	case Value_int8Value:
-		v->num = v->v.body.int8Value;
+	case Value_int8:
+	case Value_uint8:
+		v->intval = v->v.int8;
 		break;
-	case Value_uint8Value:
-		v->num = v->v.body.uint8Value;
+	case Value_int16:
+	case Value_uint16:
+	case Value_enum:
+		v->intval = v->v.int16;
 		break;
-	case Value_int16Value:
-		v->num = v->v.body.int16Value;
+	case Value_int32:
+	case Value_uint32:
+	case Value_float32:
+		v->intval = v->v.int32;
 		break;
-	case Value_uint16Value:
-	case Value_enumValue:
-		v->num = v->v.body.uint16Value;
+	case Value_int64:
+	case Value_float64:
+	case Value_uint64:
+		v->intval = v->v.int64;
 		break;
-	case Value_int32Value:
-		v->num = v->v.body.int32Value;
-		break;
-	case Value_uint32Value:
-	case Value_float32Value:
-		v->num = v->v.body.uint32Value;
-		break;
-	case Value_int64Value:
-		v->num = v->v.body.int64Value;
-		break;
-	case Value_float64Value:
-	case Value_uint64Value:
-		v->num = v->v.body.uint64Value;
-		break;
-	case Value_textValue:
-		if (v->v.body.textValue.len) {
-			const char *scope = "";
+	case Value_text:
+		if (v->v.text.len) {
 			capn_ptr p = capn_root(&g_valcapn);
-			if (capn_set_text(p, 0, v->v.body.textValue)) {
+			if (capn_set_text(p, 0, v->v.text)) {
 				fprintf(stderr, "failed to copy text\n");
 				exit(2);
 			}
@@ -234,30 +240,29 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			if (!p.type)
 				break;
 
-			v->ptr = p;
+			v->ptrval = p;
 
 			if (!symbol) {
 				static struct str buf = STR_INIT;
-				v->num = ++g_valc;
-				symbol = strf(&buf, "capn_val%d", (int) v->num);
-				scope = "static ";
-			} else {
-				v->num = 1;
+				v->intval = ++g_valc;
+				symbol = strf(&buf, "capn_val%d", (int) v->intval);
 			}
 
 			str_addf(&SRC, "%scapn_text %s = {%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg};\n",
-					scope, symbol, p.len-1, (int) (p.data-p.seg->data-8));
+					symbol ? "" : "static ",
+					symbol,
+					p.len-1,
+					(int) (p.data-p.seg->data-8));
 		}
 		break;
 
-	case Value_dataValue:
-	case Value_structValue:
-	case Value_objectValue:
-	case Value_listValue:
-		if (v->v.body.objectValue.type) {
-			const char *scope = "";
+	case Value_data:
+	case Value_struct:
+	case Value_object:
+	case Value__list:
+		if (v->v.object.type) {
 			capn_ptr p = capn_root(&g_valcapn);
-			if (capn_setp(p, 0, v->v.body.objectValue)) {
+			if (capn_setp(p, 0, v->v.object)) {
 				fprintf(stderr, "failed to copy object\n");
 				exit(2);
 			}
@@ -265,25 +270,25 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			if (!p.type)
 				break;
 
-			v->ptr = p;
+			v->ptrval = p;
 
 			if (!symbol) {
 				static struct str buf = STR_INIT;
-				v->num = ++g_valc;
-				symbol = strf(&buf, "capn_val%d", (int) v->num);
-				scope = "static ";
-			} else {
-				v->num = 1;
+				v->intval = ++g_valc;
+				symbol = strf(&buf, "capn_val%d", (int) v->intval);
 			}
 
-			str_addf(&SRC, "%s%s %s = {", scope, v->tname, symbol);
+			str_addf(&SRC, "%s%s %s = {", symbol ? "" : "static ", v->tname, symbol);
 			if (strcmp(v->tname, "capn_ptr"))
 				str_addf(&SRC, "{");
 
 			str_addf(&SRC, "%d,%d,%d,%d,%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg",
-					p.type, p.has_ptr_tag,
-					p.datasz, p.ptrsz,
-					p.len, (int) (p.data-p.seg->data-8));
+					p.type,
+					p.has_ptr_tag,
+					p.datasz,
+					p.ptrsz,
+					p.len,
+					(int) (p.data-p.seg->data-8));
 
 			if (strcmp(v->tname, "capn_ptr"))
 				str_addf(&SRC, "}");
@@ -292,129 +297,120 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		}
 		break;
 
-	case Value_interfaceValue:
-	case Value_voidValue:
+	case Value_interface:
+	case Value_void:
 		break;
 	}
 }
 
 static void define_const(struct node *n) {
 	struct value v;
-	decode_value(&v, n->c.type, n->c.value, n->name.str);
+	decode_value(&v, n->n._const.type, n->n._const.value, n->name.str);
 
-	switch (v.v.body_tag) {
-	case Value_boolValue:
-	case Value_int8Value:
-	case Value_int16Value:
-	case Value_int32Value:
-		fprintf(HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %d;\n", v.tname, n->name.str, (int) v.num);
+	switch (v.v.which) {
+	case Value_bool:
+	case Value_int8:
+	case Value_int16:
+	case Value_int32:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %d;\n", v.tname, n->name.str, (int) v.intval);
 		break;
 
-	case Value_uint8Value:
-	case Value_uint16Value:
-	case Value_uint32Value:
-		fprintf(HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.num);
+	case Value_uint8:
+	case Value_uint16:
+	case Value_uint32:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);
 		break;
 
-	case Value_enumValue:
-		fprintf(HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.num);
+	case Value_enum:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.intval);
 		break;
 
-	case Value_int64Value:
-	case Value_uint64Value:
-		fprintf(HDR, "extern %s %s;\n", v.tname, n->name.str);
+	case Value_int64:
+	case Value_uint64:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		str_addf(&SRC, "%s %s = ((uint64_t) %#xu << 32) | %#xu;\n", v.tname, n->name.str,
-				(uint32_t) (v.num >> 32), (uint32_t) v.num);
+				(uint32_t) (v.intval >> 32), (uint32_t) v.intval);
 		break;
 
-	case Value_float32Value:
-		fprintf(HDR, "extern union capn_conv_f32 %s;\n", n->name.str);
-		str_addf(&SRC, "union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.num);
+	case Value_float32:
+		str_addf(&HDR, "extern union capn_conv_f32 %s;\n", n->name.str);
+		str_addf(&SRC, "union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.intval);
 		break;
 
-	case Value_float64Value:
-		fprintf(HDR, "extern union capn_conv_f64 %s;\n", n->name.str);
+	case Value_float64:
+		str_addf(&HDR, "extern union capn_conv_f64 %s;\n", n->name.str);
 		str_addf(&SRC, "union capn_conv_f64 %s = {((uint64_t) %#xu << 32) | %#xu};\n",
-				n->name.str, (uint32_t) (v.num >> 32), (uint32_t) v.num);
+				n->name.str, (uint32_t) (v.intval >> 32), (uint32_t) v.intval);
 		break;
 
-	case Value_textValue:
-	case Value_dataValue:
-	case Value_structValue:
-	case Value_objectValue:
-	case Value_listValue:
-		fprintf(HDR, "extern %s %s;\n", v.tname, n->name.str);
-		if (!v.num) {
+	case Value_text:
+	case Value_data:
+	case Value_struct:
+	case Value_object:
+	case Value__list:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		if (!v.ptrval.type) {
 			str_addf(&SRC, "%s %s;\n", v.tname, n->name.str);
 		}
 		break;
 
-	case Value_interfaceValue:
-	case Value_voidValue:
+	case Value_interface:
+	case Value_void:
 		break;
 	}
 
-	str_release(&v.buf);
+	str_release(&v.tname_buf);
 }
 
-struct member {
-	unsigned int is_valid : 1;
-	struct StructNode_Member m;
-	struct StructNode_Field f;
-	struct StructNode_Union u;
-	struct value v;
-	struct member *mbrs;
-	int idx;
-};
+static void decode_field(struct field *fields, Field_list l, int i) {
+	struct field f;
+	memset(&f, 0, sizeof(f));
+	get_Field(&f.f, l, i);
 
-static struct member *decode_member(struct member *mbrs, StructNode_Member_list l, int i) {
-	struct member m;
-	memset(&m, 0, sizeof(m));
-	m.is_valid = 1;
-	m.idx = i;
-	get_StructNode_Member(&m.m, l, i);
-
-	if (m.m.codeOrder >= l.p.len) {
-		fprintf(stderr, "unexpectedly large code order %d >= %d\n", m.m.codeOrder, l.p.len);
+	if (f.f.codeOrder >= l.p.len) {
+		fprintf(stderr, "unexpectedly large code order %d >= %d\n", f.f.codeOrder, l.p.len);
 		exit(3);
 	}
 
-	if (m.m.body_tag == StructNode_Member_fieldMember) {
-		read_StructNode_Field(&m.f, m.m.body.fieldMember);
-		decode_value(&m.v, m.f.type, m.f.defaultValue, NULL);
+	switch (f.f.which) {
+	case Field_slot:
+		decode_value(&f.v, f.f.slot.type, f.f.slot.defaultValue, NULL);
+		break;
+	case Field_group:
+		f.group = find_node(f.f.group.typeId);
+		break;
 	}
 
-	memcpy(&mbrs[m.m.codeOrder], &m, sizeof(m));
-	return &mbrs[m.m.codeOrder];
+	memcpy(&fields[f.f.codeOrder], &f, sizeof(f));
 }
 
-static const char *xor_member(struct member *m) {
+static const char *xor_member(struct field *f) {
 	static struct str buf = STR_INIT;
 
-	if (m->v.num) {
-		switch (m->v.v.body_tag) {
-		case Value_int8Value:
-		case Value_int16Value:
-		case Value_int32Value:
-			return strf(&buf, " ^ %d", (int32_t) m->v.num);
+	if (f->v.intval) {
+		switch (f->v.v.which) {
+		case Value_int8:
+		case Value_int16:
+		case Value_int32:
+			return strf(&buf, " ^ %d", (int32_t) f->v.intval);
 
-		case Value_uint8Value:
-		case Value_uint16Value:
-		case Value_uint32Value:
-		case Value_enumValue:
-			return strf(&buf, " ^ %uu", (uint32_t) m->v.num);
+		case Value_uint8:
+		case Value_uint16:
+		case Value_uint32:
+		case Value_enum:
+			return strf(&buf, " ^ %uu", (uint32_t) f->v.intval);
 
-		case Value_float32Value:
-			return strf(&buf, " ^ %#xu", (uint32_t) m->v.num);
+		case Value_float32:
+			return strf(&buf, " ^ %#xu", (uint32_t) f->v.intval);
 
-		case Value_int64Value:
-		case Value_uint64Value:
-		case Value_float64Value:
+		case Value_int64:
+		case Value_uint64:
+		case Value_float64:
 			return strf(&buf, " ^ ((uint64_t) %#xu << 32) ^ %#xu",
-					(uint32_t) (m->v.num >> 32), (uint32_t) m->v.num);
+					(uint32_t) (f->v.intval >> 32), (uint32_t) f->v.intval);
 
 		default:
 			return "";
@@ -424,9 +420,9 @@ static const char *xor_member(struct member *m) {
 	}
 }
 
-static const char *ptr_member(struct member *m, const char *var) {
+static const char *ptr_member(struct field *f, const char *var) {
 	static struct str buf = STR_INIT;
-	if (!strcmp(m->v.tname, "capn_ptr")) {
+	if (!strcmp(f->v.tname, "capn_ptr")) {
 		return var;
 	} else if (var[0] == '*') {
 		return strf(&buf, "%s->p", var+1);
@@ -435,334 +431,408 @@ static const char *ptr_member(struct member *m, const char *var) {
 	}
 }
 
-static void set_member(struct member *m, const char *ptr, const char *tab, const char *var) {
-	const char *xor = xor_member(m);
-	const char *pvar = ptr_member(m, var);
+static void set_member(struct str *func, struct field *f, const char *ptr, const char *tab, const char *var) {
+	const char *xor = xor_member(f);
+	const char *pvar = ptr_member(f, var);
 
-	if (m->v.t.body_tag == Type_voidType)
+	if (f->v.t.which == Type_void)
 		return;
 
-	str_add(&SRC, tab, -1);
+	str_add(func, tab, -1);
 
-	switch (m->v.t.body_tag) {
-	case Type_voidType:
+	switch (f->v.t.which) {
+	case Type_bool:
+		str_addf(func, "capn_write1(%s, %d, %s != %d);\n", ptr, f->f.slot.offset, var, (int) f->v.intval);
 		break;
-	case Type_boolType:
-		str_addf(&SRC, "err = err || capn_write1(%s, %d, %s != %d);\n", ptr, m->f.offset, var, (int) m->v.num);
+	case Type_int8:
+		str_addf(func, "capn_write8(%s, %d, (uint8_t) %s%s);\n", ptr, f->f.slot.offset, var, xor);
 		break;
-	case Type_int8Type:
-		str_addf(&SRC, "err = err || capn_write8(%s, %d, (uint8_t) %s%s);\n", ptr, m->f.offset, var, xor);
+	case Type_int16:
+	case Type_enum:
+		str_addf(func, "capn_write16(%s, %d, (uint16_t) %s%s);\n", ptr, 2*f->f.slot.offset, var, xor);
 		break;
-	case Type_int16Type:
-	case Type_enumType:
-		str_addf(&SRC, "err = err || capn_write16(%s, %d, (uint16_t) %s%s);\n", ptr, 2*m->f.offset, var, xor);
+	case Type_int32:
+		str_addf(func, "capn_write32(%s, %d, (uint32_t) %s%s);\n", ptr, 4*f->f.slot.offset, var, xor);
 		break;
-	case Type_int32Type:
-		str_addf(&SRC, "err = err || capn_write32(%s, %d, (uint32_t) %s%s);\n", ptr, 4*m->f.offset, var, xor);
+	case Type_int64:
+		str_addf(func, "capn_write64(%s, %d, (uint64_t) %s%s);\n", ptr, 8*f->f.slot.offset, var, xor);
 		break;
-	case Type_int64Type:
-		str_addf(&SRC, "err = err || capn_write64(%s, %d, (uint64_t) %s%s);\n", ptr, 8*m->f.offset, var, xor);
+	case Type_uint8:
+		str_addf(func, "capn_write8(%s, %d, %s%s);\n", ptr, f->f.slot.offset, var, xor);
 		break;
-	case Type_uint8Type:
-		str_addf(&SRC, "err = err || capn_write8(%s, %d, %s%s);\n", ptr, m->f.offset, var, xor);
+	case Type_uint16:
+		str_addf(func, "capn_write16(%s, %d, %s%s);\n", ptr, 2*f->f.slot.offset, var, xor);
 		break;
-	case Type_uint16Type:
-		str_addf(&SRC, "err = err || capn_write16(%s, %d, %s%s);\n", ptr, 2*m->f.offset, var, xor);
+	case Type_uint32:
+		str_addf(func, "capn_write32(%s, %d, %s%s);\n", ptr, 4*f->f.slot.offset, var, xor);
 		break;
-	case Type_uint32Type:
-		str_addf(&SRC, "err = err || capn_write32(%s, %d, %s%s);\n", ptr, 4*m->f.offset, var, xor);
+	case Type_float32:
+		str_addf(func, "capn_write32(%s, %d, capn_from_f32(%s)%s);\n", ptr, 4*f->f.slot.offset, var, xor);
 		break;
-	case Type_float32Type:
-		str_addf(&SRC, "err = err || capn_write32(%s, %d, capn_from_f32(%s)%s);\n", ptr, 4*m->f.offset, var, xor);
+	case Type_uint64:
+		str_addf(func, "capn_write64(%s, %d, %s%s);\n", ptr, 8*f->f.slot.offset, var, xor);
 		break;
-	case Type_uint64Type:
-		str_addf(&SRC, "err = err || capn_write64(%s, %d, %s%s);\n", ptr, 8*m->f.offset, var, xor);
+	case Type_float64:
+		str_addf(func, "capn_write64(%s, %d, capn_from_f64(%s)%s);\n", ptr, 8*f->f.slot.offset, var, xor);
 		break;
-	case Type_float64Type:
-		str_addf(&SRC, "err = err || capn_write64(%s, %d, capn_from_f64(%s)%s);\n", ptr, 8*m->f.offset, var, xor);
-		break;
-	case Type_textType:
-		if (m->v.num) {
+	case Type_text:
+		if (f->v.ptrval.type) {
 			g_val0used = 1;
-			str_addf(&SRC, "err = err || capn_set_text(%s, %d, (%s.str != capn_val%d.str) ? %s : capn_val0);\n",
-					ptr, m->f.offset, var, (int)m->v.num, var);
+			str_addf(func, "capn_set_text(%s, %d, (%s.str != capn_val%d.str) ? %s : capn_val0);\n",
+					ptr, f->f.slot.offset, var, (int)f->v.intval, var);
 		} else {
-			str_addf(&SRC, "err = err || capn_set_text(%s, %d, %s);\n",
-					ptr, m->f.offset, var);
+			str_addf(func, "capn_set_text(%s, %d, %s);\n",
+					ptr, f->f.slot.offset, var);
 		}
 		break;
-	case Type_dataType:
-	case Type_structType:
-	case Type_interfaceType:
-	case Type_listType:
-	case Type_objectType:
-		if (!m->v.num) {
-			str_addf(&SRC, "err = err || capn_setp(%s, %d, %s);\n",
-					ptr, m->f.offset, pvar);
-		} else if (!strcmp(m->v.tname, "capn_ptr")) {
+	case Type_data:
+	case Type_struct:
+	case Type_interface:
+	case Type__list:
+	case Type_object:
+		if (!f->v.intval) {
+			str_addf(func, "capn_setp(%s, %d, %s);\n",
+					ptr, f->f.slot.offset, pvar);
+		} else if (!strcmp(f->v.tname, "capn_ptr")) {
 			g_nullused = 1;
-			str_addf(&SRC, "err = err || capn_setp(%s, %d, (%s.data != capn_val%d.data) ? %s : capn_null);\n",
-					ptr, m->f.offset, pvar, (int)m->v.num, pvar);
+			str_addf(func, "capn_setp(%s, %d, (%s.data != capn_val%d.data) ? %s : capn_null);\n",
+					ptr, f->f.slot.offset, pvar, (int)f->v.intval, pvar);
 		} else {
 			g_nullused = 1;
-			str_addf(&SRC, "err = err || capn_setp(%s, %d, (%s.data != capn_val%d.p.data) ? %s : capn_null);\n",
-					ptr, m->f.offset, pvar, (int)m->v.num, pvar);
+			str_addf(func, "capn_setp(%s, %d, (%s.data != capn_val%d.p.data) ? %s : capn_null);\n",
+					ptr, f->f.slot.offset, pvar, (int)f->v.intval, pvar);
 		}
+		break;
+	default:
 		break;
 	}
 }
 
-static void get_member(struct member *m, const char *ptr, const char *tab, const char *var) {
-	const char *xor = xor_member(m);
-	const char *pvar = ptr_member(m, var);
+static void get_member(struct str *func, struct field *f, const char *ptr, const char *tab, const char *var) {
+	const char *xor = xor_member(f);
+	const char *pvar = ptr_member(f, var);
 
-	if (m->v.t.body_tag == Type_voidType)
+	if (f->v.t.which == Type_void)
 		return;
 
-	str_add(&SRC, tab, -1);
+	str_add(func, tab, -1);
 
-	switch (m->v.t.body_tag) {
-	case Type_voidType:
+	switch (f->v.t.which) {
+	case Type_bool:
+		str_addf(func, "%s = (capn_read8(%s, %d) & %d) != %d;\n",
+				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), (int)f->v.intval);
 		return;
-	case Type_boolType:
-		str_addf(&SRC, "%s = (capn_read8(%s, %d) & %d) != %d;\n",
-				var, ptr, m->f.offset/8, 1 << (m->f.offset%8), (int)m->v.num);
+	case Type_int8:
+		str_addf(func, "%s = (int8_t) capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
 		return;
-	case Type_int8Type:
-		str_addf(&SRC, "%s = (int8_t) capn_read8(%s, %d)%s;\n", var, ptr, m->f.offset, xor);
+	case Type_int16:
+		str_addf(func, "%s = (int16_t) capn_read16(%s, %d)%s;\n", var, ptr, 2*f->f.slot.offset, xor);
 		return;
-	case Type_int16Type:
-		str_addf(&SRC, "%s = (int16_t) capn_read16(%s, %d)%s;\n", var, ptr, 2*m->f.offset, xor);
+	case Type_int32:
+		str_addf(func, "%s = (int32_t) capn_read32(%s, %d)%s;\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
-	case Type_int32Type:
-		str_addf(&SRC, "%s = (int32_t) capn_read32(%s, %d)%s;\n", var, ptr, 4*m->f.offset, xor);
+	case Type_int64:
+		str_addf(func, "%s = (int64_t) capn_read64(%s, %d)%s;\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
-	case Type_int64Type:
-		str_addf(&SRC, "%s = (int64_t) capn_read64(%s, %d)%s;\n", var, ptr, 8*m->f.offset, xor);
+	case Type_uint8:
+		str_addf(func, "%s = capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
 		return;
-	case Type_uint8Type:
-		str_addf(&SRC, "%s = capn_read8(%s, %d)%s;\n", var, ptr, m->f.offset, xor);
+	case Type_uint16:
+		str_addf(func, "%s = capn_read16(%s, %d)%s;\n", var, ptr, 2*f->f.slot.offset, xor);
 		return;
-	case Type_uint16Type:
-		str_addf(&SRC, "%s = capn_read16(%s, %d)%s;\n", var, ptr, 2*m->f.offset, xor);
+	case Type_uint32:
+		str_addf(func, "%s = capn_read32(%s, %d)%s;\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
-	case Type_uint32Type:
-		str_addf(&SRC, "%s = capn_read32(%s, %d)%s;\n", var, ptr, 4*m->f.offset, xor);
+	case Type_uint64:
+		str_addf(func, "%s = capn_read64(%s, %d)%s;\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
-	case Type_uint64Type:
-		str_addf(&SRC, "%s = capn_read64(%s, %d)%s;\n", var, ptr, 8*m->f.offset, xor);
+	case Type_float32:
+		str_addf(func, "%s = capn_to_f32(capn_read32(%s, %d)%s);\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
-	case Type_float32Type:
-		str_addf(&SRC, "%s = capn_to_f32(capn_read32(%s, %d)%s);\n", var, ptr, 4*m->f.offset, xor);
+	case Type_float64:
+		str_addf(func, "%s = capn_to_f64(capn_read64(%s, %d)%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
-	case Type_float64Type:
-		str_addf(&SRC, "%s = capn_to_f64(capn_read64(%s, %d)%s);\n", var, ptr, 8*m->f.offset, xor);
+	case Type_enum:
+		str_addf(func, "%s = (%s) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
 		return;
-	case Type_enumType:
-		str_addf(&SRC, "%s = (%s) capn_read16(%s, %d)%s;\n", var, m->v.tname, ptr, 2*m->f.offset, xor);
-		return;
-	case Type_textType:
-		if (!m->v.num)
+	case Type_text:
+		if (!f->v.intval)
 			g_val0used = 1;
-		str_addf(&SRC, "%s = capn_get_text(%s, %d, capn_val%d);\n", var, ptr, m->f.offset, (int)m->v.num);
+		str_addf(func, "%s = capn_get_text(%s, %d, capn_val%d);\n", var, ptr, f->f.slot.offset, (int)f->v.intval);
 		return;
 
-	case Type_dataType:
-		str_addf(&SRC, "%s = capn_get_data(%s, %d);\n", var, ptr, m->f.offset);
+	case Type_data:
+		str_addf(func, "%s = capn_get_data(%s, %d);\n", var, ptr, f->f.slot.offset);
 		break;
-	case Type_structType:
-	case Type_interfaceType:
-	case Type_objectType:
-	case Type_listType:
-		str_addf(&SRC, "%s = capn_getp(%s, %d);\n", pvar, ptr, m->f.offset);
+	case Type_struct:
+	case Type_interface:
+	case Type_object:
+	case Type__list:
+		str_addf(func, "%s = capn_getp(%s, %d);\n", pvar, ptr, f->f.slot.offset);
 		break;
+	default:
+		return;
 	}
 
-	if (m->v.num) {
-		str_addf(&SRC, "%sif (!%s.type) {\n", tab, pvar);
-		str_addf(&SRC, "%s\t%s = capn_val%d;\n", tab, var, (int)m->v.num);
-		str_addf(&SRC, "%s}\n", tab);
+	if (f->v.intval) {
+		str_addf(func, "%sif (!%s.type) {\n", tab, pvar);
+		str_addf(func, "%s\t%s = capn_val%d;\n", tab, var, (int)f->v.intval);
+		str_addf(func, "%s}\n", tab);
 	}
 }
 
-static void union_block(struct member *m, struct member *u, int set) {
+struct strings {
+	struct str ftab;
+	struct str dtab;
+	struct str get;
+	struct str set;
+	struct str enums;
+	struct str decl;
+	struct str var;
+};
+
+static void union_block(struct strings *s, struct field *f) {
 	static struct str buf = STR_INIT;
-	if (set) {
-		set_member(u, "p.p", "\t\t", strf(&buf, "s->%s.%s", m->m.name.str, u->m.name.str));
-	} else {
-		get_member(u, "p.p", "\t\t", strf(&buf, "s->%s.%s", m->m.name.str, u->m.name.str));
-	}
-
-	str_addf(&SRC, "\t\tbreak;\n");
+	str_add(&s->ftab, "\t", -1);
+	set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+	get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+	str_addf(&s->set, "%sbreak;\n", s->ftab.str);
+	str_addf(&s->get, "%sbreak;\n", s->ftab.str);
+	str_setlen(&s->ftab, s->ftab.len-1);
 }
 
-static void union_cases(struct node *n, struct member *m, int set, int mask) {
-	struct member *u = NULL;
-	int j;
+static int in_union(struct field *f) {
+	return f->f.discriminantValue != 0xFFFF;
+}
 
-	for (j = 0; j < m->u.members.p.len; j++) {
-		if (!m->mbrs[j].v.num && (mask & (1 << m->mbrs[j].v.t.body_tag))) {
-			u = &m->mbrs[j];
-			str_addf(&SRC, "\tcase %s_%s:\n", n->name.str, u->m.name.str);
-		}
+static void union_cases(struct strings *s, struct node *n, struct field *first_field, int mask) {
+	struct field *f, *u = NULL;
+
+	for (f = first_field; f < n->fields + n->n._struct.fields.p.len && in_union(f); f++) {
+
+		if (f->f.which != Field_slot)
+			continue;
+		if (f->v.ptrval.type || f->v.intval)
+			continue;
+		if ((mask & (1 << f->v.t.which)) == 0)
+			continue;
+
+		u = f;
+		str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+		str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
 	}
 
 	if (u)
-		union_block(m, u, set);
+		union_block(s, u);
 }
 
-static void do_union(struct node *n, struct member *m, int set) {
-	int j;
+static void declare_slot(struct strings *s, struct field *f) {
+	switch (f->v.t.which) {
+	case Type_void:
+		break;
+	case Type_bool:
+		str_addf(&s->decl, "%s%s %s : 1;\n", s->dtab.str, f->v.tname, f->f.name.str);
+		break;
+	default:
+		str_addf(&s->decl, "%s%s %s;\n", s->dtab.str, f->v.tname, f->f.name.str);
+		break;
+	}
+}
 
-	if (set) {
-		str_addf(&SRC, "\terr = err || capn_write16(p.p, %d, s->%s_tag);\n",
-				2*m->u.discriminantOffset, m->m.name.str);
+static void define_group(struct strings *s, struct node *n, const char *group_name);
+
+static void do_union(struct strings *s, struct node *n, struct field *first_field, const char *union_name) {
+	int tagoff = 2 * n->n._struct.discriminantOffset;
+	struct field *f;
+	static struct str tag = STR_INIT;
+	struct str enums = STR_INIT;
+
+	str_reset(&tag);
+
+	if (union_name) {
+		str_addf(&tag, "%.*s_which", s->var.len - 1, s->var.str);
+		str_addf(&enums, "enum %s_which {", n->name.str);
+		str_addf(&s->decl, "%senum %s_which %s_which;\n", s->dtab.str, n->name.str, union_name);
+		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+				s->ftab.str, tag.str, n->name.str, tagoff);
 	} else {
-		str_addf(&SRC, "\ts->%s_tag = (enum %s_%s) capn_read16(p.p, %d);\n",
-				m->m.name.str, n->name.str, m->m.name.str, 2*m->u.discriminantOffset);
+		str_addf(&tag, "%swhich", s->var.str);
+		str_addf(&enums, "enum %s_which {", n->name.str);
+		str_addf(&s->decl, "%senum %s_which which;\n", s->dtab.str, n->name.str);
+		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+				s->ftab.str, tag.str, n->name.str, tagoff);
 	}
 
-	str_addf(&SRC, "\n\tswitch (s->%s_tag) {\n", m->m.name.str);
+	str_addf(&s->set, "%scapn_write16(p.p, %d, %s);\n", s->ftab.str, tagoff, tag.str);
+	str_addf(&s->set, "%sswitch (%s) {\n", s->ftab.str, tag.str);
+	str_addf(&s->get, "%sswitch (%s) {\n", s->ftab.str, tag.str);
 
 	/* if we have a bunch of the same C type with zero defaults, we
 	 * only need to emit one switch block as the layout will line up
 	 * in the C union */
-	union_cases(n, m, set, (1 << Type_voidType));
-	union_cases(n, m, set, (1 << Type_boolType));
-	union_cases(n, m, set, (1 << Type_int8Type) | (1 << Type_uint8Type));
-	union_cases(n, m, set, (1 << Type_int16Type) | (1 << Type_uint16Type) | (1 << Type_enumType));
-	union_cases(n, m, set, (1 << Type_int32Type) | (1 << Type_uint32Type) | (1 << Type_float32Type));
-	union_cases(n, m, set, (1 << Type_int64Type) | (1 << Type_uint64Type) | (1 << Type_float64Type));
-	union_cases(n, m, set, (1 << Type_textType));
-	union_cases(n, m, set, (1 << Type_dataType));
-	union_cases(n, m, set, (1 << Type_structType) | (1 << Type_interfaceType) | (1 << Type_objectType) | (1 << Type_listType));
+	union_cases(s, n, first_field, (1 << Type_bool));
+	union_cases(s, n, first_field, (1 << Type_int8) | (1 << Type_uint8));
+	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16) | (1 << Type_enum));
+	union_cases(s, n, first_field, (1 << Type_int32) | (1 << Type_uint32) | (1 << Type_float32));
+	union_cases(s, n, first_field, (1 << Type_int64) | (1 << Type_uint64) | (1 << Type_float64));
+	union_cases(s, n, first_field, (1 << Type_text));
+	union_cases(s, n, first_field, (1 << Type_data));
+	union_cases(s, n, first_field, (1 << Type_struct) | (1 << Type_interface) | (1 << Type_object) | (1 << Type__list));
 
-	/* when we have defaults we have to emit each case seperately */
-	for (j = 0; j < m->u.members.p.len; j++) {
-		struct member *u = &m->mbrs[j];
-		if (u->v.num) {
-			str_addf(&SRC, "\tcase %s_%s:\n", n->name.str, u->m.name.str);
-			union_block(m, u, set);
+	str_addf(&s->decl, "%sunion {\n", s->dtab.str);
+	str_add(&s->dtab, "\t", -1);
+
+	/* when we have defaults or groups we have to emit each case seperately */
+	for (f = first_field; f < n->fields + n->n._struct.fields.p.len && in_union(f); f++) {
+		if (f > first_field) {
+			str_addf(&enums, ",");
+		}
+
+		str_addf(&enums, "\n\t%s_%s = %d", n->name.str, f->f.name.str, f->f.discriminantValue);
+
+		switch (f->f.which) {
+		case Field_group:
+			str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+			str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+			str_add(&s->ftab, "\t", -1);
+			define_group(s, f->group, f->f.name.str);
+			str_addf(&s->get, "%sbreak;\n", s->ftab.str);
+			str_addf(&s->set, "%sbreak;\n", s->ftab.str);
+			str_setlen(&s->ftab, s->ftab.len-1);
+			break;
+
+		case Field_slot:
+			declare_slot(s, f);
+			if (f->v.ptrval.type || f->v.intval) {
+				str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+				str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, f->f.name.str);
+				union_block(s, f);
+			}
+			break;
+
+		default:
+			break;
 		}
 	}
 
-	str_addf(&SRC, "\t}\n");
+	str_setlen(&s->dtab, s->dtab.len - 1);
+
+	if (union_name) {
+		str_addf(&s->decl, "%s} %s;\n", s->dtab.str, union_name);
+	} else {
+		str_addf(&s->decl, "%s};\n", s->dtab.str);
+	}
+
+	str_addf(&s->get, "%sdefault:\n%s\tbreak;\n%s}\n", s->ftab.str, s->ftab.str, s->ftab.str);
+	str_addf(&s->set, "%sdefault:\n%s\tbreak;\n%s}\n", s->ftab.str, s->ftab.str, s->ftab.str);
+
+	str_addf(&enums, "\n};\n");
+	str_add(&s->enums, enums.str, enums.len);
+	str_release(&enums);
 }
 
-static void print_member(struct member *m, const char *tab) {
-	switch (m->v.t.body_tag) {
-	case Type_voidType:
-		break;
-	case Type_boolType:
-		fprintf(HDR, "%s%s %s:1;\n", tab, m->v.tname, m->m.name.str);
-		break;
-	default:
-		fprintf(HDR, "%s%s %s;\n", tab, m->v.tname, m->m.name.str);
-		break;
-	}
-}
-static void define_struct(struct node *n) {
+static void define_field(struct strings *s, struct field *f) {
 	static struct str buf = STR_INIT;
 
-	int i, j, mlen = n->s.members.p.len;
-	struct member *mbrs = calloc(mlen, sizeof(*mbrs));
+	switch (f->f.which) {
+	case Field_slot:
+		declare_slot(s, f);
+		set_member(&s->set, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+		get_member(&s->get, f, "p.p", s->ftab.str, strf(&buf, "%s%s", s->var.str, f->f.name.str));
+		break;
 
-	/* get list of members in code order and emit union enums */
-	for (i = 0; i < mlen; i++) {
-		struct member *m = decode_member(mbrs, n->s.members, i);
+	case Field_group:
+		define_group(s, f->group, f->f.name.str);
+		break;
+	}
+}
 
-		if (m->m.body_tag == StructNode_Member_unionMember) {
-			int first, ulen;
+static void define_group(struct strings *s, struct node *n, const char *group_name) {
+	struct field *f;
+	int flen = n->n._struct.fields.p.len;
+	int ulen = n->n._struct.discriminantCount;
+	/* named union is where all group members are in the union */
+	int named_union = (group_name && ulen == flen && ulen > 0);
+	int named_struct = (group_name && !named_union);
 
-			/* get union members in code order */
-			read_StructNode_Union(&m->u, m->m.body.unionMember);
-			ulen = m->u.members.p.len;
-			m->mbrs = calloc(ulen, sizeof(*m->mbrs));
-			for (j = 0; j < ulen; j++) {
-				decode_member(m->mbrs, m->u.members, j);
-			}
+	if (named_struct) {
+		str_addf(&s->decl, "%sstruct {\n", s->dtab.str);
+		str_add(&s->dtab, "\t", 1);
+	}
 
-			/* emit union enum definition */
-			first = 1;
-			fprintf(HDR, "\nenum %s_%s {", n->name.str, m->m.name.str);
-			for (j = 0; j < ulen; j++) {
-				struct member *u = &m->mbrs[j];
-				if (!u->is_valid) continue;
-				if (!first) fprintf(HDR, ",");
-				fprintf(HDR, "\n\t%s_%s = %d", n->name.str, u->m.name.str, u->idx);
-				first = 0;
-			}
-			fprintf(HDR, "\n};\n");
+	if (group_name) {
+		str_addf(&s->var, "%s.", group_name);
+	}
+
+	/* fields before the union members */
+	for (f = n->fields; f < n->fields + flen && !in_union(f); f++) {
+		define_field(s, f);
+	}
+
+	if (ulen > 0) {
+		do_union(s, n, f, named_union ? group_name : NULL);
+
+		while (f < n->fields + flen && in_union(f))
+			f++;
+
+		/* fields after the unnamed union */
+		for (;f < n->fields + flen; f++) {
+			define_field(s, f);
 		}
 	}
 
-	/* emit struct definition */
-	fprintf(HDR, "\nstruct %s {\n", n->name.str);
-	for (i = 0; i < mlen; i++) {
-		struct member *m = &mbrs[i];
-		if (!m->is_valid)
-			continue;
-
-		switch (m->m.body_tag) {
-		case StructNode_Member_fieldMember:
-			print_member(m, "\t");
-			break;
-		case StructNode_Member_unionMember:
-			fprintf(HDR, "\tenum %s_%s %s_tag;\n", n->name.str, m->m.name.str, m->m.name.str);
-			fprintf(HDR, "\tunion {\n");
-			for (j = 0; j < m->u.members.p.len; j++) {
-				print_member(&m->mbrs[j], "\t\t");
-			}
-			fprintf(HDR, "\t} %s;\n", m->m.name.str);
-			break;
-		}
+	if (named_struct) {
+		str_setlen(&s->dtab, s->dtab.len-1);
+		str_addf(&s->decl, "%s} %s;\n", s->dtab.str, group_name);
 	}
-	fprintf(HDR, "};\n");
+
+	if (group_name) {
+		str_setlen(&s->var, s->var.len - strlen(group_name) - 1);
+	}
+}
+
+static void define_struct(struct node *n) {
+	static struct strings s;
+
+	str_reset(&s.dtab);
+	str_reset(&s.ftab);
+	str_reset(&s.get);
+	str_reset(&s.set);
+	str_reset(&s.enums);
+	str_reset(&s.decl);
+	str_reset(&s.var);
+
+	str_add(&s.dtab, "\t", -1);
+	str_add(&s.ftab, "\t", -1);
+	str_add(&s.var, "s->", -1);
+
+	define_group(&s, n, NULL);
+
+	str_add(&HDR, s.enums.str, s.enums.len);
+
+	str_addf(&HDR, "\nstruct %s {\n", n->name.str);
+	str_add(&HDR, s.decl.str, s.decl.len);
+	str_addf(&HDR, "};\n");
 
 	str_addf(&SRC, "\n%s_ptr new_%s(struct capn_segment *s) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_new_struct(s, %d, %d);\n", 8*n->s.dataSectionWordSize, n->s.pointerSectionSize);
+	str_addf(&SRC, "\tp.p = capn_new_struct(s, %d, %d);\n", 8*n->n._struct.dataWordCount, n->n._struct.pointerCount);
 	str_addf(&SRC, "\treturn p;\n");
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_list p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_new_list(s, len, %d, %d);\n", 8*n->s.dataSectionWordSize, n->s.pointerSectionSize);
+	str_addf(&SRC, "\tp.p = capn_new_list(s, len, %d, %d);\n", 8*n->n._struct.dataWordCount, n->n._struct.pointerCount);
 	str_addf(&SRC, "\treturn p;\n");
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void read_%s(struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	for (i = 0; i < mlen; i++) {
-		struct member *m = &mbrs[i];
-		if (!m->is_valid) continue;
-
-		switch (m->m.body_tag) {
-		case StructNode_Member_fieldMember:
-			get_member(m, "p.p", "\t", strf(&buf, "s->%s", m->m.name.str));
-			break;
-		case StructNode_Member_unionMember:
-			do_union(n, m, 0);
-			break;
-		}
-	}
+	str_add(&SRC, s.get.str, s.get.len);
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "int write_%s(const struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	str_addf(&SRC, "\tint err = 0;\n");
-	for (i = 0; i < mlen; i++) {
-		struct member *m = &mbrs[i];
-		if (!m->is_valid) continue;
-
-		switch (m->m.body_tag) {
-		case StructNode_Member_fieldMember:
-			set_member(m, "p.p", "\t", strf(&buf, "s->%s", m->m.name.str));
-			break;
-		case StructNode_Member_unionMember:
-			do_union(n, m, 1);
-			break;
-		}
-	}
-	str_addf(&SRC, "\treturn err;\n}\n");
+	str_addf(&SRC, "void write_%s(const struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_add(&SRC, s.set.str, s.set.len);
+	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void get_%s(struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
@@ -770,13 +840,15 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\tread_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "int set_%s(const struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "void set_%s(const struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
 	str_addf(&SRC, "\tp.p = capn_getp(l.p, i);\n");
-	str_addf(&SRC, "\treturn write_%s(s, p);\n", n->name.str);
+	str_addf(&SRC, "\twrite_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 }
 
+#if 0
+Commenting out interfaces until the RPC protocol has been spec'd
 static int find_offset(struct str *v, int inc, uint64_t mask) {
 	int i, j;
 	union {uint64_t u; char c[8];} umask;
@@ -822,36 +894,36 @@ static void define_method(struct node *iface, int ord) {
 		m->m.ordinal = i;
 
 		switch (m->v.t.body_tag) {
-		case Type_voidType:
+		case Type_void:
 			break;
-		case Type_boolType:
+		case Type_bool:
 			m->f.offset = find_offset(&buf, 1, 1);
 			break;
-		case Type_int8Type:
-		case Type_uint8Type:
+		case Type_int8:
+		case Type_uint8:
 			m->f.offset = find_offset(&buf, 8, 0xFF);
 			break;
-		case Type_int16Type:
-		case Type_uint16Type:
-		case Type_enumType:
+		case Type_int16:
+		case Type_uint16:
+		case Type_enum:
 			m->f.offset = find_offset(&buf, 16, 0xFFFF);
 			break;
-		case Type_int32Type:
-		case Type_uint32Type:
-		case Type_float32Type:
+		case Type_int32:
+		case Type_uint32:
+		case Type_float32:
 			m->f.offset = find_offset(&buf, 32, 0xFFFFFFFFu);
 			break;
-		case Type_int64Type:
-		case Type_uint64Type:
-		case Type_float64Type:
+		case Type_int64:
+		case Type_uint64:
+		case Type_float64:
 			m->f.offset = find_offset(&buf, 64, ~((uint64_t) 0));
 			break;
-		case Type_textType:
-		case Type_dataType:
-		case Type_listType:
-		case Type_structType:
-		case Type_interfaceType:
-		case Type_objectType:
+		case Type_text:
+		case Type_data:
+		case Type__list:
+		case Type_struct:
+		case Type_interface:
+		case Type_object:
 			m->f.offset = ptrs++;
 			break;
 		}
@@ -862,14 +934,14 @@ static void define_method(struct node *iface, int ord) {
 
 	/* write function to initiate a call */
 
-	fprintf(HDR, "\nint write_%s_%s(struct capn_msg*", iface->name.str, method.name.str);
+	str_addf(&HDR, "\nint write_%s_%s(struct capn_msg*", iface->name.str, method.name.str);
 	str_addf(&SRC, "\nint write_%s_%s(struct capn_msg *m", iface->name.str, method.name.str);
 	for (i = 0; i < method.params.p.len; i++) {
 		struct member *m = &mbrs[i];
-		fprintf(HDR, ", %s %s", m->v.tname, m->m.name.str);
+		str_addf(&HDR, ", %s %s", m->v.tname, m->m.name.str);
 		str_addf(&SRC, ", %s a%d", m->v.tname, i);
 	}
-	fprintf(HDR, ");\n");
+	str_addf(&HDR, ");\n");
 	str_addf(&SRC, ") {\n");
 
 	str_addf(&SRC, "\tint err = 0;\n");
@@ -894,14 +966,14 @@ static void define_method(struct node *iface, int ord) {
 	/* read function to handle a call */
 
 	if (datasz || ptrs) {
-		fprintf(HDR, "void read_%s_%s(struct capn_msg*", iface->name.str, method.name.str);
+		str_addf(&HDR, "void read_%s_%s(struct capn_msg*", iface->name.str, method.name.str);
 		str_addf(&SRC, "void read_%s_%s(struct capn_msg *m", iface->name.str, method.name.str);
 		for (i = 0; i < method.params.p.len; i++) {
 			struct member *m = &mbrs[i];
-			fprintf(HDR, ", %s *%s", m->v.tname, m->m.name.str);
+			str_addf(&HDR, ", %s *%s", m->v.tname, m->m.name.str);
 			str_addf(&SRC, ", %s *a%d", m->v.tname, i);
 		}
-		fprintf(HDR, ");\n");
+		str_addf(&HDR, ");\n");
 		str_addf(&SRC, ") {\n");
 
 		for (i = 0; i < method.params.p.len; i++) {
@@ -913,30 +985,34 @@ static void define_method(struct node *iface, int ord) {
 
 	free(mbrs);
 }
+#endif
 
-static void declare(struct node *n, enum Node_body type, const char *format, int num) {
-	fprintf(HDR, "\n");
-	for (n = n->first_child; n != NULL; n = n->next_child) {
-		if (n->n.body_tag == type) {
+static void declare(struct node *file_node, const char *format, int num) {
+	struct node *n;
+	str_addf(&HDR, "\n");
+	for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
+		if (n->n.which == Node_struct && !n->n._struct.isGroup) {
 			switch (num) {
 			case 3:
-				fprintf(HDR, format, n->name.str, n->name.str, n->name.str);
+				str_addf(&HDR, format, n->name.str, n->name.str, n->name.str);
 				break;
 			case 2:
-				fprintf(HDR, format, n->name.str, n->name.str);
+				str_addf(&HDR, format, n->name.str, n->name.str);
 				break;
 			case 1:
-				fprintf(HDR, format, n->name.str);
+				str_addf(&HDR, format, n->name.str);
 				break;
 			}
 		}
 	}
 }
+
 int main() {
 	struct capn capn;
 	CodeGeneratorRequest_ptr root;
 	struct CodeGeneratorRequest req;
-	struct node *n;
+	struct node *file_node, *n;
+	struct node *all_files = NULL, *all_structs = NULL;
 	int i, j;
 
 	if (capn_init_fp(&capn, stdin, 0)) {
@@ -955,30 +1031,30 @@ int main() {
 		get_Node(&n->n, req.nodes, i);
 		insert_node(n);
 
-		switch (n->n.body_tag) {
-		case Node_fileNode:
-			n->next = g_files;
-			g_files = n;
-			read_FileNode(&n->f, n->n.body.fileNode);
+		switch (n->n.which) {
+		case Node_file:
+			n->next = all_files;
+			all_files = n;
 			break;
-		case Node_structNode:
-			read_StructNode(&n->s, n->n.body.structNode);
+
+		case Node_struct:
+			n->next = all_structs;
+			all_structs = n;
 			break;
-		case Node_enumNode:
-			read_EnumNode(&n->e, n->n.body.enumNode);
-			break;
-		case Node_interfaceNode:
-			read_InterfaceNode(&n->i, n->n.body.interfaceNode);
-			break;
-		case Node_constNode:
-			read_ConstNode(&n->c, n->n.body.constNode);
-			break;
+
 		default:
 			break;
 		}
 	}
 
-	for (n = g_files; n != NULL; n = n->next) {
+	for (n = all_structs; n != NULL; n = n->next) {
+		n->fields = calloc(n->n._struct.fields.p.len, sizeof(n->fields[0]));
+		for (j = 0; j < n->n._struct.fields.p.len; j++) {
+			decode_field(n->fields, n->n._struct.fields, j);
+		}
+	}
+
+	for (n = all_files; n != NULL; n = n->next) {
 		struct str b = STR_INIT;
 
 		for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
@@ -991,10 +1067,10 @@ int main() {
 	}
 
 	for (i = 0; i < req.requestedFiles.p.len; i++) {
+		struct CodeGeneratorRequest_RequestedFile file_req;
 		static struct str b = STR_INIT;
-		struct node *s;
 		char *p;
-		FILE *srcf;
+		FILE *srcf, *hdrf;
 
 		g_valc = 0;
 		g_valseg.len = 0;
@@ -1003,71 +1079,75 @@ int main() {
 		capn_init_malloc(&g_valcapn);
 		capn_append_segment(&g_valcapn, &g_valseg);
 
-		n = find_node(capn_get64(req.requestedFiles, i));
+		get_CodeGeneratorRequest_RequestedFile(&file_req, req.requestedFiles, i);
+		file_node = find_node(file_req.id);
 
-		HDR = fopen(strf(&b, "%s.h", n->n.displayName.str), "w");
-		if (!HDR) {
-			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
-			exit(2);
-		}
-
+		str_reset(&HDR);
 		str_reset(&SRC);
-		srcf = fopen(strf(&b, "%s.c", n->n.displayName.str), "w");
-		if (!srcf) {
-			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
-			exit(2);
+
+		str_addf(&HDR, "#ifndef CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
+		str_addf(&HDR, "#define CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
+		str_addf(&HDR, "/* AUTO GENERATED - DO NOT EDIT */\n");
+		str_addf(&HDR, "#include <capn.h>\n");
+
+		for (j = 0; j < file_req.imports.p.len; j++) {
+			struct CodeGeneratorRequest_RequestedFile_Import im;
+			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
+			str_addf(&HDR, "#include \"%s.h\"\n", im.name.str);
 		}
 
-		fprintf(HDR, "#ifndef CAPN_%X%X\n", (uint32_t) (n->n.id >> 32), (uint32_t) n->n.id);
-		fprintf(HDR, "#define CAPN_%X%X\n", (uint32_t) (n->n.id >> 32), (uint32_t) n->n.id);
-		fprintf(HDR, "/* AUTO GENERATED - DO NOT EDIT */\n");
-		fprintf(HDR, "#include <capn.h>\n");
+		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
 
-		for (i = 0; i < n->f.imports.p.len; i++) {
-			struct FileNode_Import im;
-			get_FileNode_Import(&im, n->f.imports, i);
-			fprintf(HDR, "#include \"%s.h\"\n", im.name.str);
-		}
+		declare(file_node, "struct %s;\n", 1);
+		declare(file_node, "typedef struct {capn_ptr p;} %s_ptr;\n", 1);
+		declare(file_node, "typedef struct {capn_ptr p;} %s_list;\n", 1);
 
-		fprintf(HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
-
-
-		declare(n, Node_structNode, "struct %s;\n", 1);
-		declare(n, Node_structNode, "typedef struct {capn_ptr p;} %s_ptr;\n", 1);
-		declare(n, Node_structNode, "typedef struct {capn_ptr p;} %s_list;\n", 1);
-		declare(n, Node_interfaceNode, "typedef struct {capn_ptr p;} %s_ptr;\n", 1);
-		declare(n, Node_interfaceNode, "typedef struct {capn_ptr p;} %s_list;\n", 1);
-
-		for (s = n->first_child; s != NULL; s = s->next_child) {
-			switch (s->n.body_tag) {
-			case Node_structNode:
-				define_struct(s);
-				break;
-			case Node_enumNode:
-				define_enum(s);
-				break;
-			case Node_constNode:
-				define_const(s);
-				break;
-			case Node_interfaceNode:
-				for (j = 0; j < s->i.methods.p.len; j++) {
-					define_method(s, j);
+		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
+			switch (n->n.which) {
+			case Node_struct:
+				if (!n->n._struct.isGroup) {
+					define_struct(n);
 				}
+				break;
+			case Node_enum:
+				define_enum(n);
+				break;
+			case Node_const:
+				define_const(n);
 				break;
 			default:
 				break;
 			}
 		}
 
-		declare(n, Node_structNode, "%s_ptr new_%s(struct capn_segment*);\n", 2);
-		declare(n, Node_structNode, "%s_list new_%s_list(struct capn_segment*, int len);\n", 2);
-		declare(n, Node_structNode, "void read_%s(struct %s*, %s_ptr);\n", 3);
-		declare(n, Node_structNode, "int write_%s(const struct %s*, %s_ptr);\n", 3);
-		declare(n, Node_structNode, "void get_%s(struct %s*, %s_list, int i);\n", 3);
-		declare(n, Node_structNode, "int set_%s(const struct %s*, %s_list, int i);\n", 3);
+		declare(file_node, "%s_ptr new_%s(struct capn_segment*);\n", 2);
+		declare(file_node, "%s_list new_%s_list(struct capn_segment*, int len);\n", 2);
+		declare(file_node, "void read_%s(struct %s*, %s_ptr);\n", 3);
+		declare(file_node, "void write_%s(const struct %s*, %s_ptr);\n", 3);
+		declare(file_node, "void get_%s(struct %s*, %s_list, int i);\n", 3);
+		declare(file_node, "void set_%s(const struct %s*, %s_list, int i);\n", 3);
 
-		p = strrchr(n->n.displayName.str, '/');
-		fprintf(srcf, "#include \"%s.h\"\n", p ? p+1 : n->n.displayName.str);
+		str_addf(&HDR, "\n#ifdef __cplusplus\n}\n#endif\n#endif\n");
+
+		/* write out the header */
+
+		hdrf = fopen(strf(&b, "%s.h", file_node->n.displayName.str), "w");
+		if (!hdrf) {
+			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
+			exit(2);
+		}
+		fwrite(HDR.str, 1, HDR.len, hdrf);
+		fclose(hdrf);
+
+		/* write out the source */
+
+		srcf = fopen(strf(&b, "%s.c", file_node->n.displayName.str), "w");
+		if (!srcf) {
+			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
+			exit(2);
+		}
+		p = strrchr(file_node->n.displayName.str, '/');
+		fprintf(srcf, "#include \"%s.h\"\n", p ? p+1 : file_node->n.displayName.str);
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
 
 		if (g_val0used)
@@ -1091,12 +1171,9 @@ int main() {
 		}
 
 		fwrite(SRC.str, 1, SRC.len, srcf);
-
-		fprintf(HDR, "\n#ifdef __cplusplus\n}\n#endif\n#endif\n");
-		fclose(HDR);
 		fclose(srcf);
+
 		capn_free(&g_valcapn);
-		HDR = srcf = NULL;
 	}
 
 	return 0;

@@ -1,7 +1,7 @@
 .PHONY: all clean test
 
 LDFLAGS=-g -Wall -Werror -fPIC
-CFLAGS=-g -Wall -Werror -fPIC -I. -Wno-unused-function -ansi -pedantic
+CFLAGS=-g -Wall -Werror -fPIC -I. -Wno-unused-function
 
 all: capn.so capnpc-c test
 
