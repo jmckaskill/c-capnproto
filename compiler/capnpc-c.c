@@ -68,14 +68,14 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
 
-	for (i = 0; i < n->n.nestedNodes.p.len; i++) {
+	for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 		resolve_names(b, find_node(nest.id), nest.name, file);
 	}
 
 	if (n->n.which == Node__struct) {
-		for (i = 0; i < n->n._struct.fields.p.len; i++) {
+		for (i = n->n._struct.fields.p.len-1; i >= 0; i--) {
 			if (n->fields[i].group) {
 				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
 			}
