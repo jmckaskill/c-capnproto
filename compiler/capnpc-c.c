@@ -68,6 +68,8 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
 
+	capn_resolve(&n->n.nestedNodes.p);
+
 	for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
@@ -93,6 +95,7 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 static void define_enum(struct node *n) {
 	int i;
 
+	capn_resolve(&n->n._enum.enumerants.p);
 	str_addf(&HDR, "\nenum %s {", n->name.str);
 	for (i = 0; i < n->n._enum.enumerants.p.len; i++) {
 		struct Enumerant e;
@@ -236,7 +239,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 				fprintf(stderr, "failed to copy text\n");
 				exit(2);
 			}
-			p = capn_getp(p, 0);
+			p = capn_getp(p, 0, 1);
 			if (!p.type)
 				break;
 
@@ -266,7 +269,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 				fprintf(stderr, "failed to copy object\n");
 				exit(2);
 			}
-			p = capn_getp(p, 0);
+			p = capn_getp(p, 0, 1);
 			if (!p.type)
 				break;
 
@@ -575,7 +578,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	case Type__interface:
 	case Type_object:
 	case Type__list:
-		str_addf(func, "%s = capn_getp(%s, %d);\n", pvar, ptr, f->f.slot.offset);
+		str_addf(func, "%s = capn_getp(%s, %d, 0);\n", pvar, ptr, f->f.slot.offset);
 		break;
 	default:
 		return;
@@ -880,22 +883,24 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void read_%s(struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
 	str_add(&SRC, s.get.str, s.get.len);
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void write_%s(const struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
 	str_add(&SRC, s.set.str, s.set.len);
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void get_%s(struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_getp(l.p, i);\n");
+	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
 	str_addf(&SRC, "\tread_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void set_%s(const struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_getp(l.p, i);\n");
+	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
 	str_addf(&SRC, "\twrite_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 }
@@ -1076,8 +1081,10 @@ int main() {
 	g_valseg.data = calloc(1, capn.seglist->len);
 	g_valseg.cap = capn.seglist->len;
 
-	root.p = capn_getp(capn_root(&capn), 0);
+	root.p = capn_getp(capn_root(&capn), 0, 1);
 	read_CodeGeneratorRequest(&req, root);
+
+	capn_resolve(&req.nodes.p);
 
 	for (i = 0; i < req.nodes.p.len; i++) {
 		n = calloc(1, sizeof(*n));
@@ -1091,6 +1098,7 @@ int main() {
 			break;
 
 		case Node__struct:
+			capn_resolve(&n->n._struct.fields.p);
 			n->next = all_structs;
 			all_structs = n;
 			break;
@@ -1109,6 +1117,7 @@ int main() {
 
 	for (n = all_files; n != NULL; n = n->next) {
 		struct str b = STR_INIT;
+		capn_resolve(&n->n.nestedNodes.p);
 
 		for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
@@ -1118,6 +1127,8 @@ int main() {
 
 		str_release(&b);
 	}
+
+	capn_resolve(&req.requestedFiles.p);
 
 	for (i = 0; i < req.requestedFiles.p.len; i++) {
 		struct CodeGeneratorRequest_RequestedFile file_req;
@@ -1142,6 +1153,8 @@ int main() {
 		str_addf(&HDR, "#define CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
 		str_addf(&HDR, "/* AUTO GENERATED - DO NOT EDIT */\n");
 		str_addf(&HDR, "#include <capn.h>\n");
+
+		capn_resolve(&file_req.imports.p);
 
 		for (j = 0; j < file_req.imports.p.len; j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
@@ -1208,14 +1221,14 @@ int main() {
 		if (g_nullused)
 			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
-		if (g_valseg.len) {
+		if (g_valseg.len > 8) {
 			fprintf(srcf, "static const uint8_t capn_buf[%d] = {", g_valseg.len-8);
-			for (i = 8; i < g_valseg.len; i++) {
-				if (i > 8)
+			for (j = 8; j < g_valseg.len; j++) {
+				if (j > 8)
 					fprintf(srcf, ",");
-				if ((i % 8) == 0)
+				if ((j % 8) == 0)
 					fprintf(srcf, "\n\t");
-				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[i]);
+				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[j]);
 			}
 			fprintf(srcf, "\n};\n");
 

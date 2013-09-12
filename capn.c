@@ -407,7 +407,17 @@ err:
 	return ret;
 }
 
-capn_ptr capn_getp(capn_ptr p, int off) {
+void capn_resolve(capn_ptr *p) {
+	if (p->type == CAPN_FAR_POINTER)
+		*p = read_ptr(p->seg, p->data);
+}
+
+capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
+	capn_ptr ret = {CAPN_FAR_POINTER};
+	ret.seg = p.seg;
+
+	capn_resolve(&p);
+
 	switch (p.type) {
 	case CAPN_COMPOSITE_LIST:
 	case CAPN_LIST:
@@ -429,19 +439,25 @@ capn_ptr capn_getp(capn_ptr p, int off) {
 		if (off >= p.ptrsz) {
 			goto err;
 		}
-
-		return read_ptr(p.seg, p.data + p.datasz + off);
+		ret.data = p.data + p.datasz + off;
+		break;
 
 	case CAPN_PTR_LIST:
 		if (off >= p.len) {
 			goto err;
 		}
-
-		return read_ptr(p.seg, p.data + off * 8);
+		ret.data = p.data + off * 8;
+		break;
 
 	default:
 		goto err;
 	}
+
+	if (resolve) {
+		ret = read_ptr(ret.seg, ret.data);
+	}
+
+	return ret;
 
 err:
 	memset(&p, 0, sizeof(p));
@@ -750,6 +766,9 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 	char *data;
 	int err, dep = 0;
 
+	capn_resolve(&p);
+	capn_resolve(&tgt);
+
 	switch (p.type) {
 	case CAPN_LIST:
 	case CAPN_COMPOSITE_LIST:
@@ -812,8 +831,8 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 		}
 
 		if (tc->type == CAPN_COMPOSITE_LIST) {
-			*fn = capn_getp(*fc, 0);
-			*tn = capn_getp(*tc, 0);
+			*fn = capn_getp(*fc, 0, 1);
+			*tn = capn_getp(*tc, 0, 1);
 
 			copy_list_member(tn, fn, &dep);
 
@@ -1019,7 +1038,7 @@ capn_ptr capn_new_string(struct capn_segment *seg, const char *str, int sz) {
 }
 
 capn_text capn_get_text(capn_ptr p, int off, capn_text def) {
-	capn_ptr m = capn_getp(p, off);
+	capn_ptr m = capn_getp(p, off, 1);
 	capn_text ret = def;
 	if (m.type == CAPN_LIST && m.datasz == 1 && m.len && m.data[m.len - 1] == 0) {
 		ret.seg = m.seg;
@@ -1045,7 +1064,7 @@ int capn_set_text(capn_ptr p, int off, capn_text tgt) {
 
 capn_data capn_get_data(capn_ptr p, int off) {
 	capn_data ret;
-	ret.p = capn_getp(p, off);
+	ret.p = capn_getp(p, off, 1);
 	if (ret.p.type != CAPN_LIST || ret.p.datasz != 1) {
 		memset(&ret, 0, sizeof(ret));
 	}

@@ -100,6 +100,7 @@ enum CAPN_TYPE {
 	CAPN_LIST = 2,
 	CAPN_PTR_LIST = 3,
 	CAPN_BIT_LIST = 4,
+	CAPN_FAR_POINTER = 5,
 	CAPN_LIST_MEMBER = 6,
 	CAPN_COMPOSITE_LIST = 7
 };
@@ -140,6 +141,7 @@ struct capn_msg {
 void capn_append_segment(struct capn*, struct capn_segment*);
 
 capn_ptr capn_root(struct capn *c);
+void capn_resolve(capn_ptr *p);
 
 /* capn_getp|setp functions get/set ptrs in list/structs
  * off is the list index or pointer index in a struct
@@ -147,7 +149,7 @@ capn_ptr capn_root(struct capn *c);
  * is in a different segment/context.
  * Both of these will use/return inner pointers for composite lists.
  */
-capn_ptr capn_getp(capn_ptr p, int off);
+capn_ptr capn_getp(capn_ptr p, int off, int resolve);
 int capn_setp(capn_ptr p, int off, capn_ptr tgt);
 
 capn_text capn_get_text(capn_ptr p, int off, capn_text def);

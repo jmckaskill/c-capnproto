@@ -46,7 +46,7 @@ TEST(WireFormat, SimpleRawDataStruct) {
   EXPECT_EQ(1, ctx.segnum);
   EXPECT_EQ(0, seg.id);
 
-  struct capn_ptr ptr = capn_getp(capn_root(&ctx), 0);
+  struct capn_ptr ptr = capn_getp(capn_root(&ctx), 0, 1);
   EXPECT_EQ(CAPN_STRUCT, ptr.type);
   EXPECT_EQ(8, ptr.datasz);
   EXPECT_EQ(0, ptr.ptrsz);
@@ -111,7 +111,7 @@ static void setupStruct(struct capn *ctx) {
   EXPECT_EQ(8, list.ptrsz);
   EXPECT_EQ(0, capn_setp(ptr, 2, list));
   for (int i = 0; i < 4; i++) {
-    capn_ptr element = capn_getp(list, i);
+    capn_ptr element = capn_getp(list, i, 1);
     ASSERT_EQ(CAPN_LIST_MEMBER, element.type);
     EXPECT_EQ(8, element.datasz);
     EXPECT_EQ(8, element.ptrsz);
@@ -151,7 +151,7 @@ static void setupStruct(struct capn *ctx) {
 }
 
 static void checkStruct(struct capn *ctx) {
-  capn_ptr ptr = capn_getp(capn_root(ctx), 0);
+  capn_ptr ptr = capn_getp(capn_root(ctx), 0, 1);
   EXPECT_EQ(CAPN_STRUCT, ptr.type);
   EXPECT_EQ(16, ptr.datasz);
   EXPECT_EQ(48, ptr.ptrsz);
@@ -161,13 +161,13 @@ static void checkStruct(struct capn *ctx) {
   EXPECT_EQ(0x40, capn_read8(ptr, 14));
   EXPECT_EQ((1 << 6) | (1 << 5) | (1 << 4) | (1 << 2), capn_read8(ptr, 15));
 
-  capn_ptr subStruct = capn_getp(ptr, 0);
+  capn_ptr subStruct = capn_getp(ptr, 0, 1);
   EXPECT_EQ(CAPN_STRUCT, subStruct.type);
   EXPECT_EQ(8, subStruct.datasz);
   EXPECT_EQ(0, subStruct.ptrsz);
   EXPECT_EQ(123, capn_read32(subStruct, 0));
 
-  capn_list32 list32 = {capn_getp(ptr, 1)};
+  capn_list32 list32 = {capn_getp(ptr, 1, 1)};
   capn_list8 list8 = {list32.p};
   capn_list16 list16 = {list32.p};
   capn_list64 list64 = {list32.p};
@@ -183,31 +183,31 @@ static void checkStruct(struct capn *ctx) {
   EXPECT_EQ(201, capn_get8(list8, 1));
   EXPECT_EQ(202, capn_get16(list16, 2));
 
-  capn_ptr list = capn_getp(ptr, 2);
+  capn_ptr list = capn_getp(ptr, 2, 1);
   EXPECT_EQ(CAPN_COMPOSITE_LIST, list.type);
   EXPECT_EQ(4, list.len);
   EXPECT_EQ(8, list.datasz);
   EXPECT_EQ(8, list.ptrsz);
 
   for (int i = 0; i < 4; i++) {
-    capn_ptr element = capn_getp(list, i);
+    capn_ptr element = capn_getp(list, i, 1);
     EXPECT_EQ(CAPN_LIST_MEMBER, element.type);
     EXPECT_EQ(8, element.datasz);
     EXPECT_EQ(8, element.ptrsz);
     EXPECT_EQ(300+i, capn_read32(element,0));
 
-    capn_ptr subelement = capn_getp(element, 0);
+    capn_ptr subelement = capn_getp(element, 0, 1);
     EXPECT_EQ(CAPN_STRUCT, subelement.type);
     EXPECT_EQ(8, subelement.datasz);
     EXPECT_EQ(0, subelement.ptrsz);
     EXPECT_EQ(400+i, capn_read32(subelement, 0));
   }
 
-  list = capn_getp(ptr, 3);
+  list = capn_getp(ptr, 3, 1);
   EXPECT_EQ(CAPN_PTR_LIST, list.type);
   EXPECT_EQ(5, list.len);
   for (int i = 0; i < 5; i++) {
-    capn_list16 element = {capn_getp(list, i)};
+    capn_list16 element = {capn_getp(list, i, 1)};
     EXPECT_EQ(CAPN_LIST, element.p.type);
     EXPECT_EQ(i+1, element.p.len);
     EXPECT_EQ(2, element.p.datasz);
@@ -217,17 +217,17 @@ static void checkStruct(struct capn *ctx) {
     }
   }
 
-  capn_ptr recurse = capn_getp(ptr, 4);
+  capn_ptr recurse = capn_getp(ptr, 4, 1);
   EXPECT_EQ(CAPN_STRUCT, recurse.type);
   EXPECT_EQ(0, recurse.datasz);
   EXPECT_EQ(16, recurse.ptrsz);
-  capn_ptr recurse_mbr = capn_getp(recurse, 0);
+  capn_ptr recurse_mbr = capn_getp(recurse, 0, 1);
   EXPECT_EQ(CAPN_STRUCT, recurse_mbr.type);
   EXPECT_EQ(0, recurse_mbr.datasz);
   EXPECT_EQ(16, recurse_mbr.ptrsz);
   EXPECT_EQ(recurse.seg, recurse_mbr.seg);
   EXPECT_EQ(recurse.data, recurse_mbr.data);
-  EXPECT_EQ(CAPN_NULL, capn_getp(recurse, 1).type);
+  EXPECT_EQ(CAPN_NULL, capn_getp(recurse, 1, 1).type);
 }
 
 TEST(WireFormat, StructRoundTrip_OneSegment) {
@@ -433,7 +433,7 @@ TEST(WireFormat, CopyStruct) {
   checkStruct(&ctx1.capn);
 
   capn_ptr root = capn_root(&ctx2.capn);
-  EXPECT_EQ(0, capn_setp(root, 0, capn_getp(capn_root(&ctx1.capn), 0)));
+  EXPECT_EQ(0, capn_setp(root, 0, capn_getp(capn_root(&ctx1.capn), 0, 1)));
 
   checkStruct(&ctx2.capn);
 }

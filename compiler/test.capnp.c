@@ -1073,6 +1073,7 @@ TestAllTypes_list new_TestAllTypes_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestAllTypes(struct TestAllTypes *s, TestAllTypes_ptr p) {
+	capn_resolve(&p.p);
 	s->boolField = (capn_read8(p.p, 0) & 1) != 0;
 	s->int8Field = (int8_t) capn_read8(p.p, 1);
 	s->int16Field = (int16_t) capn_read16(p.p, 2);
@@ -1086,27 +1087,28 @@ void read_TestAllTypes(struct TestAllTypes *s, TestAllTypes_ptr p) {
 	s->float64Field = capn_to_f64(capn_read64(p.p, 40));
 	s->textField = capn_get_text(p.p, 0, capn_val0);
 	s->dataField = capn_get_data(p.p, 1);
-	s->structField.p = capn_getp(p.p, 2);
+	s->structField.p = capn_getp(p.p, 2, 0);
 	s->enumField = (enum TestEnum) capn_read16(p.p, 36);
-	s->voidList = capn_getp(p.p, 3);
-	s->boolList.p = capn_getp(p.p, 4);
-	s->int8List.p = capn_getp(p.p, 5);
-	s->int16List.p = capn_getp(p.p, 6);
-	s->int32List.p = capn_getp(p.p, 7);
-	s->int64List.p = capn_getp(p.p, 8);
-	s->uInt8List.p = capn_getp(p.p, 9);
-	s->uInt16List.p = capn_getp(p.p, 10);
-	s->uInt32List.p = capn_getp(p.p, 11);
-	s->uInt64List.p = capn_getp(p.p, 12);
-	s->float32List.p = capn_getp(p.p, 13);
-	s->float64List.p = capn_getp(p.p, 14);
-	s->textList = capn_getp(p.p, 15);
-	s->dataList = capn_getp(p.p, 16);
-	s->structList.p = capn_getp(p.p, 17);
-	s->enumList.p = capn_getp(p.p, 18);
-	s->interfaceList = capn_getp(p.p, 19);
+	s->voidList = capn_getp(p.p, 3, 0);
+	s->boolList.p = capn_getp(p.p, 4, 0);
+	s->int8List.p = capn_getp(p.p, 5, 0);
+	s->int16List.p = capn_getp(p.p, 6, 0);
+	s->int32List.p = capn_getp(p.p, 7, 0);
+	s->int64List.p = capn_getp(p.p, 8, 0);
+	s->uInt8List.p = capn_getp(p.p, 9, 0);
+	s->uInt16List.p = capn_getp(p.p, 10, 0);
+	s->uInt32List.p = capn_getp(p.p, 11, 0);
+	s->uInt64List.p = capn_getp(p.p, 12, 0);
+	s->float32List.p = capn_getp(p.p, 13, 0);
+	s->float64List.p = capn_getp(p.p, 14, 0);
+	s->textList = capn_getp(p.p, 15, 0);
+	s->dataList = capn_getp(p.p, 16, 0);
+	s->structList.p = capn_getp(p.p, 17, 0);
+	s->enumList.p = capn_getp(p.p, 18, 0);
+	s->interfaceList = capn_getp(p.p, 19, 0);
 }
 void write_TestAllTypes(const struct TestAllTypes *s, TestAllTypes_ptr p) {
+	capn_resolve(&p.p);
 	capn_write1(p.p, 0, s->boolField != 0);
 	capn_write8(p.p, 1, (uint8_t) s->int8Field);
 	capn_write16(p.p, 2, (uint16_t) s->int16Field);
@@ -1142,12 +1144,12 @@ void write_TestAllTypes(const struct TestAllTypes *s, TestAllTypes_ptr p) {
 }
 void get_TestAllTypes(struct TestAllTypes *s, TestAllTypes_list l, int i) {
 	TestAllTypes_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestAllTypes(s, p);
 }
 void set_TestAllTypes(const struct TestAllTypes *s, TestAllTypes_list l, int i) {
 	TestAllTypes_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestAllTypes(s, p);
 }
 capn_text capn_val1 = {3,(char*)&capn_buf[5368],(struct capn_segment*)&capn_seg};
@@ -1181,6 +1183,7 @@ TestDefaults_list new_TestDefaults_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestDefaults(struct TestDefaults *s, TestDefaults_ptr p) {
+	capn_resolve(&p.p);
 	s->boolField = (capn_read8(p.p, 0) & 1) != 1;
 	s->int8Field = (int8_t) capn_read8(p.p, 1) ^ -123;
 	s->int16Field = (int16_t) capn_read16(p.p, 2) ^ -12345;
@@ -1197,78 +1200,79 @@ void read_TestDefaults(struct TestDefaults *s, TestDefaults_ptr p) {
 	if (!s->dataField.p.type) {
 		s->dataField = capn_val2;
 	}
-	s->structField.p = capn_getp(p.p, 2);
+	s->structField.p = capn_getp(p.p, 2, 0);
 	if (!s->structField.p.type) {
 		s->structField = capn_val3;
 	}
 	s->enumField = (enum TestEnum) capn_read16(p.p, 36) ^ 5u;
-	s->voidList = capn_getp(p.p, 3);
+	s->voidList = capn_getp(p.p, 3, 0);
 	if (!s->voidList.type) {
 		s->voidList = capn_val4;
 	}
-	s->boolList.p = capn_getp(p.p, 4);
+	s->boolList.p = capn_getp(p.p, 4, 0);
 	if (!s->boolList.p.type) {
 		s->boolList = capn_val5;
 	}
-	s->int8List.p = capn_getp(p.p, 5);
+	s->int8List.p = capn_getp(p.p, 5, 0);
 	if (!s->int8List.p.type) {
 		s->int8List = capn_val6;
 	}
-	s->int16List.p = capn_getp(p.p, 6);
+	s->int16List.p = capn_getp(p.p, 6, 0);
 	if (!s->int16List.p.type) {
 		s->int16List = capn_val7;
 	}
-	s->int32List.p = capn_getp(p.p, 7);
+	s->int32List.p = capn_getp(p.p, 7, 0);
 	if (!s->int32List.p.type) {
 		s->int32List = capn_val8;
 	}
-	s->int64List.p = capn_getp(p.p, 8);
+	s->int64List.p = capn_getp(p.p, 8, 0);
 	if (!s->int64List.p.type) {
 		s->int64List = capn_val9;
 	}
-	s->uInt8List.p = capn_getp(p.p, 9);
+	s->uInt8List.p = capn_getp(p.p, 9, 0);
 	if (!s->uInt8List.p.type) {
 		s->uInt8List = capn_val10;
 	}
-	s->uInt16List.p = capn_getp(p.p, 10);
+	s->uInt16List.p = capn_getp(p.p, 10, 0);
 	if (!s->uInt16List.p.type) {
 		s->uInt16List = capn_val11;
 	}
-	s->uInt32List.p = capn_getp(p.p, 11);
+	s->uInt32List.p = capn_getp(p.p, 11, 0);
 	if (!s->uInt32List.p.type) {
 		s->uInt32List = capn_val12;
 	}
-	s->uInt64List.p = capn_getp(p.p, 12);
+	s->uInt64List.p = capn_getp(p.p, 12, 0);
 	if (!s->uInt64List.p.type) {
 		s->uInt64List = capn_val13;
 	}
-	s->float32List.p = capn_getp(p.p, 13);
+	s->float32List.p = capn_getp(p.p, 13, 0);
 	if (!s->float32List.p.type) {
 		s->float32List = capn_val14;
 	}
-	s->float64List.p = capn_getp(p.p, 14);
+	s->float64List.p = capn_getp(p.p, 14, 0);
 	if (!s->float64List.p.type) {
 		s->float64List = capn_val15;
 	}
-	s->textList = capn_getp(p.p, 15);
+	s->textList = capn_getp(p.p, 15, 0);
 	if (!s->textList.type) {
 		s->textList = capn_val16;
 	}
-	s->dataList = capn_getp(p.p, 16);
+	s->dataList = capn_getp(p.p, 16, 0);
 	if (!s->dataList.type) {
 		s->dataList = capn_val17;
 	}
-	s->structList.p = capn_getp(p.p, 17);
+	s->structList.p = capn_getp(p.p, 17, 0);
 	if (!s->structList.p.type) {
 		s->structList = capn_val18;
 	}
-	s->enumList.p = capn_getp(p.p, 18);
+	s->enumList.p = capn_getp(p.p, 18, 0);
 	if (!s->enumList.p.type) {
 		s->enumList = capn_val19;
 	}
-	s->interfaceList = capn_getp(p.p, 19);
+	s->interfaceList = capn_getp(p.p, 19, 0);
 }
 void write_TestDefaults(const struct TestDefaults *s, TestDefaults_ptr p) {
+	capn_resolve(&p.p);
 	capn_write1(p.p, 0, s->boolField != 1);
 	capn_write8(p.p, 1, (uint8_t) s->int8Field ^ -123);
 	capn_write16(p.p, 2, (uint16_t) s->int16Field ^ -12345);
@@ -1304,12 +1308,12 @@ void write_TestDefaults(const struct TestDefaults *s, TestDefaults_ptr p) {
 }
 void get_TestDefaults(struct TestDefaults *s, TestDefaults_list l, int i) {
 	TestDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestDefaults(s, p);
 }
 void set_TestDefaults(const struct TestDefaults *s, TestDefaults_list l, int i) {
 	TestDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestDefaults(s, p);
 }
 
@@ -1324,19 +1328,21 @@ TestObject_list new_TestObject_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestObject(struct TestObject *s, TestObject_ptr p) {
-	s->objectField = capn_getp(p.p, 0);
+	capn_resolve(&p.p);
+	s->objectField = capn_getp(p.p, 0, 0);
 }
 void write_TestObject(const struct TestObject *s, TestObject_ptr p) {
+	capn_resolve(&p.p);
 	capn_setp(p.p, 0, s->objectField);
 }
 void get_TestObject(struct TestObject *s, TestObject_list l, int i) {
 	TestObject_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestObject(s, p);
 }
 void set_TestObject(const struct TestObject *s, TestObject_list l, int i) {
 	TestObject_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestObject(s, p);
 }
 
@@ -1351,6 +1357,7 @@ TestOutOfOrder_list new_TestOutOfOrder_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestOutOfOrder(struct TestOutOfOrder *s, TestOutOfOrder_ptr p) {
+	capn_resolve(&p.p);
 	s->foo = capn_get_text(p.p, 3, capn_val0);
 	s->bar = capn_get_text(p.p, 2, capn_val0);
 	s->baz = capn_get_text(p.p, 8, capn_val0);
@@ -1362,6 +1369,7 @@ void read_TestOutOfOrder(struct TestOutOfOrder *s, TestOutOfOrder_ptr p) {
 	s->waldo = capn_get_text(p.p, 5, capn_val0);
 }
 void write_TestOutOfOrder(const struct TestOutOfOrder *s, TestOutOfOrder_ptr p) {
+	capn_resolve(&p.p);
 	capn_set_text(p.p, 3, s->foo);
 	capn_set_text(p.p, 2, s->bar);
 	capn_set_text(p.p, 8, s->baz);
@@ -1374,12 +1382,12 @@ void write_TestOutOfOrder(const struct TestOutOfOrder *s, TestOutOfOrder_ptr p) 
 }
 void get_TestOutOfOrder(struct TestOutOfOrder *s, TestOutOfOrder_list l, int i) {
 	TestOutOfOrder_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestOutOfOrder(s, p);
 }
 void set_TestOutOfOrder(const struct TestOutOfOrder *s, TestOutOfOrder_list l, int i) {
 	TestOutOfOrder_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestOutOfOrder(s, p);
 }
 
@@ -1394,6 +1402,7 @@ TestUnion_list new_TestUnion_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestUnion(struct TestUnion *s, TestUnion_ptr p) {
+	capn_resolve(&p.p);
 	s->union0_which = (enum TestUnion_union0_which) capn_read16(p.p, 0);
 	switch (s->union0_which) {
 	case TestUnion_union0_u0f0s1:
@@ -1508,6 +1517,7 @@ void read_TestUnion(struct TestUnion *s, TestUnion_ptr p) {
 	s->byte0 = capn_read8(p.p, 35);
 }
 void write_TestUnion(const struct TestUnion *s, TestUnion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 0, s->union0_which);
 	switch (s->union0_which) {
 	case TestUnion_union0_u0f0s1:
@@ -1623,12 +1633,12 @@ void write_TestUnion(const struct TestUnion *s, TestUnion_ptr p) {
 }
 void get_TestUnion(struct TestUnion *s, TestUnion_list l, int i) {
 	TestUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestUnion(s, p);
 }
 void set_TestUnion(const struct TestUnion *s, TestUnion_list l, int i) {
 	TestUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestUnion(s, p);
 }
 
@@ -1643,6 +1653,7 @@ TestUnnamedUnion_list new_TestUnnamedUnion_list(struct capn_segment *s, int len)
 	return p;
 }
 void read_TestUnnamedUnion(struct TestUnnamedUnion *s, TestUnnamedUnion_ptr p) {
+	capn_resolve(&p.p);
 	s->before = capn_get_text(p.p, 0, capn_val0);
 	s->which = (enum TestUnnamedUnion_which) capn_read16(p.p, 4);
 	switch (s->which) {
@@ -1659,6 +1670,7 @@ void read_TestUnnamedUnion(struct TestUnnamedUnion *s, TestUnnamedUnion_ptr p) {
 	s->after = capn_get_text(p.p, 1, capn_val0);
 }
 void write_TestUnnamedUnion(const struct TestUnnamedUnion *s, TestUnnamedUnion_ptr p) {
+	capn_resolve(&p.p);
 	capn_set_text(p.p, 0, s->before);
 	capn_write16(p.p, 4, s->which);
 	switch (s->which) {
@@ -1676,12 +1688,12 @@ void write_TestUnnamedUnion(const struct TestUnnamedUnion *s, TestUnnamedUnion_p
 }
 void get_TestUnnamedUnion(struct TestUnnamedUnion *s, TestUnnamedUnion_list l, int i) {
 	TestUnnamedUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestUnnamedUnion(s, p);
 }
 void set_TestUnnamedUnion(const struct TestUnnamedUnion *s, TestUnnamedUnion_list l, int i) {
 	TestUnnamedUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestUnnamedUnion(s, p);
 }
 
@@ -1696,6 +1708,7 @@ TestUnionInUnion_list new_TestUnionInUnion_list(struct capn_segment *s, int len)
 	return p;
 }
 void read_TestUnionInUnion(struct TestUnionInUnion *s, TestUnionInUnion_ptr p) {
+	capn_resolve(&p.p);
 	s->outer_which = (enum TestUnionInUnion_outer_which) capn_read16(p.p, 8);
 	switch (s->outer_which) {
 	case TestUnionInUnion_outer_baz:
@@ -1717,6 +1730,7 @@ void read_TestUnionInUnion(struct TestUnionInUnion *s, TestUnionInUnion_ptr p) {
 	}
 }
 void write_TestUnionInUnion(const struct TestUnionInUnion *s, TestUnionInUnion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 8, s->outer_which);
 	switch (s->outer_which) {
 	case TestUnionInUnion_outer_baz:
@@ -1739,12 +1753,12 @@ void write_TestUnionInUnion(const struct TestUnionInUnion *s, TestUnionInUnion_p
 }
 void get_TestUnionInUnion(struct TestUnionInUnion *s, TestUnionInUnion_list l, int i) {
 	TestUnionInUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestUnionInUnion(s, p);
 }
 void set_TestUnionInUnion(const struct TestUnionInUnion *s, TestUnionInUnion_list l, int i) {
 	TestUnionInUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestUnionInUnion(s, p);
 }
 
@@ -1759,6 +1773,7 @@ TestGroups_list new_TestGroups_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestGroups(struct TestGroups *s, TestGroups_ptr p) {
+	capn_resolve(&p.p);
 	s->groups_which = (enum TestGroups_groups_which) capn_read16(p.p, 4);
 	switch (s->groups_which) {
 	case TestGroups_groups_foo:
@@ -1781,6 +1796,7 @@ void read_TestGroups(struct TestGroups *s, TestGroups_ptr p) {
 	}
 }
 void write_TestGroups(const struct TestGroups *s, TestGroups_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 4, s->groups_which);
 	switch (s->groups_which) {
 	case TestGroups_groups_foo:
@@ -1804,12 +1820,12 @@ void write_TestGroups(const struct TestGroups *s, TestGroups_ptr p) {
 }
 void get_TestGroups(struct TestGroups *s, TestGroups_list l, int i) {
 	TestGroups_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestGroups(s, p);
 }
 void set_TestGroups(const struct TestGroups *s, TestGroups_list l, int i) {
 	TestGroups_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestGroups(s, p);
 }
 
@@ -1824,6 +1840,7 @@ TestInterleavedGroups_list new_TestInterleavedGroups_list(struct capn_segment *s
 	return p;
 }
 void read_TestInterleavedGroups(struct TestInterleavedGroups *s, TestInterleavedGroups_ptr p) {
+	capn_resolve(&p.p);
 	s->group1.foo = capn_read32(p.p, 0);
 	s->group1.bar = capn_read64(p.p, 8);
 	s->group1.which = (enum TestInterleavedGroups_group1_which) capn_read16(p.p, 28);
@@ -1866,6 +1883,7 @@ void read_TestInterleavedGroups(struct TestInterleavedGroups *s, TestInterleaved
 	s->group2.waldo = capn_get_text(p.p, 1, capn_val0);
 }
 void write_TestInterleavedGroups(const struct TestInterleavedGroups *s, TestInterleavedGroups_ptr p) {
+	capn_resolve(&p.p);
 	capn_write32(p.p, 0, s->group1.foo);
 	capn_write64(p.p, 8, s->group1.bar);
 	capn_write16(p.p, 28, s->group1.which);
@@ -1909,12 +1927,12 @@ void write_TestInterleavedGroups(const struct TestInterleavedGroups *s, TestInte
 }
 void get_TestInterleavedGroups(struct TestInterleavedGroups *s, TestInterleavedGroups_list l, int i) {
 	TestInterleavedGroups_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestInterleavedGroups(s, p);
 }
 void set_TestInterleavedGroups(const struct TestInterleavedGroups *s, TestInterleavedGroups_list l, int i) {
 	TestInterleavedGroups_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestInterleavedGroups(s, p);
 }
 TestUnion_ptr capn_val20 = {{1,0,64,16,0,(char*)&capn_buf[7960],(struct capn_segment*)&capn_seg}};
@@ -1933,24 +1951,26 @@ TestUnionDefaults_list new_TestUnionDefaults_list(struct capn_segment *s, int le
 	return p;
 }
 void read_TestUnionDefaults(struct TestUnionDefaults *s, TestUnionDefaults_ptr p) {
-	s->s16s8s64s8Set.p = capn_getp(p.p, 0);
+	capn_resolve(&p.p);
+	s->s16s8s64s8Set.p = capn_getp(p.p, 0, 0);
 	if (!s->s16s8s64s8Set.p.type) {
 		s->s16s8s64s8Set = capn_val20;
 	}
-	s->s0sps1s32Set.p = capn_getp(p.p, 1);
+	s->s0sps1s32Set.p = capn_getp(p.p, 1, 0);
 	if (!s->s0sps1s32Set.p.type) {
 		s->s0sps1s32Set = capn_val21;
 	}
-	s->unnamed1.p = capn_getp(p.p, 2);
+	s->unnamed1.p = capn_getp(p.p, 2, 0);
 	if (!s->unnamed1.p.type) {
 		s->unnamed1 = capn_val22;
 	}
-	s->unnamed2.p = capn_getp(p.p, 3);
+	s->unnamed2.p = capn_getp(p.p, 3, 0);
 	if (!s->unnamed2.p.type) {
 		s->unnamed2 = capn_val23;
 	}
 }
 void write_TestUnionDefaults(const struct TestUnionDefaults *s, TestUnionDefaults_ptr p) {
+	capn_resolve(&p.p);
 	capn_setp(p.p, 0, (s->s16s8s64s8Set.p.data != capn_val20.p.data) ? s->s16s8s64s8Set.p : capn_null);
 	capn_setp(p.p, 1, (s->s0sps1s32Set.p.data != capn_val21.p.data) ? s->s0sps1s32Set.p : capn_null);
 	capn_setp(p.p, 2, (s->unnamed1.p.data != capn_val22.p.data) ? s->unnamed1.p : capn_null);
@@ -1958,12 +1978,12 @@ void write_TestUnionDefaults(const struct TestUnionDefaults *s, TestUnionDefault
 }
 void get_TestUnionDefaults(struct TestUnionDefaults *s, TestUnionDefaults_list l, int i) {
 	TestUnionDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestUnionDefaults(s, p);
 }
 void set_TestUnionDefaults(const struct TestUnionDefaults *s, TestUnionDefaults_list l, int i) {
 	TestUnionDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestUnionDefaults(s, p);
 }
 
@@ -1978,23 +1998,25 @@ TestNestedTypes_list new_TestNestedTypes_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestNestedTypes(struct TestNestedTypes *s, TestNestedTypes_ptr p) {
-	s->nestedStruct.p = capn_getp(p.p, 0);
+	capn_resolve(&p.p);
+	s->nestedStruct.p = capn_getp(p.p, 0, 0);
 	s->outerNestedEnum = (enum TestNestedTypes_NestedEnum) capn_read16(p.p, 0) ^ 1u;
 	s->innerNestedEnum = (enum TestNestedTypes_NestedStruct_NestedEnum) capn_read16(p.p, 2) ^ 2u;
 }
 void write_TestNestedTypes(const struct TestNestedTypes *s, TestNestedTypes_ptr p) {
+	capn_resolve(&p.p);
 	capn_setp(p.p, 0, s->nestedStruct.p);
 	capn_write16(p.p, 0, (uint16_t) s->outerNestedEnum ^ 1u);
 	capn_write16(p.p, 2, (uint16_t) s->innerNestedEnum ^ 2u);
 }
 void get_TestNestedTypes(struct TestNestedTypes *s, TestNestedTypes_list l, int i) {
 	TestNestedTypes_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestNestedTypes(s, p);
 }
 void set_TestNestedTypes(const struct TestNestedTypes *s, TestNestedTypes_list l, int i) {
 	TestNestedTypes_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestNestedTypes(s, p);
 }
 
@@ -2009,21 +2031,23 @@ TestNestedTypes_NestedStruct_list new_TestNestedTypes_NestedStruct_list(struct c
 	return p;
 }
 void read_TestNestedTypes_NestedStruct(struct TestNestedTypes_NestedStruct *s, TestNestedTypes_NestedStruct_ptr p) {
+	capn_resolve(&p.p);
 	s->outerNestedEnum = (enum TestNestedTypes_NestedEnum) capn_read16(p.p, 0) ^ 1u;
 	s->innerNestedEnum = (enum TestNestedTypes_NestedStruct_NestedEnum) capn_read16(p.p, 2) ^ 2u;
 }
 void write_TestNestedTypes_NestedStruct(const struct TestNestedTypes_NestedStruct *s, TestNestedTypes_NestedStruct_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 0, (uint16_t) s->outerNestedEnum ^ 1u);
 	capn_write16(p.p, 2, (uint16_t) s->innerNestedEnum ^ 2u);
 }
 void get_TestNestedTypes_NestedStruct(struct TestNestedTypes_NestedStruct *s, TestNestedTypes_NestedStruct_list l, int i) {
 	TestNestedTypes_NestedStruct_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestNestedTypes_NestedStruct(s, p);
 }
 void set_TestNestedTypes_NestedStruct(const struct TestNestedTypes_NestedStruct *s, TestNestedTypes_NestedStruct_list l, int i) {
 	TestNestedTypes_NestedStruct_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestNestedTypes_NestedStruct(s, p);
 }
 
@@ -2038,21 +2062,23 @@ TestUsing_list new_TestUsing_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestUsing(struct TestUsing *s, TestUsing_ptr p) {
+	capn_resolve(&p.p);
 	s->outerNestedEnum = (enum TestNestedTypes_NestedEnum) capn_read16(p.p, 2) ^ 1u;
 	s->innerNestedEnum = (enum TestNestedTypes_NestedStruct_NestedEnum) capn_read16(p.p, 0) ^ 2u;
 }
 void write_TestUsing(const struct TestUsing *s, TestUsing_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 2, (uint16_t) s->outerNestedEnum ^ 1u);
 	capn_write16(p.p, 0, (uint16_t) s->innerNestedEnum ^ 2u);
 }
 void get_TestUsing(struct TestUsing *s, TestUsing_list l, int i) {
 	TestUsing_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestUsing(s, p);
 }
 void set_TestUsing(const struct TestUsing *s, TestUsing_list l, int i) {
 	TestUsing_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestUsing(s, p);
 }
 
@@ -2067,18 +2093,20 @@ TestLists_list new_TestLists_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestLists(struct TestLists *s, TestLists_ptr p) {
-	s->list0.p = capn_getp(p.p, 0);
-	s->list1.p = capn_getp(p.p, 1);
-	s->list8.p = capn_getp(p.p, 2);
-	s->list16.p = capn_getp(p.p, 3);
-	s->list32.p = capn_getp(p.p, 4);
-	s->list64.p = capn_getp(p.p, 5);
-	s->listP.p = capn_getp(p.p, 6);
-	s->int32ListList = capn_getp(p.p, 7);
-	s->textListList = capn_getp(p.p, 8);
-	s->structListList = capn_getp(p.p, 9);
+	capn_resolve(&p.p);
+	s->list0.p = capn_getp(p.p, 0, 0);
+	s->list1.p = capn_getp(p.p, 1, 0);
+	s->list8.p = capn_getp(p.p, 2, 0);
+	s->list16.p = capn_getp(p.p, 3, 0);
+	s->list32.p = capn_getp(p.p, 4, 0);
+	s->list64.p = capn_getp(p.p, 5, 0);
+	s->listP.p = capn_getp(p.p, 6, 0);
+	s->int32ListList = capn_getp(p.p, 7, 0);
+	s->textListList = capn_getp(p.p, 8, 0);
+	s->structListList = capn_getp(p.p, 9, 0);
 }
 void write_TestLists(const struct TestLists *s, TestLists_ptr p) {
+	capn_resolve(&p.p);
 	capn_setp(p.p, 0, s->list0.p);
 	capn_setp(p.p, 1, s->list1.p);
 	capn_setp(p.p, 2, s->list8.p);
@@ -2092,12 +2120,12 @@ void write_TestLists(const struct TestLists *s, TestLists_ptr p) {
 }
 void get_TestLists(struct TestLists *s, TestLists_list l, int i) {
 	TestLists_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists(s, p);
 }
 void set_TestLists(const struct TestLists *s, TestLists_list l, int i) {
 	TestLists_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists(s, p);
 }
 
@@ -2112,17 +2140,19 @@ TestLists_Struct0_list new_TestLists_Struct0_list(struct capn_segment *s, int le
 	return p;
 }
 void read_TestLists_Struct0(struct TestLists_Struct0 *s, TestLists_Struct0_ptr p) {
+	capn_resolve(&p.p);
 }
 void write_TestLists_Struct0(const struct TestLists_Struct0 *s, TestLists_Struct0_ptr p) {
+	capn_resolve(&p.p);
 }
 void get_TestLists_Struct0(struct TestLists_Struct0 *s, TestLists_Struct0_list l, int i) {
 	TestLists_Struct0_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct0(s, p);
 }
 void set_TestLists_Struct0(const struct TestLists_Struct0 *s, TestLists_Struct0_list l, int i) {
 	TestLists_Struct0_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct0(s, p);
 }
 
@@ -2137,19 +2167,21 @@ TestLists_Struct1_list new_TestLists_Struct1_list(struct capn_segment *s, int le
 	return p;
 }
 void read_TestLists_Struct1(struct TestLists_Struct1 *s, TestLists_Struct1_ptr p) {
+	capn_resolve(&p.p);
 	s->f = (capn_read8(p.p, 0) & 1) != 0;
 }
 void write_TestLists_Struct1(const struct TestLists_Struct1 *s, TestLists_Struct1_ptr p) {
+	capn_resolve(&p.p);
 	capn_write1(p.p, 0, s->f != 0);
 }
 void get_TestLists_Struct1(struct TestLists_Struct1 *s, TestLists_Struct1_list l, int i) {
 	TestLists_Struct1_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct1(s, p);
 }
 void set_TestLists_Struct1(const struct TestLists_Struct1 *s, TestLists_Struct1_list l, int i) {
 	TestLists_Struct1_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct1(s, p);
 }
 
@@ -2164,19 +2196,21 @@ TestLists_Struct8_list new_TestLists_Struct8_list(struct capn_segment *s, int le
 	return p;
 }
 void read_TestLists_Struct8(struct TestLists_Struct8 *s, TestLists_Struct8_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read8(p.p, 0);
 }
 void write_TestLists_Struct8(const struct TestLists_Struct8 *s, TestLists_Struct8_ptr p) {
+	capn_resolve(&p.p);
 	capn_write8(p.p, 0, s->f);
 }
 void get_TestLists_Struct8(struct TestLists_Struct8 *s, TestLists_Struct8_list l, int i) {
 	TestLists_Struct8_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct8(s, p);
 }
 void set_TestLists_Struct8(const struct TestLists_Struct8 *s, TestLists_Struct8_list l, int i) {
 	TestLists_Struct8_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct8(s, p);
 }
 
@@ -2191,19 +2225,21 @@ TestLists_Struct16_list new_TestLists_Struct16_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct16(struct TestLists_Struct16 *s, TestLists_Struct16_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read16(p.p, 0);
 }
 void write_TestLists_Struct16(const struct TestLists_Struct16 *s, TestLists_Struct16_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 0, s->f);
 }
 void get_TestLists_Struct16(struct TestLists_Struct16 *s, TestLists_Struct16_list l, int i) {
 	TestLists_Struct16_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct16(s, p);
 }
 void set_TestLists_Struct16(const struct TestLists_Struct16 *s, TestLists_Struct16_list l, int i) {
 	TestLists_Struct16_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct16(s, p);
 }
 
@@ -2218,19 +2254,21 @@ TestLists_Struct32_list new_TestLists_Struct32_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct32(struct TestLists_Struct32 *s, TestLists_Struct32_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read32(p.p, 0);
 }
 void write_TestLists_Struct32(const struct TestLists_Struct32 *s, TestLists_Struct32_ptr p) {
+	capn_resolve(&p.p);
 	capn_write32(p.p, 0, s->f);
 }
 void get_TestLists_Struct32(struct TestLists_Struct32 *s, TestLists_Struct32_list l, int i) {
 	TestLists_Struct32_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct32(s, p);
 }
 void set_TestLists_Struct32(const struct TestLists_Struct32 *s, TestLists_Struct32_list l, int i) {
 	TestLists_Struct32_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct32(s, p);
 }
 
@@ -2245,19 +2283,21 @@ TestLists_Struct64_list new_TestLists_Struct64_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct64(struct TestLists_Struct64 *s, TestLists_Struct64_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read64(p.p, 0);
 }
 void write_TestLists_Struct64(const struct TestLists_Struct64 *s, TestLists_Struct64_ptr p) {
+	capn_resolve(&p.p);
 	capn_write64(p.p, 0, s->f);
 }
 void get_TestLists_Struct64(struct TestLists_Struct64 *s, TestLists_Struct64_list l, int i) {
 	TestLists_Struct64_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct64(s, p);
 }
 void set_TestLists_Struct64(const struct TestLists_Struct64 *s, TestLists_Struct64_list l, int i) {
 	TestLists_Struct64_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct64(s, p);
 }
 
@@ -2272,19 +2312,21 @@ TestLists_StructP_list new_TestLists_StructP_list(struct capn_segment *s, int le
 	return p;
 }
 void read_TestLists_StructP(struct TestLists_StructP *s, TestLists_StructP_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_StructP(const struct TestLists_StructP *s, TestLists_StructP_ptr p) {
+	capn_resolve(&p.p);
 	capn_set_text(p.p, 0, s->f);
 }
 void get_TestLists_StructP(struct TestLists_StructP *s, TestLists_StructP_list l, int i) {
 	TestLists_StructP_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_StructP(s, p);
 }
 void set_TestLists_StructP(const struct TestLists_StructP *s, TestLists_StructP_list l, int i) {
 	TestLists_StructP_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_StructP(s, p);
 }
 
@@ -2299,19 +2341,21 @@ TestLists_Struct0c_list new_TestLists_Struct0c_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct0c(struct TestLists_Struct0c *s, TestLists_Struct0c_ptr p) {
+	capn_resolve(&p.p);
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct0c(const struct TestLists_Struct0c *s, TestLists_Struct0c_ptr p) {
+	capn_resolve(&p.p);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct0c(struct TestLists_Struct0c *s, TestLists_Struct0c_list l, int i) {
 	TestLists_Struct0c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct0c(s, p);
 }
 void set_TestLists_Struct0c(const struct TestLists_Struct0c *s, TestLists_Struct0c_list l, int i) {
 	TestLists_Struct0c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct0c(s, p);
 }
 
@@ -2326,21 +2370,23 @@ TestLists_Struct1c_list new_TestLists_Struct1c_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct1c(struct TestLists_Struct1c *s, TestLists_Struct1c_ptr p) {
+	capn_resolve(&p.p);
 	s->f = (capn_read8(p.p, 0) & 1) != 0;
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct1c(const struct TestLists_Struct1c *s, TestLists_Struct1c_ptr p) {
+	capn_resolve(&p.p);
 	capn_write1(p.p, 0, s->f != 0);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct1c(struct TestLists_Struct1c *s, TestLists_Struct1c_list l, int i) {
 	TestLists_Struct1c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct1c(s, p);
 }
 void set_TestLists_Struct1c(const struct TestLists_Struct1c *s, TestLists_Struct1c_list l, int i) {
 	TestLists_Struct1c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct1c(s, p);
 }
 
@@ -2355,21 +2401,23 @@ TestLists_Struct8c_list new_TestLists_Struct8c_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_Struct8c(struct TestLists_Struct8c *s, TestLists_Struct8c_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read8(p.p, 0);
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct8c(const struct TestLists_Struct8c *s, TestLists_Struct8c_ptr p) {
+	capn_resolve(&p.p);
 	capn_write8(p.p, 0, s->f);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct8c(struct TestLists_Struct8c *s, TestLists_Struct8c_list l, int i) {
 	TestLists_Struct8c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct8c(s, p);
 }
 void set_TestLists_Struct8c(const struct TestLists_Struct8c *s, TestLists_Struct8c_list l, int i) {
 	TestLists_Struct8c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct8c(s, p);
 }
 
@@ -2384,21 +2432,23 @@ TestLists_Struct16c_list new_TestLists_Struct16c_list(struct capn_segment *s, in
 	return p;
 }
 void read_TestLists_Struct16c(struct TestLists_Struct16c *s, TestLists_Struct16c_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read16(p.p, 0);
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct16c(const struct TestLists_Struct16c *s, TestLists_Struct16c_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 0, s->f);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct16c(struct TestLists_Struct16c *s, TestLists_Struct16c_list l, int i) {
 	TestLists_Struct16c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct16c(s, p);
 }
 void set_TestLists_Struct16c(const struct TestLists_Struct16c *s, TestLists_Struct16c_list l, int i) {
 	TestLists_Struct16c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct16c(s, p);
 }
 
@@ -2413,21 +2463,23 @@ TestLists_Struct32c_list new_TestLists_Struct32c_list(struct capn_segment *s, in
 	return p;
 }
 void read_TestLists_Struct32c(struct TestLists_Struct32c *s, TestLists_Struct32c_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read32(p.p, 0);
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct32c(const struct TestLists_Struct32c *s, TestLists_Struct32c_ptr p) {
+	capn_resolve(&p.p);
 	capn_write32(p.p, 0, s->f);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct32c(struct TestLists_Struct32c *s, TestLists_Struct32c_list l, int i) {
 	TestLists_Struct32c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct32c(s, p);
 }
 void set_TestLists_Struct32c(const struct TestLists_Struct32c *s, TestLists_Struct32c_list l, int i) {
 	TestLists_Struct32c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct32c(s, p);
 }
 
@@ -2442,21 +2494,23 @@ TestLists_Struct64c_list new_TestLists_Struct64c_list(struct capn_segment *s, in
 	return p;
 }
 void read_TestLists_Struct64c(struct TestLists_Struct64c *s, TestLists_Struct64c_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_read64(p.p, 0);
 	s->pad = capn_get_text(p.p, 0, capn_val0);
 }
 void write_TestLists_Struct64c(const struct TestLists_Struct64c *s, TestLists_Struct64c_ptr p) {
+	capn_resolve(&p.p);
 	capn_write64(p.p, 0, s->f);
 	capn_set_text(p.p, 0, s->pad);
 }
 void get_TestLists_Struct64c(struct TestLists_Struct64c *s, TestLists_Struct64c_list l, int i) {
 	TestLists_Struct64c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_Struct64c(s, p);
 }
 void set_TestLists_Struct64c(const struct TestLists_Struct64c *s, TestLists_Struct64c_list l, int i) {
 	TestLists_Struct64c_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_Struct64c(s, p);
 }
 
@@ -2471,21 +2525,23 @@ TestLists_StructPc_list new_TestLists_StructPc_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestLists_StructPc(struct TestLists_StructPc *s, TestLists_StructPc_ptr p) {
+	capn_resolve(&p.p);
 	s->f = capn_get_text(p.p, 0, capn_val0);
 	s->pad = capn_read64(p.p, 0);
 }
 void write_TestLists_StructPc(const struct TestLists_StructPc *s, TestLists_StructPc_ptr p) {
+	capn_resolve(&p.p);
 	capn_set_text(p.p, 0, s->f);
 	capn_write64(p.p, 0, s->pad);
 }
 void get_TestLists_StructPc(struct TestLists_StructPc *s, TestLists_StructPc_list l, int i) {
 	TestLists_StructPc_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLists_StructPc(s, p);
 }
 void set_TestLists_StructPc(const struct TestLists_StructPc *s, TestLists_StructPc_list l, int i) {
 	TestLists_StructPc_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLists_StructPc(s, p);
 }
 
@@ -2500,23 +2556,25 @@ TestFieldZeroIsBit_list new_TestFieldZeroIsBit_list(struct capn_segment *s, int 
 	return p;
 }
 void read_TestFieldZeroIsBit(struct TestFieldZeroIsBit *s, TestFieldZeroIsBit_ptr p) {
+	capn_resolve(&p.p);
 	s->bit = (capn_read8(p.p, 0) & 1) != 0;
 	s->secondBit = (capn_read8(p.p, 0) & 2) != 1;
 	s->thirdField = capn_read8(p.p, 1) ^ 123u;
 }
 void write_TestFieldZeroIsBit(const struct TestFieldZeroIsBit *s, TestFieldZeroIsBit_ptr p) {
+	capn_resolve(&p.p);
 	capn_write1(p.p, 0, s->bit != 0);
 	capn_write1(p.p, 1, s->secondBit != 1);
 	capn_write8(p.p, 1, s->thirdField ^ 123u);
 }
 void get_TestFieldZeroIsBit(struct TestFieldZeroIsBit *s, TestFieldZeroIsBit_list l, int i) {
 	TestFieldZeroIsBit_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestFieldZeroIsBit(s, p);
 }
 void set_TestFieldZeroIsBit(const struct TestFieldZeroIsBit *s, TestFieldZeroIsBit_list l, int i) {
 	TestFieldZeroIsBit_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestFieldZeroIsBit(s, p);
 }
 TestLists_ptr capn_val24 = {{1,1,0,80,0,(char*)&capn_buf[56],(struct capn_segment*)&capn_seg}};
@@ -2532,22 +2590,24 @@ TestListDefaults_list new_TestListDefaults_list(struct capn_segment *s, int len)
 	return p;
 }
 void read_TestListDefaults(struct TestListDefaults *s, TestListDefaults_ptr p) {
-	s->lists.p = capn_getp(p.p, 0);
+	capn_resolve(&p.p);
+	s->lists.p = capn_getp(p.p, 0, 0);
 	if (!s->lists.p.type) {
 		s->lists = capn_val24;
 	}
 }
 void write_TestListDefaults(const struct TestListDefaults *s, TestListDefaults_ptr p) {
+	capn_resolve(&p.p);
 	capn_setp(p.p, 0, (s->lists.p.data != capn_val24.p.data) ? s->lists.p : capn_null);
 }
 void get_TestListDefaults(struct TestListDefaults *s, TestListDefaults_list l, int i) {
 	TestListDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestListDefaults(s, p);
 }
 void set_TestListDefaults(const struct TestListDefaults *s, TestListDefaults_list l, int i) {
 	TestListDefaults_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestListDefaults(s, p);
 }
 
@@ -2562,6 +2622,7 @@ TestLateUnion_list new_TestLateUnion_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestLateUnion(struct TestLateUnion *s, TestLateUnion_ptr p) {
+	capn_resolve(&p.p);
 	s->foo = (int32_t) capn_read32(p.p, 0);
 	s->bar = capn_get_text(p.p, 0, capn_val0);
 	s->baz = (int16_t) capn_read16(p.p, 4);
@@ -2574,7 +2635,7 @@ void read_TestLateUnion(struct TestLateUnion *s, TestLateUnion_ptr p) {
 		s->theUnion.qux = capn_get_text(p.p, 1, capn_val0);
 		break;
 	case TestLateUnion_theUnion_corge:
-		s->theUnion.corge.p = capn_getp(p.p, 1);
+		s->theUnion.corge.p = capn_getp(p.p, 1, 0);
 		break;
 	default:
 		break;
@@ -2588,13 +2649,14 @@ void read_TestLateUnion(struct TestLateUnion *s, TestLateUnion_ptr p) {
 		s->anotherUnion.qux = capn_get_text(p.p, 2, capn_val0);
 		break;
 	case TestLateUnion_anotherUnion_corge:
-		s->anotherUnion.corge.p = capn_getp(p.p, 2);
+		s->anotherUnion.corge.p = capn_getp(p.p, 2, 0);
 		break;
 	default:
 		break;
 	}
 }
 void write_TestLateUnion(const struct TestLateUnion *s, TestLateUnion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write32(p.p, 0, (uint32_t) s->foo);
 	capn_set_text(p.p, 0, s->bar);
 	capn_write16(p.p, 4, (uint16_t) s->baz);
@@ -2629,12 +2691,12 @@ void write_TestLateUnion(const struct TestLateUnion *s, TestLateUnion_ptr p) {
 }
 void get_TestLateUnion(struct TestLateUnion *s, TestLateUnion_list l, int i) {
 	TestLateUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestLateUnion(s, p);
 }
 void set_TestLateUnion(const struct TestLateUnion *s, TestLateUnion_list l, int i) {
 	TestLateUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestLateUnion(s, p);
 }
 
@@ -2649,23 +2711,25 @@ TestOldVersion_list new_TestOldVersion_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestOldVersion(struct TestOldVersion *s, TestOldVersion_ptr p) {
+	capn_resolve(&p.p);
 	s->old1 = (int64_t) capn_read64(p.p, 0);
 	s->old2 = capn_get_text(p.p, 0, capn_val0);
-	s->old3.p = capn_getp(p.p, 1);
+	s->old3.p = capn_getp(p.p, 1, 0);
 }
 void write_TestOldVersion(const struct TestOldVersion *s, TestOldVersion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write64(p.p, 0, (uint64_t) s->old1);
 	capn_set_text(p.p, 0, s->old2);
 	capn_setp(p.p, 1, s->old3.p);
 }
 void get_TestOldVersion(struct TestOldVersion *s, TestOldVersion_list l, int i) {
 	TestOldVersion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestOldVersion(s, p);
 }
 void set_TestOldVersion(const struct TestOldVersion *s, TestOldVersion_list l, int i) {
 	TestOldVersion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestOldVersion(s, p);
 }
 capn_text capn_val25 = {3,(char*)&capn_buf[8160],(struct capn_segment*)&capn_seg};
@@ -2681,13 +2745,15 @@ TestNewVersion_list new_TestNewVersion_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestNewVersion(struct TestNewVersion *s, TestNewVersion_ptr p) {
+	capn_resolve(&p.p);
 	s->old1 = (int64_t) capn_read64(p.p, 0);
 	s->old2 = capn_get_text(p.p, 0, capn_val0);
-	s->old3.p = capn_getp(p.p, 1);
+	s->old3.p = capn_getp(p.p, 1, 0);
 	s->new1 = (int64_t) capn_read64(p.p, 8) ^ ((uint64_t) 0u << 32) ^ 0x3dbu;
 	s->new2 = capn_get_text(p.p, 2, capn_val25);
 }
 void write_TestNewVersion(const struct TestNewVersion *s, TestNewVersion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write64(p.p, 0, (uint64_t) s->old1);
 	capn_set_text(p.p, 0, s->old2);
 	capn_setp(p.p, 1, s->old3.p);
@@ -2696,12 +2762,12 @@ void write_TestNewVersion(const struct TestNewVersion *s, TestNewVersion_ptr p) 
 }
 void get_TestNewVersion(struct TestNewVersion *s, TestNewVersion_list l, int i) {
 	TestNewVersion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestNewVersion(s, p);
 }
 void set_TestNewVersion(const struct TestNewVersion *s, TestNewVersion_list l, int i) {
 	TestNewVersion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestNewVersion(s, p);
 }
 
@@ -2716,17 +2782,19 @@ TestStructUnion_list new_TestStructUnion_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestStructUnion(struct TestStructUnion *s, TestStructUnion_ptr p) {
+	capn_resolve(&p.p);
 	s->un_which = (enum TestStructUnion_un_which) capn_read16(p.p, 0);
 	switch (s->un_which) {
 	case TestStructUnion_un_allTypes:
 	case TestStructUnion_un_object:
-		s->un.object.p = capn_getp(p.p, 0);
+		s->un.object.p = capn_getp(p.p, 0, 0);
 		break;
 	default:
 		break;
 	}
 }
 void write_TestStructUnion(const struct TestStructUnion *s, TestStructUnion_ptr p) {
+	capn_resolve(&p.p);
 	capn_write16(p.p, 0, s->un_which);
 	switch (s->un_which) {
 	case TestStructUnion_un_allTypes:
@@ -2739,12 +2807,12 @@ void write_TestStructUnion(const struct TestStructUnion *s, TestStructUnion_ptr 
 }
 void get_TestStructUnion(struct TestStructUnion *s, TestStructUnion_list l, int i) {
 	TestStructUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestStructUnion(s, p);
 }
 void set_TestStructUnion(const struct TestStructUnion *s, TestStructUnion_list l, int i) {
 	TestStructUnion_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestStructUnion(s, p);
 }
 
@@ -2759,17 +2827,19 @@ TestEmptyStruct_list new_TestEmptyStruct_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestEmptyStruct(struct TestEmptyStruct *s, TestEmptyStruct_ptr p) {
+	capn_resolve(&p.p);
 }
 void write_TestEmptyStruct(const struct TestEmptyStruct *s, TestEmptyStruct_ptr p) {
+	capn_resolve(&p.p);
 }
 void get_TestEmptyStruct(struct TestEmptyStruct *s, TestEmptyStruct_list l, int i) {
 	TestEmptyStruct_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestEmptyStruct(s, p);
 }
 void set_TestEmptyStruct(const struct TestEmptyStruct *s, TestEmptyStruct_list l, int i) {
 	TestEmptyStruct_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestEmptyStruct(s, p);
 }
 
@@ -2784,16 +2854,18 @@ TestConstants_list new_TestConstants_list(struct capn_segment *s, int len) {
 	return p;
 }
 void read_TestConstants(struct TestConstants *s, TestConstants_ptr p) {
+	capn_resolve(&p.p);
 }
 void write_TestConstants(const struct TestConstants *s, TestConstants_ptr p) {
+	capn_resolve(&p.p);
 }
 void get_TestConstants(struct TestConstants *s, TestConstants_list l, int i) {
 	TestConstants_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	read_TestConstants(s, p);
 }
 void set_TestConstants(const struct TestConstants *s, TestConstants_list l, int i) {
 	TestConstants_ptr p;
-	p.p = capn_getp(l.p, i);
+	p.p = capn_getp(l.p, i, 0);
 	write_TestConstants(s, p);
 }
