@@ -20,26 +20,25 @@ void read_Node(struct Node *s, Node_ptr p) {
 	s->nestedNodes.p = capn_getp(p.p, 1);
 	s->annotations.p = capn_getp(p.p, 2);
 	s->which = (enum Node_which) capn_read16(p.p, 12);
-
 	switch (s->which) {
-	case Node_struct:
+	case Node__struct:
 		s->_struct.dataWordCount = capn_read16(p.p, 14);
 		s->_struct.pointerCount = capn_read16(p.p, 24);
 		s->_struct.preferredListEncoding = (enum ElementSize) capn_read16(p.p, 26);
 		s->_struct.isGroup = (capn_read8(p.p, 28) & 1) != 0;
 		s->_struct.discriminantCount = capn_read16(p.p, 30);
-		s->_struct.discriminantOffset = capn_read16(p.p, 32);
+		s->_struct.discriminantOffset = capn_read32(p.p, 32);
 		s->_struct.fields.p = capn_getp(p.p, 3);
 		break;
-	case Node_enum:
+	case Node__enum:
 		s->_enum.enumerants.p = capn_getp(p.p, 3);
 		break;
-	case Node_interface:
+	case Node__interface:
 		s->_interface.methods.p = capn_getp(p.p, 3);
 		break;
-	case Node_const:
+	case Node__const:
 		s->_const.type.p = capn_getp(p.p, 3);
-		s->_const.value.p = capn_getp(p.p, 3);
+		s->_const.value.p = capn_getp(p.p, 4);
 		break;
 	case Node_annotation:
 		s->annotation.type.p = capn_getp(p.p, 3);
@@ -63,31 +62,30 @@ void read_Node(struct Node *s, Node_ptr p) {
 void write_Node(const struct Node *s, Node_ptr p) {
 	capn_write64(p.p, 0, s->id);
 	capn_set_text(p.p, 0, s->displayName);
-	capn_write16(p.p, 8, s->displayNamePrefixLength);
+	capn_write32(p.p, 8, s->displayNamePrefixLength);
 	capn_write64(p.p, 16, s->scopeId);
 	capn_setp(p.p, 1, s->nestedNodes.p);
 	capn_setp(p.p, 2, s->annotations.p);
 	capn_write16(p.p, 12, s->which);
-
 	switch (s->which) {
-	case Node_struct:
+	case Node__struct:
 		capn_write16(p.p, 14, s->_struct.dataWordCount);
-		capn_write16(p.p, 24, s->_struct.pointerCount );
-		capn_write16(p.p, 26, s->_struct.preferredListEncoding);
+		capn_write16(p.p, 24, s->_struct.pointerCount);
+		capn_write16(p.p, 26, (uint16_t) s->_struct.preferredListEncoding);
 		capn_write1(p.p, 224, s->_struct.isGroup != 0);
 		capn_write16(p.p, 30, s->_struct.discriminantCount);
-		capn_write16(p.p, 32, s->_struct.discriminantOffset);
-		capn_setp(p.p, 3, s->_struct.fields.p );
+		capn_write32(p.p, 32, s->_struct.discriminantOffset);
+		capn_setp(p.p, 3, s->_struct.fields.p);
 		break;
-	case Node_enum:
+	case Node__enum:
 		capn_setp(p.p, 3, s->_enum.enumerants.p);
 		break;
-	case Node_interface:
+	case Node__interface:
 		capn_setp(p.p, 3, s->_interface.methods.p);
 		break;
-	case Node_const:
+	case Node__const:
 		capn_setp(p.p, 3, s->_const.type.p);
-		capn_setp(p.p, 3, s->_const.value.p);
+		capn_setp(p.p, 4, s->_const.value.p);
 		break;
 	case Node_annotation:
 		capn_setp(p.p, 3, s->annotation.type.p);
@@ -98,7 +96,7 @@ void write_Node(const struct Node *s, Node_ptr p) {
 		capn_write1(p.p, 116, s->annotation.targetsStruct != 0);
 		capn_write1(p.p, 117, s->annotation.targetsField != 0);
 		capn_write1(p.p, 118, s->annotation.targetsUnion != 0);
-		capn_write1(p.p, 118, s->annotation.targetsGroup != 0);
+		capn_write1(p.p, 119, s->annotation.targetsGroup != 0);
 		capn_write1(p.p, 120, s->annotation.targetsInterface != 0);
 		capn_write1(p.p, 121, s->annotation.targetsMethod != 0);
 		capn_write1(p.p, 122, s->annotation.targetsParam != 0);
@@ -162,9 +160,8 @@ void read_Field(struct Field *s, Field_ptr p) {
 	s->name = capn_get_text(p.p, 0, capn_val0);
 	s->codeOrder = capn_read16(p.p, 0);
 	s->annotations.p = capn_getp(p.p, 1);
-	s->discriminantValue = capn_read16(p.p, 2) ^ 65535;
+	s->discriminantValue = capn_read16(p.p, 2) ^ 65535u;
 	s->which = (enum Field_which) capn_read16(p.p, 8);
-
 	switch (s->which) {
 	case Field_slot:
 		s->slot.offset = capn_read32(p.p, 4);
@@ -177,11 +174,9 @@ void read_Field(struct Field *s, Field_ptr p) {
 	default:
 		break;
 	}
-
-	s->ordinal_which = (enum Field_ordinal) capn_read16(p.p, 10);
-
+	s->ordinal_which = (enum Field_ordinal_which) capn_read16(p.p, 10);
 	switch (s->ordinal_which) {
-	case Field_explicit:
+	case Field_ordinal__explicit:
 		s->ordinal._explicit = capn_read16(p.p, 12);
 		break;
 	default:
@@ -192,9 +187,8 @@ void write_Field(const struct Field *s, Field_ptr p) {
 	capn_set_text(p.p, 0, s->name);
 	capn_write16(p.p, 0, s->codeOrder);
 	capn_setp(p.p, 1, s->annotations.p);
-	capn_write16(p.p, 2, s->discriminantValue ^ 65535);
+	capn_write16(p.p, 2, s->discriminantValue ^ 65535u);
 	capn_write16(p.p, 8, s->which);
-
 	switch (s->which) {
 	case Field_slot:
 		capn_write32(p.p, 4, s->slot.offset);
@@ -207,11 +201,9 @@ void write_Field(const struct Field *s, Field_ptr p) {
 	default:
 		break;
 	}
-
 	capn_write16(p.p, 10, s->ordinal_which);
-
 	switch (s->ordinal_which) {
-	case Field_explicit:
+	case Field_ordinal__explicit:
 		capn_write16(p.p, 12, s->ordinal._explicit);
 		break;
 	default:
@@ -342,18 +334,17 @@ Type_list new_Type_list(struct capn_segment *s, int len) {
 }
 void read_Type(struct Type *s, Type_ptr p) {
 	s->which = (enum Type_which) capn_read16(p.p, 0);
-
 	switch (s->which) {
 	case Type__list:
-		s->list.elementType.p = capn_getp(p.p, 0);
+		s->_list.elementType.p = capn_getp(p.p, 0);
 		break;
-	case Type_enum:
+	case Type__enum:
 		s->_enum.typeId = capn_read64(p.p, 8);
 		break;
-	case Type_struct:
+	case Type__struct:
 		s->_struct.typeId = capn_read64(p.p, 8);
 		break;
-	case Type_interface:
+	case Type__interface:
 		s->_interface.typeId = capn_read64(p.p, 8);
 		break;
 	default:
@@ -362,18 +353,17 @@ void read_Type(struct Type *s, Type_ptr p) {
 }
 void write_Type(const struct Type *s, Type_ptr p) {
 	capn_write16(p.p, 0, s->which);
-
 	switch (s->which) {
 	case Type__list:
-		capn_setp(p.p, 0, s->list.elementType.p);
+		capn_setp(p.p, 0, s->_list.elementType.p);
 		break;
-	case Type_enum:
+	case Type__enum:
 		capn_write64(p.p, 8, s->_enum.typeId);
 		break;
-	case Type_struct:
+	case Type__struct:
 		capn_write64(p.p, 8, s->_struct.typeId);
 		break;
-	case Type_interface:
+	case Type__interface:
 		capn_write64(p.p, 8, s->_interface.typeId);
 		break;
 	default:
@@ -388,7 +378,7 @@ void get_Type(struct Type *s, Type_list l, int i) {
 void set_Type(const struct Type *s, Type_list l, int i) {
 	Type_ptr p;
 	p.p = capn_getp(l.p, i);
-	return write_Type(s, p);
+	write_Type(s, p);
 }
 
 Value_ptr new_Value(struct capn_segment *s) {
@@ -403,10 +393,9 @@ Value_list new_Value_list(struct capn_segment *s, int len) {
 }
 void read_Value(struct Value *s, Value_ptr p) {
 	s->which = (enum Value_which) capn_read16(p.p, 0);
-
 	switch (s->which) {
-	case Value_bool:
-		s->_bool = (capn_read8(p.p, 8) & 1) != 0;
+	case Value__bool:
+		s->_bool = (capn_read8(p.p, 2) & 1) != 0;
 		break;
 	case Value_int8:
 	case Value_uint8:
@@ -414,7 +403,7 @@ void read_Value(struct Value *s, Value_ptr p) {
 		break;
 	case Value_int16:
 	case Value_uint16:
-	case Value_enum:
+	case Value__enum:
 		s->_enum = capn_read16(p.p, 2);
 		break;
 	case Value_int32:
@@ -434,7 +423,7 @@ void read_Value(struct Value *s, Value_ptr p) {
 		s->data = capn_get_data(p.p, 0);
 		break;
 	case Value__list:
-	case Value_struct:
+	case Value__struct:
 	case Value_object:
 		s->object = capn_getp(p.p, 0);
 		break;
@@ -444,9 +433,8 @@ void read_Value(struct Value *s, Value_ptr p) {
 }
 void write_Value(const struct Value *s, Value_ptr p) {
 	capn_write16(p.p, 0, s->which);
-
 	switch (s->which) {
-	case Value_bool:
+	case Value__bool:
 		capn_write1(p.p, 16, s->_bool != 0);
 		break;
 	case Value_int8:
@@ -455,7 +443,7 @@ void write_Value(const struct Value *s, Value_ptr p) {
 		break;
 	case Value_int16:
 	case Value_uint16:
-	case Value_enum:
+	case Value__enum:
 		capn_write16(p.p, 2, s->_enum);
 		break;
 	case Value_int32:
@@ -475,7 +463,7 @@ void write_Value(const struct Value *s, Value_ptr p) {
 		capn_setp(p.p, 0, s->data.p);
 		break;
 	case Value__list:
-	case Value_struct:
+	case Value__struct:
 	case Value_object:
 		capn_setp(p.p, 0, s->object);
 		break;
@@ -491,7 +479,7 @@ void get_Value(struct Value *s, Value_list l, int i) {
 void set_Value(const struct Value *s, Value_list l, int i) {
 	Value_ptr p;
 	p.p = capn_getp(l.p, i);
-	return write_Value(s, p);
+	write_Value(s, p);
 }
 
 Annotation_ptr new_Annotation(struct capn_segment *s) {

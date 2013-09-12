@@ -1,7 +1,8 @@
-#ifndef CAPN_B471DF2F45CA32C7
-#define CAPN_B471DF2F45CA32C7
+#ifndef CAPN_A93FC509624C72D9
+#define CAPN_A93FC509624C72D9
 /* AUTO GENERATED - DO NOT EDIT */
 #include <capn.h>
+#include "c++.capnp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,14 +57,12 @@ enum ElementSize {
 	ElementSize_pointer = 6,
 	ElementSize_inlineComposite = 7
 };
-
-
 enum Node_which {
 	Node_file = 0,
-	Node_struct = 1,
-	Node_enum = 2,
-	Node_interface = 3,
-	Node_const = 4,
+	Node__struct = 1,
+	Node__enum = 2,
+	Node__interface = 3,
+	Node__const = 4,
 	Node_annotation = 5
 };
 
@@ -82,23 +81,19 @@ struct Node {
 			enum ElementSize preferredListEncoding;
 			unsigned isGroup : 1;
 			uint16_t discriminantCount;
-			uint16_t discriminantOffset;
+			uint32_t discriminantOffset;
 			Field_list fields;
 		} _struct;
-
 		struct {
 			Enumerant_list enumerants;
 		} _enum;
-
 		struct {
 			Method_list methods;
 		} _interface;
-
 		struct {
 			Type_ptr type;
 			Value_ptr value;
 		} _const;
-
 		struct {
 			Type_ptr type;
 			unsigned targetsFile : 1;
@@ -121,15 +116,13 @@ struct Node_NestedNode {
 	capn_text name;
 	uint64_t id;
 };
-
 enum Field_which {
 	Field_slot = 0,
-	Field_group = 1,
+	Field_group = 1
 };
-
-enum Field_ordinal {
-	Field_implicit = 8,
-	Field_explicit = 9,
+enum Field_ordinal_which {
+	Field_ordinal_implicit = 0,
+	Field_ordinal__explicit = 1
 };
 
 struct Field {
@@ -144,13 +137,11 @@ struct Field {
 			Type_ptr type;
 			Value_ptr defaultValue;
 		} slot;
-
 		struct {
 			uint64_t typeId;
 		} group;
 	};
-
-	enum Field_ordinal ordinal_which;
+	enum Field_ordinal_which ordinal_which;
 	union {
 		uint16_t _explicit;
 	} ordinal;
@@ -177,10 +168,9 @@ struct Method_Param {
 	Value_ptr defaultValue;
 	Annotation_list annotations;
 };
-
 enum Type_which {
-	Type_void = 0,
-	Type_bool = 1,
+	Type__void = 0,
+	Type__bool = 1,
 	Type_int8 = 2,
 	Type_int16 = 3,
 	Type_int32 = 4,
@@ -194,9 +184,9 @@ enum Type_which {
 	Type_text = 12,
 	Type_data = 13,
 	Type__list = 14,
-	Type_enum = 15,
-	Type_struct = 16,
-	Type_interface = 17,
+	Type__enum = 15,
+	Type__struct = 16,
+	Type__interface = 17,
 	Type_object = 18
 };
 
@@ -205,25 +195,21 @@ struct Type {
 	union {
 		struct {
 			Type_ptr elementType;
-		} list;
-
+		} _list;
 		struct {
 			uint64_t typeId;
 		} _enum;
-
 		struct {
 			uint64_t typeId;
 		} _struct;
-
 		struct {
 			uint64_t typeId;
 		} _interface;
 	};
 };
-
 enum Value_which {
-	Value_void = 0,
-	Value_bool = 1,
+	Value__void = 0,
+	Value__bool = 1,
 	Value_int8 = 2,
 	Value_int16 = 3,
 	Value_int32 = 4,
@@ -237,9 +223,9 @@ enum Value_which {
 	Value_text = 12,
 	Value_data = 13,
 	Value__list = 14,
-	Value_enum = 15,
-	Value_struct = 16,
-	Value_interface = 17,
+	Value__enum = 15,
+	Value__struct = 16,
+	Value__interface = 17,
 	Value_object = 18
 };
 
@@ -259,7 +245,7 @@ struct Value {
 		double float64;
 		capn_text text;
 		capn_data data;
-		capn_ptr list;
+		capn_ptr _list;
 		uint16_t _enum;
 		capn_ptr _struct;
 		capn_ptr object;

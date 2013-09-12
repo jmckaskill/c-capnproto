@@ -74,7 +74,7 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 		resolve_names(b, find_node(nest.id), nest.name, file);
 	}
 
-	if (n->n.which == Node_struct) {
+	if (n->n.which == Node__struct) {
 		for (i = 0; i < n->n._struct.fields.p.len; i++) {
 			if (n->fields[i].group) {
 				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
@@ -82,7 +82,7 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 		}
 	}
 
-	if (n->n.which != Node_struct || !n->n._struct.isGroup) {
+	if (n->n.which != Node__struct || !n->n._struct.isGroup) {
 		n->next_file_node = file->file_nodes;
 		file->file_nodes = n;
 	}
@@ -112,10 +112,10 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 	read_Value(&v->v, value);
 
 	switch (v->t.which) {
-	case Type_void:
+	case Type__void:
 		v->tname = "void";
 		break;
-	case Type_bool:
+	case Type__bool:
 		v->tname = "unsigned";
 		break;
 	case Type_int8:
@@ -154,24 +154,24 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 	case Type_data:
 		v->tname = "capn_data";
 		break;
-	case Type_enum:
+	case Type__enum:
 		v->tname = strf(&v->tname_buf, "enum %s", find_node(v->t._enum.typeId)->name.str);
 		break;
-	case Type_struct:
-	case Type_interface:
+	case Type__struct:
+	case Type__interface:
 		v->tname = strf(&v->tname_buf, "%s_ptr", find_node(v->t._struct.typeId)->name.str);
 		break;
 	case Type_object:
 		v->tname = "capn_ptr";
 		break;
 	case Type__list:
-		read_Type(&list_type, v->t.list.elementType);
+		read_Type(&list_type, v->t._list.elementType);
 
 		switch (list_type.which) {
-		case Type_void:
+		case Type__void:
 			v->tname = "capn_ptr";
 			break;
-		case Type_bool:
+		case Type__bool:
 			v->tname = "capn_list1";
 			break;
 		case Type_int8:
@@ -180,7 +180,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			break;
 		case Type_int16:
 		case Type_uint16:
-		case Type_enum:
+		case Type__enum:
 			v->tname = "capn_list16";
 			break;
 		case Type_int32:
@@ -199,15 +199,15 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		case Type__list:
 			v->tname = "capn_ptr";
 			break;
-		case Type_struct:
-		case Type_interface:
+		case Type__struct:
+		case Type__interface:
 			v->tname = strf(&v->tname_buf, "%s_list", find_node(list_type._struct.typeId)->name.str);
 			break;
 		}
 	}
 
 	switch (v->v.which) {
-	case Value_bool:
+	case Value__bool:
 		v->intval = v->v._bool;
 		break;
 	case Value_int8:
@@ -216,7 +216,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		break;
 	case Value_int16:
 	case Value_uint16:
-	case Value_enum:
+	case Value__enum:
 		v->intval = v->v.int16;
 		break;
 	case Value_int32:
@@ -257,7 +257,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		break;
 
 	case Value_data:
-	case Value_struct:
+	case Value__struct:
 	case Value_object:
 	case Value__list:
 		if (v->v.object.type) {
@@ -297,8 +297,8 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		}
 		break;
 
-	case Value_interface:
-	case Value_void:
+	case Value__interface:
+	case Value__void:
 		break;
 	}
 }
@@ -308,7 +308,7 @@ static void define_const(struct node *n) {
 	decode_value(&v, n->n._const.type, n->n._const.value, n->name.str);
 
 	switch (v.v.which) {
-	case Value_bool:
+	case Value__bool:
 	case Value_int8:
 	case Value_int16:
 	case Value_int32:
@@ -323,7 +323,7 @@ static void define_const(struct node *n) {
 		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);
 		break;
 
-	case Value_enum:
+	case Value__enum:
 		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		str_addf(&SRC, "%s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.intval);
 		break;
@@ -348,7 +348,7 @@ static void define_const(struct node *n) {
 
 	case Value_text:
 	case Value_data:
-	case Value_struct:
+	case Value__struct:
 	case Value_object:
 	case Value__list:
 		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
@@ -357,8 +357,8 @@ static void define_const(struct node *n) {
 		}
 		break;
 
-	case Value_interface:
-	case Value_void:
+	case Value__interface:
+	case Value__void:
 		break;
 	}
 
@@ -396,7 +396,7 @@ static const char *xor_member(struct field *f) {
 			return strf(&buf, " ^ %uu", (uint8_t) f->v.intval);
 
 		case Value_uint16:
-		case Value_enum:
+		case Value__enum:
 			return strf(&buf, " ^ %uu", (uint16_t) f->v.intval);
 
 		case Value_uint32:
@@ -434,20 +434,20 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 	const char *xor = xor_member(f);
 	const char *pvar = ptr_member(f, var);
 
-	if (f->v.t.which == Type_void)
+	if (f->v.t.which == Type__void)
 		return;
 
 	str_add(func, tab, -1);
 
 	switch (f->v.t.which) {
-	case Type_bool:
+	case Type__bool:
 		str_addf(func, "capn_write1(%s, %d, %s != %d);\n", ptr, f->f.slot.offset, var, (int) f->v.intval);
 		break;
 	case Type_int8:
 		str_addf(func, "capn_write8(%s, %d, (uint8_t) %s%s);\n", ptr, f->f.slot.offset, var, xor);
 		break;
 	case Type_int16:
-	case Type_enum:
+	case Type__enum:
 		str_addf(func, "capn_write16(%s, %d, (uint16_t) %s%s);\n", ptr, 2*f->f.slot.offset, var, xor);
 		break;
 	case Type_int32:
@@ -485,8 +485,8 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 		}
 		break;
 	case Type_data:
-	case Type_struct:
-	case Type_interface:
+	case Type__struct:
+	case Type__interface:
 	case Type__list:
 	case Type_object:
 		if (!f->v.intval) {
@@ -511,13 +511,13 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	const char *xor = xor_member(f);
 	const char *pvar = ptr_member(f, var);
 
-	if (f->v.t.which == Type_void)
+	if (f->v.t.which == Type__void)
 		return;
 
 	str_add(func, tab, -1);
 
 	switch (f->v.t.which) {
-	case Type_bool:
+	case Type__bool:
 		str_addf(func, "%s = (capn_read8(%s, %d) & %d) != %d;\n",
 				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), (int)f->v.intval);
 		return;
@@ -551,7 +551,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	case Type_float64:
 		str_addf(func, "%s = capn_to_f64(capn_read64(%s, %d)%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
-	case Type_enum:
+	case Type__enum:
 		str_addf(func, "%s = (%s) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_text:
@@ -563,8 +563,8 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	case Type_data:
 		str_addf(func, "%s = capn_get_data(%s, %d);\n", var, ptr, f->f.slot.offset);
 		break;
-	case Type_struct:
-	case Type_interface:
+	case Type__struct:
+	case Type__interface:
 	case Type_object:
 	case Type__list:
 		str_addf(func, "%s = capn_getp(%s, %d);\n", pvar, ptr, f->f.slot.offset);
@@ -615,6 +615,10 @@ static const char *field_name(struct field *f) {
 		"interface", "module", "import",
 		/* capn reserved otherwise Value_ptr enum and type collide */
 		"ptr", "list",
+		/* C11 keywords not reserved in C++ */
+		"restrict", "_Alignas", "_Alignof", "_Atomic", "_Bool",
+		"_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
+		"_Thread_local",
 	};
 
 	int i;
@@ -665,9 +669,9 @@ static void union_cases(struct strings *s, struct node *n, struct field *first_f
 
 static void declare_slot(struct strings *s, struct field *f) {
 	switch (f->v.t.which) {
-	case Type_void:
+	case Type__void:
 		break;
-	case Type_bool:
+	case Type__bool:
 		str_addf(&s->decl, "%s%s %s : 1;\n", s->dtab.str, f->v.tname, field_name(f));
 		break;
 	default:
@@ -707,14 +711,14 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	/* if we have a bunch of the same C type with zero defaults, we
 	 * only need to emit one switch block as the layout will line up
 	 * in the C union */
-	union_cases(s, n, first_field, (1 << Type_bool));
+	union_cases(s, n, first_field, (1 << Type__bool));
 	union_cases(s, n, first_field, (1 << Type_int8) | (1 << Type_uint8));
-	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16) | (1 << Type_enum));
+	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16) | (1 << Type__enum));
 	union_cases(s, n, first_field, (1 << Type_int32) | (1 << Type_uint32) | (1 << Type_float32));
 	union_cases(s, n, first_field, (1 << Type_int64) | (1 << Type_uint64) | (1 << Type_float64));
 	union_cases(s, n, first_field, (1 << Type_text));
 	union_cases(s, n, first_field, (1 << Type_data));
-	union_cases(s, n, first_field, (1 << Type_struct) | (1 << Type_interface) | (1 << Type_object) | (1 << Type__list));
+	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_object) | (1 << Type__list));
 
 	str_addf(&s->decl, "%sunion {\n", s->dtab.str);
 	str_add(&s->dtab, "\t", -1);
@@ -935,9 +939,9 @@ static void define_method(struct node *iface, int ord) {
 		m->m.ordinal = i;
 
 		switch (m->v.t.body_tag) {
-		case Type_void:
+		case Type__void:
 			break;
-		case Type_bool:
+		case Type__bool:
 			m->f.offset = find_offset(&buf, 1, 1);
 			break;
 		case Type_int8:
@@ -946,7 +950,7 @@ static void define_method(struct node *iface, int ord) {
 			break;
 		case Type_int16:
 		case Type_uint16:
-		case Type_enum:
+		case Type__enum:
 			m->f.offset = find_offset(&buf, 16, 0xFFFF);
 			break;
 		case Type_int32:
@@ -962,8 +966,8 @@ static void define_method(struct node *iface, int ord) {
 		case Type_text:
 		case Type_data:
 		case Type__list:
-		case Type_struct:
-		case Type_interface:
+		case Type__struct:
+		case Type__interface:
 		case Type_object:
 			m->f.offset = ptrs++;
 			break;
@@ -1032,7 +1036,7 @@ static void declare(struct node *file_node, const char *format, int num) {
 	struct node *n;
 	str_addf(&HDR, "\n");
 	for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
-		if (n->n.which == Node_struct && !n->n._struct.isGroup) {
+		if (n->n.which == Node__struct && !n->n._struct.isGroup) {
 			switch (num) {
 			case 3:
 				str_addf(&HDR, format, n->name.str, n->name.str, n->name.str);
@@ -1078,7 +1082,7 @@ int main() {
 			all_files = n;
 			break;
 
-		case Node_struct:
+		case Node__struct:
 			n->next = all_structs;
 			all_structs = n;
 			break;
@@ -1144,19 +1148,19 @@ int main() {
 		declare(file_node, "typedef struct {capn_ptr p;} %s_list;\n", 1);
 
 		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
-			if (n->n.which == Node_enum) {
+			if (n->n.which == Node__enum) {
 				define_enum(n);
 			}
 		}
 
 		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
-			if (n->n.which == Node_const) {
+			if (n->n.which == Node__const) {
 				define_const(n);
 			}
 		}
 
 		for (n = file_node->file_nodes; n != NULL; n = n->next_file_node) {
-			if (n->n.which == Node_struct && !n->n._struct.isGroup) {
+			if (n->n.which == Node__struct && !n->n._struct.isGroup) {
 				define_struct(n);
 			}
 		}
