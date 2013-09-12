@@ -148,11 +148,6 @@ static void setupStruct(struct capn *ctx) {
   EXPECT_EQ(0, capn_setp(recurse, 0, recurse));
   EXPECT_EQ(0, capn_setp(ptr, 4, recurse));
 
-  capn_ptr interface = capn_new_interface(ptr.seg, 0, 0);
-  EXPECT_EQ(CAPN_INTERFACE, interface.type);
-  EXPECT_EQ(0, interface.datasz);
-  EXPECT_EQ(0, interface.ptrsz);
-  EXPECT_EQ(0, capn_setp(ptr, 5, interface));
 }
 
 static void checkStruct(struct capn *ctx) {
@@ -233,11 +228,6 @@ static void checkStruct(struct capn *ctx) {
   EXPECT_EQ(recurse.seg, recurse_mbr.seg);
   EXPECT_EQ(recurse.data, recurse_mbr.data);
   EXPECT_EQ(CAPN_NULL, capn_getp(recurse, 1).type);
-
-  capn_ptr interface = capn_getp(ptr, 5);
-  EXPECT_EQ(CAPN_INTERFACE, interface.type);
-  EXPECT_EQ(0, interface.datasz);
-  EXPECT_EQ(0, interface.ptrsz);
 }
 
 TEST(WireFormat, StructRoundTrip_OneSegment) {

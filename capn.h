@@ -100,7 +100,6 @@ enum CAPN_TYPE {
 	CAPN_LIST = 2,
 	CAPN_PTR_LIST = 3,
 	CAPN_BIT_LIST = 4,
-	CAPN_INTERFACE = 5,
 	CAPN_LIST_MEMBER = 6,
 	CAPN_COMPOSITE_LIST = 7
 };
@@ -154,7 +153,6 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt);
 capn_text capn_get_text(capn_ptr p, int off, capn_text def);
 capn_data capn_get_data(capn_ptr p, int off);
 int capn_set_text(capn_ptr p, int off, capn_text tgt);
-CAPN_INLINE int capn_set_data(capn_ptr p, int off, capn_data tgt);
 
 /* capn_get_* functions get data from a list
  * The length of the list is given by p->size
@@ -384,10 +382,6 @@ CAPN_INLINE uint64_t capn_from_f64(double v) {
 	union capn_conv_f64 u;
 	u.f = v;
 	return u.u;
-}
-
-CAPN_INLINE int capn_set_data(capn_ptr p, int off, capn_data d) {
-	return capn_setp(p, off, d.p);
 }
 
 #ifdef __cplusplus

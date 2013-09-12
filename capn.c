@@ -8,7 +8,6 @@
 #define STRUCT_PTR 0
 #define LIST_PTR 1
 #define FAR_PTR 2
-#define INTERFACE_PTR 3
 #define DOUBLE_PTR 6
 
 #define VOID_LIST 0
@@ -332,10 +331,6 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 		ret.type = val ? CAPN_STRUCT : CAPN_NULL;
 		goto struct_common;
 
-	case INTERFACE_PTR:
-		ret.type = CAPN_INTERFACE;
-		goto struct_common;
-
 	struct_common:
 		ret.datasz = U32(U16(val >> 32)) * 8;
 		ret.ptrsz = U32(U16(val >> 48)) * 8;
@@ -396,6 +391,9 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 			break;
 		}
 		break;
+
+	default:
+		goto err;
 	}
 
 	if (e - s->data > s->len)
@@ -425,7 +423,6 @@ capn_ptr capn_getp(capn_ptr p, int off) {
 			goto err;
 		}
 
-	case CAPN_INTERFACE:
 	case CAPN_LIST_MEMBER:
 	case CAPN_STRUCT:
 		off *= 8;
@@ -457,7 +454,6 @@ static int data_size(struct capn_ptr p) {
 		return p.datasz;
 	case CAPN_PTR_LIST:
 		return p.len*8;
-	case CAPN_INTERFACE:
 	case CAPN_STRUCT:
 		return p.datasz + p.ptrsz;
 	case CAPN_COMPOSITE_LIST:
@@ -473,10 +469,6 @@ static void write_ptr_tag(char *d, capn_ptr p, int off) {
 	uint64_t val = U64(U32(I32(off/8) << 2));
 
 	switch (p.type) {
-	case CAPN_INTERFACE:
-		val |= INTERFACE_PTR | (U64(p.datasz/8) << 32) | (U64(p.ptrsz/8) << 48);
-		break;
-
 	case CAPN_STRUCT:
 		val |= STRUCT_PTR | (U64(p.datasz/8) << 32) | (U64(p.ptrsz/8) << 48);
 		break;
@@ -592,8 +584,6 @@ struct copy {
 
 static capn_ptr new_clone(struct capn_segment *s, capn_ptr p) {
 	switch (p.type) {
-	case CAPN_INTERFACE:
-		return capn_new_interface(s, p.datasz, p.ptrsz/8);
 	case CAPN_STRUCT:
 	case CAPN_LIST_MEMBER:
 		return capn_new_struct(s, p.datasz, p.ptrsz/8);
@@ -691,7 +681,6 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 	 * be valid */
 	switch (t->type) {
 	case CAPN_STRUCT:
-	case CAPN_INTERFACE:
 		if (t->datasz) {
 			memcpy(t->data, f->data, t->datasz);
 			t->data += t->datasz;
@@ -780,7 +769,6 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 		goto copy_ptr;
 
 	case CAPN_STRUCT:
-	case CAPN_INTERFACE:
 	case CAPN_LIST_MEMBER:
 		off *= 8;
 		if (off >= p.ptrsz)
@@ -961,15 +949,6 @@ capn_ptr capn_root(struct capn *c) {
 
 capn_ptr capn_new_struct(struct capn_segment *seg, int datasz, int ptrs) {
 	capn_ptr p = {CAPN_STRUCT};
-	p.seg = seg;
-	p.datasz = (datasz + 7) & ~7;
-	p.ptrsz = ptrs * 8;
-	new_object(&p, p.datasz + p.ptrsz);
-	return p;
-}
-
-capn_ptr capn_new_interface(struct capn_segment *seg, int datasz, int ptrs) {
-	capn_ptr p = {CAPN_INTERFACE};
 	p.seg = seg;
 	p.datasz = (datasz + 7) & ~7;
 	p.ptrsz = ptrs * 8;
