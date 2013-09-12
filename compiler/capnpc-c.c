@@ -317,7 +317,15 @@ static void define_const(struct node *n) {
 		break;
 
 	case Value_uint8:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint8_t) v.intval);
+		break;
+
 	case Value_uint16:
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint16_t) v.intval);
+		break;
+
 	case Value_uint32:
 		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);

@@ -23,5 +23,5 @@ test: capn-test
 %-test.o: %-test.cpp *.h *.c *.inc
 	$(CXX) -g -Wall -Werror -I. `gtest-config --cppflags --cxxflags` -o $@ -c $<
 
-capn-test: capn-test.o capn-stream-test.o compiler/schema-test.o compiler/schema.capnp.o
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o
 	$(CXX) -g -Wall -Werror -I. `gtest-config --ldflags --libs` -o $@ $^
