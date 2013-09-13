@@ -16,6 +16,8 @@ extern "C" {
 #define CAPN_INLINE static
 #endif
 
+#define CAPN_VERSION 1
+
 /* struct capn is a common structure shared between segments in the same
  * session/context so that far pointers between segments will be created.
  *
