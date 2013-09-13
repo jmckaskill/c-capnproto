@@ -113,7 +113,7 @@ struct capn_ptr {
 	unsigned int type : 4;
 	unsigned int has_ptr_tag : 1;
 	unsigned int datasz : 19;
-	unsigned int ptrsz : 19;
+	unsigned int ptrs : 16;
 	int len;
 	char *data;
 	struct capn_segment *seg;

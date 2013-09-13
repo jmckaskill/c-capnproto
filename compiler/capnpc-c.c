@@ -289,7 +289,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 					p.type,
 					p.has_ptr_tag,
 					p.datasz,
-					p.ptrsz,
+					p.ptrs,
 					p.len,
 					(int) (p.data-p.seg->data-8));
 

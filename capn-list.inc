@@ -17,7 +17,7 @@ UINT_T CAT(capn_get,SZ) (LIST_T l, int off) {
 	case CAPN_COMPOSITE_LIST:
 		if (p.datasz < SZ/8)
 			return 0;
-		d = p.data + off * (p.datasz + p.ptrsz);
+		d = p.data + off * (p.datasz + 8*p.ptrs);
 		return FLIP(*(UINT_T*)d);
 
 	case CAPN_PTR_LIST:
@@ -43,7 +43,7 @@ int CAT(capn_getv,SZ) (LIST_T l, int off, UINT_T *to, int sz) {
 	switch (p.type) {
 	case CAPN_LIST:
 	case CAPN_COMPOSITE_LIST:
-		if (p.datasz == SZ/8 && !p.ptrsz && (SZ == 8 || CAPN_LITTLE)) {
+		if (p.datasz == SZ/8 && !p.ptrs && (SZ == 8 || CAPN_LITTLE)) {
 			memcpy(to, p.data + off, sz * (SZ/8));
 			return sz;
 		} else if (p.datasz < SZ/8) {
@@ -51,7 +51,7 @@ int CAT(capn_getv,SZ) (LIST_T l, int off, UINT_T *to, int sz) {
 		}
 
 		for (i = 0; i < sz; i++) {
-			char *d = p.data + (i + off) * (p.datasz + p.ptrsz);
+			char *d = p.data + (i + off) * (p.datasz + 8*p.ptrs);
 			to[i] = FLIP(*(UINT_T*)d);
 		}
 		return sz;
@@ -84,7 +84,7 @@ int CAT(capn_set,SZ) (LIST_T l, int off, UINT_T v) {
 	case CAPN_COMPOSITE_LIST:
 		if (p.datasz < SZ/8)
 			return -1;
-		d = p.data + off * (p.datasz + p.ptrsz);
+		d = p.data + off * (p.datasz + 8*p.ptrs);
 		*(UINT_T*) d = FLIP(v);
 		return 0;
 
@@ -111,7 +111,7 @@ int CAT(capn_setv,SZ) (LIST_T l, int off, const UINT_T *from, int sz) {
 	switch (p.type) {
 	case CAPN_LIST:
 	case CAPN_COMPOSITE_LIST:
-		if (p.datasz == SZ/8 && !p.ptrsz && (SZ == 8 || CAPN_LITTLE)) {
+		if (p.datasz == SZ/8 && !p.ptrs && (SZ == 8 || CAPN_LITTLE)) {
 			memcpy(p.data + off, from, sz * (SZ/8));
 			return sz;
 		} else if (p.datasz < SZ/8) {
@@ -119,7 +119,7 @@ int CAT(capn_setv,SZ) (LIST_T l, int off, const UINT_T *from, int sz) {
 		}
 
 		for (i = 0; i < sz; i++) {
-			char *d = p.data + (i + off) * (p.datasz + p.ptrsz);
+			char *d = p.data + (i + off) * (p.datasz + 8*p.ptrs);
 			*(UINT_T*) d = FLIP(from[i]);
 		}
 		return sz;
