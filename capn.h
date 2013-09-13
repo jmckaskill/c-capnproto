@@ -61,6 +61,8 @@ struct capn_tree {
 	unsigned int red : 1;
 };
 
+struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
+
 /* struct capn_segment contains the information about a single segment.
  *
  * capn points to a struct capn that is shared between segments in the
@@ -147,7 +149,7 @@ void capn_resolve(capn_ptr *p);
 
 /* capn_getp|setp functions get/set ptrs in list/structs
  * off is the list index or pointer index in a struct
- * capn_set_ptr will copy the data, create far pointers, etc if the target
+ * capn_setp will copy the data, create far pointers, etc if the target
  * is in a different segment/context.
  * Both of these will use/return inner pointers for composite lists.
  */
@@ -158,12 +160,12 @@ capn_text capn_get_text(capn_ptr p, int off, capn_text def);
 capn_data capn_get_data(capn_ptr p, int off);
 int capn_set_text(capn_ptr p, int off, capn_text tgt);
 
-/* capn_get_* functions get data from a list
+/* capn_get* functions get data from a list
  * The length of the list is given by p->size
  * off specifies how far into the list to start
  * sz indicates the number of elements to get
  * The function returns the number of elements read or -1 on an error.
- * off must be byte aligned for capn_get1v
+ * off must be byte aligned for capn_getv1
  */
 int capn_get1(capn_list1 p, int off);
 uint8_t capn_get8(capn_list8 p, int off);
@@ -176,11 +178,11 @@ int capn_getv16(capn_list16 p, int off, uint16_t *data, int sz);
 int capn_getv32(capn_list32 p, int off, uint32_t *data, int sz);
 int capn_getv64(capn_list64 p, int off, uint64_t *data, int sz);
 
-/* capn_set_* function set data in a list
+/* capn_set* functions set data in a list
  * off specifies how far into the list to start
  * sz indicates the number of elements to write
  * The function returns the number of elemnts written or -1 on an error.
- * off must be byte aligned for capn_set1v
+ * off must be byte aligned for capn_setv1
  */
 int capn_set1(capn_list1 p, int off, int v);
 int capn_set8(capn_list8 p, int off, uint8_t v);
@@ -207,7 +209,7 @@ capn_list16 capn_new_list16(struct capn_segment *seg, int sz);
 capn_list32 capn_new_list32(struct capn_segment *seg, int sz);
 capn_list64 capn_new_list64(struct capn_segment *seg, int sz);
 
-/* capn_read|write_* functions read/write struct values
+/* capn_read|write* functions read/write struct values
  * off is the offset into the structure in bytes
  * Rarely should these be called directly, instead use the generated code.
  * Data must be xored with the default value
@@ -222,8 +224,6 @@ CAPN_INLINE int capn_write8(capn_ptr p, int off, uint8_t val);
 CAPN_INLINE int capn_write16(capn_ptr p, int off, uint16_t val);
 CAPN_INLINE int capn_write32(capn_ptr p, int off, uint32_t val);
 CAPN_INLINE int capn_write64(capn_ptr p, int off, uint64_t val);
-
-struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
 
 /* capn_init_malloc inits the capn struct with a create function which
  * allocates segments on the heap using malloc
@@ -276,26 +276,35 @@ int capn_inflate(struct capn_stream*);
 /* Inline functions */
 
 
-#define T(IDX) s.v[IDX] = (uint8_t) (v >> (8*IDX))
 CAPN_INLINE uint8_t capn_flip8(uint8_t v) {
 	return v;
 }
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
 	union { uint16_t u; uint8_t v[2]; } s;
-	T(0); T(1);
+	s.v[0] = (uint8_t)v;
+	s.v[1] = (uint8_t)(v>>8);
 	return s.u;
 }
 CAPN_INLINE uint32_t capn_flip32(uint32_t v) {
 	union { uint32_t u; uint8_t v[4]; } s;
-	T(0); T(1); T(2); T(3);
+	s.v[0] = (uint8_t)v;
+	s.v[1] = (uint8_t)(v>>8);
+	s.v[2] = (uint8_t)(v>>16);
+	s.v[3] = (uint8_t)(v>>24);
 	return s.u;
 }
 CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
 	union { uint64_t u; uint8_t v[8]; } s;
-	T(0); T(1); T(2); T(3); T(4); T(5); T(6); T(7);
+	s.v[0] = (uint8_t)v;
+	s.v[1] = (uint8_t)(v>>8);
+	s.v[2] = (uint8_t)(v>>16);
+	s.v[3] = (uint8_t)(v>>24);
+	s.v[4] = (uint8_t)(v>>32);
+	s.v[5] = (uint8_t)(v>>40);
+	s.v[6] = (uint8_t)(v>>48);
+	s.v[7] = (uint8_t)(v>>56);
 	return s.u;
 }
-#undef T
 
 CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 	if (off >= p.datasz*8) {

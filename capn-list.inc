@@ -149,7 +149,9 @@ LIST_T CAT(capn_new_list,SZ) (struct capn_segment *seg, int sz) {
 	return l;
 }
 
-#undef FLIP
-#undef UINT_T
+#undef CAT2
 #undef CAT
+#undef UINT_T
+#undef LIST_T
+#undef FLIP
 

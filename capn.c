@@ -739,7 +739,7 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 	}
 }
 
-void copy_list_member(capn_ptr* t, capn_ptr *f, int *dep) {
+static void copy_list_member(capn_ptr* t, capn_ptr *f, int *dep) {
 	/* copy struct data */
 	int sz = min(t->datasz, f->datasz);
 	memcpy(t->data, f->data, sz);
