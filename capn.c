@@ -767,6 +767,15 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 	int err, dep = 0;
 
 	capn_resolve(&p);
+
+	if (tgt.type == CAPN_FAR_POINTER && tgt.seg->capn == p.seg->capn) {
+		uint64_t val = capn_flip64(*(uint64_t*) tgt.data);
+		if ((val & 3) == FAR_PTR) {
+			*(uint64_t*) p.data = *(uint64_t*) tgt.data;
+			return 0;
+		}
+	}
+
 	capn_resolve(&tgt);
 
 	switch (p.type) {
