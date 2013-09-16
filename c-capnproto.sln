@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "capn", "c-capnproto.vcproj", "{53D0282D-B524-4F2C-A68B-E3A4D1B15211}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "capnpc-c", "compiler\compiler.vcproj", "{B136A2E7-FD2F-4BFC-8BA8-2E4C6CF7499B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{53D0282D-B524-4F2C-A68B-E3A4D1B15211} = {53D0282D-B524-4F2C-A68B-E3A4D1B15211}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{53D0282D-B524-4F2C-A68B-E3A4D1B15211}.Debug|Win32.ActiveCfg = Debug|Win32
+		{53D0282D-B524-4F2C-A68B-E3A4D1B15211}.Debug|Win32.Build.0 = Debug|Win32
+		{53D0282D-B524-4F2C-A68B-E3A4D1B15211}.Release|Win32.ActiveCfg = Release|Win32
+		{53D0282D-B524-4F2C-A68B-E3A4D1B15211}.Release|Win32.Build.0 = Release|Win32
+		{B136A2E7-FD2F-4BFC-8BA8-2E4C6CF7499B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B136A2E7-FD2F-4BFC-8BA8-2E4C6CF7499B}.Debug|Win32.Build.0 = Debug|Win32
+		{B136A2E7-FD2F-4BFC-8BA8-2E4C6CF7499B}.Release|Win32.ActiveCfg = Release|Win32
+		{B136A2E7-FD2F-4BFC-8BA8-2E4C6CF7499B}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

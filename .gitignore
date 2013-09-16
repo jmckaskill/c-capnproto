@@ -2,3 +2,11 @@
 *.so
 /capn-test
 /capnpc-c
+/compiler/Debug
+/compiler/Release
+.*.swp
+*.user
+*.ncb
+*.suo
+/Debug
+/Release

@@ -309,7 +309,7 @@ CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
 }
 
 CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
-	if (off >= p.datasz*8) {
+	if (off >= (int)p.datasz*8) {
 		return -1;
 	} else if (val) {
 		((uint8_t*)p.data)[off/8] |= 1 << (off%8);
@@ -321,10 +321,10 @@ CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 }
 
 CAPN_INLINE uint8_t capn_read8(capn_ptr p, int off) {
-	return off+1 <= p.datasz ? capn_flip8(*(uint8_t*) (p.data+off)) : 0;
+	return off+1 <= (int)p.datasz ? capn_flip8(*(uint8_t*) (p.data+off)) : 0;
 }
 CAPN_INLINE int capn_write8(capn_ptr p, int off, uint8_t val) {
-	if (off+1 <= p.datasz) {
+	if (off+1 <= (int)p.datasz) {
 		*(uint8_t*) (p.data+off) = capn_flip8(val);
 		return 0;
 	} else {
@@ -333,10 +333,10 @@ CAPN_INLINE int capn_write8(capn_ptr p, int off, uint8_t val) {
 }
 
 CAPN_INLINE uint16_t capn_read16(capn_ptr p, int off) {
-	return off+2 <= p.datasz ? capn_flip16(*(uint16_t*) (p.data+off)) : 0;
+	return off+2 <= (int)p.datasz ? capn_flip16(*(uint16_t*) (p.data+off)) : 0;
 }
 CAPN_INLINE int capn_write16(capn_ptr p, int off, uint16_t val) {
-	if (off+2 <= p.datasz) {
+	if (off+2 <= (int)p.datasz) {
 		*(uint16_t*) (p.data+off) = capn_flip16(val);
 		return 0;
 	} else {
@@ -345,10 +345,10 @@ CAPN_INLINE int capn_write16(capn_ptr p, int off, uint16_t val) {
 }
 
 CAPN_INLINE uint32_t capn_read32(capn_ptr p, int off) {
-	return off+4 <= p.datasz ? capn_flip32(*(uint32_t*) (p.data+off)) : 0;
+	return off+4 <= (int)p.datasz ? capn_flip32(*(uint32_t*) (p.data+off)) : 0;
 }
 CAPN_INLINE int capn_write32(capn_ptr p, int off, uint32_t val) {
-	if (off+4 <= p.datasz) {
+	if (off+4 <= (int)p.datasz) {
 		*(uint32_t*) (p.data+off) = capn_flip32(val);
 		return 0;
 	} else {
@@ -357,10 +357,10 @@ CAPN_INLINE int capn_write32(capn_ptr p, int off, uint32_t val) {
 }
 
 CAPN_INLINE uint64_t capn_read64(capn_ptr p, int off) {
-	return off+8 <= p.datasz ? capn_flip64(*(uint64_t*) (p.data+off)) : 0;
+	return off+8 <= (int)p.datasz ? capn_flip64(*(uint64_t*) (p.data+off)) : 0;
 }
 CAPN_INLINE int capn_write64(capn_ptr p, int off, uint64_t val) {
-	if (off+8 <= p.datasz) {
+	if (off+8 <= (int)p.datasz) {
 		*(uint64_t*) (p.data+off) = capn_flip64(val);
 		return 0;
 	} else {

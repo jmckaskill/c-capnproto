@@ -816,7 +816,9 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	}
 
 	for (f = n->fields; f < n->fields + flen; f++) {
-		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
+		if (f->f.which == Field_slot) {
+			decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
+		}
 	}
 
 	/* fields before the union members */
@@ -1071,6 +1073,8 @@ int main() {
 	struct node *file_node, *n;
 	struct node *all_files = NULL, *all_structs = NULL;
 	int i, j;
+
+  __asm{int 3};
 
 	if (capn_init_fp(&capn, stdin, 0)) {
 		fprintf(stderr, "failed to read schema from stdin\n");

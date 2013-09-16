@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
 
 #define STRUCT_PTR 0
 #define LIST_PTR 1
@@ -239,7 +238,7 @@ static uint64_t lookup_double(struct capn_segment **s, char **d, uint64_t val) {
 	}
 
 	p = (*s)->data + off;
-	if (off + 16 > (*s)->len) {
+	if ((int)off + 16 > (*s)->len) {
 		return 0;
 	}
 
@@ -272,7 +271,7 @@ static uint64_t lookup_far(struct capn_segment **s, char **d, uint64_t val) {
 		return 0;
 	}
 
-	if (off + 8 > (*s)->len) {
+	if ((int)off + 8 > (*s)->len) {
 		return 0;
 	}
 
@@ -436,7 +435,7 @@ capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
 		}
 
 	case CAPN_STRUCT:
-		if (off >= p.ptrs) {
+		if (off >= (int)p.ptrs) {
 			goto err;
 		}
 		ret.data = p.data + p.datasz + 8*off;
@@ -666,7 +665,7 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 		struct capn_segment *cs = c->copylist;
 
 		/* need to allocate a struct copy */
-		if (!cs || cs->len + sizeof(*n) > cs->cap) {
+		if (!cs || cs->len + (int)sizeof(*n) > cs->cap) {
 			cs = c->create_local ? c->create_local(c->user, sizeof(*n)) : NULL;
 			if (!cs) {
 				/* can't allocate a copy structure */
@@ -795,7 +794,7 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 		goto copy_ptr;
 
 	case CAPN_STRUCT:
-		if (off >= p.ptrs)
+		if (off >= (int)p.ptrs)
 			return -1;
 		data = p.data + p.datasz + 8*off;
 		goto copy_ptr;
@@ -889,7 +888,7 @@ int capn_getv1(capn_list1 l, int off, uint8_t *data, int sz) {
 	bsz = (sz + 7) / 8;
 	off /= 8;
 
-	if (off + sz > p.datasz) {
+	if (off + sz > (int)p.datasz) {
 		memcpy(data, p.data + off, p.datasz - off);
 		return p.len - off*8;
 	} else {
@@ -908,7 +907,7 @@ int capn_setv1(capn_list1 l, int off, const uint8_t *data, int sz) {
 	bsz = (sz + 7) / 8;
 	off /= 8;
 
-	if (off + sz > p.datasz) {
+	if (off + sz > (int)p.datasz) {
 		memcpy(p.data + off, data, p.datasz - off);
 		return p.len - off*8;
 	} else {

@@ -4,23 +4,29 @@
 #include <string.h>
 #include <limits.h>
 
-struct check_segment_alignment {
-	unsigned int foo : (sizeof(struct capn_segment)&7) ? -1 : 1;
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
+
+struct capn_segment_align {
+  struct capn_segment s;
+  char pad[((sizeof(struct capn_segment)+7)&~7) - sizeof(struct capn_segment)];
 };
 
 static struct capn_segment *create(void *u, uint32_t id, int sz) {
-	struct capn_segment *s;
+	struct capn_segment_align *s;
 	sz += sizeof(*s);
 	if (sz < 4096) {
 		sz = 4096;
 	} else {
 		sz = (sz + 4095) & ~4095;
 	}
-	s = (struct capn_segment*) calloc(1, sz);
-	s->data = (char*) (s+1);
-	s->cap = sz - sizeof(*s);
-	s->user = s;
-	return s;
+	s = (struct capn_segment_align*) calloc(1, sz);
+	s->s.data = (char*) (s+1);
+	s->s.cap = sz - sizeof(*s);
+	s->s.user = s;
+	return &s->s;
 }
 
 static struct capn_segment *create_local(void *u, int sz) {
@@ -80,7 +86,7 @@ static int read_fp(void *p, size_t sz, FILE *f, struct capn_stream *z, uint8_t* 
 		return capn_inflate(z) != 0;
 
 	} else {
-		if (z->avail_in < sz)
+		if (z->avail_in < (int)sz)
 			return -1;
 		memcpy(p, z->next_in, sz);
 		z->next_in += sz;
@@ -145,6 +151,9 @@ err:
 int capn_init_fp(struct capn *c, FILE *f, int packed) {
 	struct capn_stream z;
 	memset(&z, 0, sizeof(z));
+#ifdef _WIN32
+  _setmode(_fileno(f), _O_BINARY);
+#endif
 	return init_fp(c, f, &z, packed);
 }
 
