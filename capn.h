@@ -105,13 +105,13 @@ enum CAPN_TYPE {
 	CAPN_PTR_LIST = 3,
 	CAPN_BIT_LIST = 4,
 	CAPN_FAR_POINTER = 5,
-	CAPN_LIST_MEMBER = 6,
-	CAPN_COMPOSITE_LIST = 7
 };
 
 struct capn_ptr {
 	unsigned int type : 4;
 	unsigned int has_ptr_tag : 1;
+	unsigned int is_list_member : 1;
+	unsigned int is_composite_list : 1;
 	unsigned int datasz : 19;
 	unsigned int ptrs : 16;
 	int len;
@@ -146,6 +146,8 @@ void capn_append_segment(struct capn*, struct capn_segment*);
 
 capn_ptr capn_root(struct capn *c);
 void capn_resolve(capn_ptr *p);
+
+#define capn_len(list) ((list).p.type == CAPN_FAR_POINTER ? (capn_resolve(&(list).p), (list).p.len) : (list).p.len)
 
 /* capn_getp|setp functions get/set ptrs in list/structs
  * off is the list index or pointer index in a struct

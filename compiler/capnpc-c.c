@@ -68,16 +68,14 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
 
-	capn_resolve(&n->n.nestedNodes.p);
-
-	for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
+	for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 		resolve_names(b, find_node(nest.id), nest.name, file);
 	}
 
 	if (n->n.which == Node__struct) {
-		for (i = n->n._struct.fields.p.len-1; i >= 0; i--) {
+		for (i = capn_len(n->n._struct.fields)-1; i >= 0; i--) {
 			if (n->fields[i].group) {
 				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
 			}
@@ -95,9 +93,8 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 static void define_enum(struct node *n) {
 	int i;
 
-	capn_resolve(&n->n._enum.enumerants.p);
 	str_addf(&HDR, "\nenum %s {", n->name.str);
-	for (i = 0; i < n->n._enum.enumerants.p.len; i++) {
+	for (i = 0; i < capn_len(n->n._enum.enumerants); i++) {
 		struct Enumerant e;
 		get_Enumerant(&e, n->n._enum.enumerants, i);
 		if (i) {
@@ -285,9 +282,11 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			if (strcmp(v->tname, "capn_ptr"))
 				str_addf(&SRC, "{");
 
-			str_addf(&SRC, "%d,%d,%d,%d,%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg",
+			str_addf(&SRC, "%d,%d,%d,%d,%d,%d,%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg",
 					p.type,
 					p.has_ptr_tag,
+					p.is_list_member,
+					p.is_composite_list,
 					p.datasz,
 					p.ptrs,
 					p.len,
@@ -381,8 +380,8 @@ static void decode_field(struct field *fields, Field_list l, int i) {
 	memset(&f, 0, sizeof(f));
 	get_Field(&f.f, l, i);
 
-	if (f.f.codeOrder >= l.p.len) {
-		fprintf(stderr, "unexpectedly large code order %d >= %d\n", f.f.codeOrder, l.p.len);
+	if (f.f.codeOrder >= capn_len(l)) {
+		fprintf(stderr, "unexpectedly large code order %d >= %d\n", f.f.codeOrder, capn_len(l));
 		exit(3);
 	}
 
@@ -660,7 +659,7 @@ static int in_union(struct field *f) {
 static void union_cases(struct strings *s, struct node *n, struct field *first_field, int mask) {
 	struct field *f, *u = NULL;
 
-	for (f = first_field; f < n->fields + n->n._struct.fields.p.len && in_union(f); f++) {
+	for (f = first_field; f < n->fields + capn_len(n->n._struct.fields) && in_union(f); f++) {
 
 		if (f->f.which != Field_slot)
 			continue;
@@ -735,7 +734,7 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	str_add(&s->dtab, "\t", -1);
 
 	/* when we have defaults or groups we have to emit each case seperately */
-	for (f = first_field; f < n->fields + n->n._struct.fields.p.len && in_union(f); f++) {
+	for (f = first_field; f < n->fields + capn_len(n->n._struct.fields) && in_union(f); f++) {
 		if (f > first_field) {
 			str_addf(&enums, ",");
 		}
@@ -801,7 +800,7 @@ static void define_field(struct strings *s, struct field *f) {
 
 static void define_group(struct strings *s, struct node *n, const char *group_name) {
 	struct field *f;
-	int flen = n->n._struct.fields.p.len;
+	int flen = capn_len(n->n._struct.fields);
 	int ulen = n->n._struct.discriminantCount;
 	/* named union is where all group members are in the union */
 	int named_union = (group_name && ulen == flen && ulen > 0);
@@ -1084,9 +1083,7 @@ int main() {
 	root.p = capn_getp(capn_root(&capn), 0, 1);
 	read_CodeGeneratorRequest(&req, root);
 
-	capn_resolve(&req.nodes.p);
-
-	for (i = 0; i < req.nodes.p.len; i++) {
+	for (i = 0; i < capn_len(req.nodes); i++) {
 		n = calloc(1, sizeof(*n));
 		get_Node(&n->n, req.nodes, i);
 		insert_node(n);
@@ -1098,7 +1095,6 @@ int main() {
 			break;
 
 		case Node__struct:
-			capn_resolve(&n->n._struct.fields.p);
 			n->next = all_structs;
 			all_structs = n;
 			break;
@@ -1109,17 +1105,16 @@ int main() {
 	}
 
 	for (n = all_structs; n != NULL; n = n->next) {
-		n->fields = calloc(n->n._struct.fields.p.len, sizeof(n->fields[0]));
-		for (j = 0; j < n->n._struct.fields.p.len; j++) {
+		n->fields = calloc(capn_len(n->n._struct.fields), sizeof(n->fields[0]));
+		for (j = 0; j < capn_len(n->n._struct.fields); j++) {
 			decode_field(n->fields, n->n._struct.fields, j);
 		}
 	}
 
 	for (n = all_files; n != NULL; n = n->next) {
 		struct str b = STR_INIT;
-		capn_resolve(&n->n.nestedNodes.p);
 
-		for (i = n->n.nestedNodes.p.len-1; i >= 0; i--) {
+		for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
 			get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 			resolve_names(&b, find_node(nest.id), nest.name, n);
@@ -1128,9 +1123,7 @@ int main() {
 		str_release(&b);
 	}
 
-	capn_resolve(&req.requestedFiles.p);
-
-	for (i = 0; i < req.requestedFiles.p.len; i++) {
+	for (i = 0; i < capn_len(req.requestedFiles); i++) {
 		struct CodeGeneratorRequest_RequestedFile file_req;
 		static struct str b = STR_INIT;
 		char *p;
@@ -1157,9 +1150,7 @@ int main() {
 		str_addf(&HDR, "#error \"version mismatch between capn.h and generated code\"\n");
 		str_addf(&HDR, "#endif\n\n");
 
-		capn_resolve(&file_req.imports.p);
-
-		for (j = 0; j < file_req.imports.p.len; j++) {
+		for (j = 0; j < capn_len(file_req.imports); j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
 			str_addf(&HDR, "#include \"%s.h\"\n", im.name.str);

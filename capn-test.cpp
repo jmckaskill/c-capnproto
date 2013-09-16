@@ -105,14 +105,16 @@ static void setupStruct(struct capn *ctx) {
   EXPECT_EQ(0, capn_setp(ptr, 1, list32.p));
 
   capn_ptr list = capn_new_list(ptr.seg, 4, 4, 1);
-  ASSERT_EQ(CAPN_COMPOSITE_LIST, list.type);
+  ASSERT_EQ(CAPN_LIST, list.type);
+  ASSERT_EQ(1, list.is_composite_list);
   EXPECT_EQ(4, list.len);
   EXPECT_EQ(8, list.datasz);
   EXPECT_EQ(1, list.ptrs);
   EXPECT_EQ(0, capn_setp(ptr, 2, list));
   for (int i = 0; i < 4; i++) {
     capn_ptr element = capn_getp(list, i, 1);
-    ASSERT_EQ(CAPN_LIST_MEMBER, element.type);
+    ASSERT_EQ(CAPN_STRUCT, element.type);
+    EXPECT_EQ(1, element.is_list_member);
     EXPECT_EQ(8, element.datasz);
     EXPECT_EQ(1, element.ptrs);
     EXPECT_EQ(0, capn_write32(element, 0, 300+i));
@@ -184,14 +186,16 @@ static void checkStruct(struct capn *ctx) {
   EXPECT_EQ(202, capn_get16(list16, 2));
 
   capn_ptr list = capn_getp(ptr, 2, 1);
-  EXPECT_EQ(CAPN_COMPOSITE_LIST, list.type);
+  EXPECT_EQ(CAPN_LIST, list.type);
+  EXPECT_EQ(1, list.is_composite_list);
   EXPECT_EQ(4, list.len);
   EXPECT_EQ(8, list.datasz);
   EXPECT_EQ(1, list.ptrs);
 
   for (int i = 0; i < 4; i++) {
     capn_ptr element = capn_getp(list, i, 1);
-    EXPECT_EQ(CAPN_LIST_MEMBER, element.type);
+    EXPECT_EQ(CAPN_STRUCT, element.type);
+    EXPECT_EQ(1, element.is_list_member);
     EXPECT_EQ(8, element.datasz);
     EXPECT_EQ(1, element.ptrs);
     EXPECT_EQ(300+i, capn_read32(element,0));
