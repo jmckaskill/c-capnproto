@@ -20,7 +20,6 @@ struct field {
 };
 
 struct node {
-	struct capn_tree hdr;
 	struct Node n;
 	struct node *next;
 	struct node *file_nodes, *next_file_node;
@@ -34,28 +33,33 @@ static struct capn_segment g_valseg;
 static int g_valc;
 static int g_val0used, g_nullused;
 
-static struct capn_tree *g_node_tree;
+struct node_entry {
+	uint64_t id;
+	struct node *n;
+};
+
+static struct node_entry *g_nodes;
+static int g_nodelen;
+
+static int compare_node(const void *a, const void *b) {
+	struct node_entry *na = (struct node_entry*) a;
+	struct node_entry *nb = (struct node_entry*) b;
+	if (na->id > nb->id)
+		return 1;
+	else if (na->id < nb->id)
+		return -1;
+	else
+		return 0;
+}
 
 struct node *find_node(uint64_t id) {
-	struct node *s = (struct node*) g_node_tree;
-	while (s && s->n.id != id) {
-		s = (struct node*) s->hdr.link[s->n.id < id];
-	}
-	if (s == NULL) {
+	struct node_entry key = {id, NULL};
+	struct node_entry *np = (struct node_entry*) bsearch(&key, g_nodes, g_nodelen, sizeof(g_nodes[0]), &compare_node);
+	if (np == NULL) {
 		fprintf(stderr, "cant find node with id 0x%x%x\n", (uint32_t) (id >> 32), (uint32_t) id);
 		exit(2);
 	}
-	return s;
-}
-
-static void insert_node(struct node *s) {
-	struct capn_tree **x = &g_node_tree;
-	while (*x) {
-		s->hdr.parent = *x;
-		x = &(*x)->link[((struct node*)*x)->n.id < s->n.id];
-	}
-	*x = &s->hdr;
-	g_node_tree = capn_tree_insert(g_node_tree, &s->hdr);
+	return np->n;
 }
 
 /* resolve_names recursively follows the nestedNodes tree in order to
@@ -1084,11 +1088,14 @@ int main() {
 
 	root.p = capn_getp(capn_root(&capn), 0, 1);
 	read_CodeGeneratorRequest(&req, root);
+	g_nodes = calloc(capn_len(req.nodes), sizeof(g_nodes[0]));
+	g_nodelen = capn_len(req.nodes);
 
 	for (i = 0; i < capn_len(req.nodes); i++) {
 		n = calloc(1, sizeof(*n));
 		get_Node(&n->n, req.nodes, i);
-		insert_node(n);
+		g_nodes[i].id = n->n.id;
+		g_nodes[i].n = n;
 
 		switch (n->n.which) {
 		case Node_file:
@@ -1105,6 +1112,8 @@ int main() {
 			break;
 		}
 	}
+
+	qsort(g_nodes, g_nodelen, sizeof(g_nodes[0]), &compare_node);
 
 	for (n = all_structs; n != NULL; n = n->next) {
 		n->fields = calloc(capn_len(n->n._struct.fields), sizeof(n->fields[0]));
