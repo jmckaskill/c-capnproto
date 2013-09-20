@@ -112,6 +112,7 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 		goto err;
 	segnum++;
 
+	/* also read the padding */
 	if (read_fp(hdr, 8 * (segnum/2) + 4, f, z, zbuf, packed))
 		goto err;
 

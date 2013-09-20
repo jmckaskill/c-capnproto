@@ -18,6 +18,10 @@
 #define PTR_LIST 6
 #define COMPOSITE_LIST 7
 
+#define IS_COMPOSITE_LIST 1
+#define HAS_PTR_TAG 2
+#define IS_LIST_MEMBER 4
+
 #define U64(val) ((uint64_t) (val))
 #define I64(val) ((int64_t) (val))
 #define U32(val) ((uint32_t) (val))
@@ -312,12 +316,18 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 	switch (val&7) {
 	case FAR_PTR:
 		val = lookup_far(&s, &d, val);
-		ret.has_ptr_tag = (U32(val) >> 2) == 0;
+		if ((U32(val) >> 2) == 0) {
+			/* If the offset is 0 then we have a tag */
+			ret.flags |= HAS_PTR_TAG;
+		}
 		break;
 	case DOUBLE_PTR:
 		val = lookup_double(&s, &d, val);
 		break;
 	}
+
+	if (!val)
+		goto err;
 
 	d += (I32(U32(val)) >> 2) * 8 + 8;
 
@@ -327,10 +337,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 
 	switch (val & 3) {
 	case STRUCT_PTR:
-		ret.type = val ? CAPN_STRUCT : CAPN_NULL;
-		goto struct_common;
-
-	struct_common:
+		ret.type = CAPN_STRUCT;
 		ret.datasz = U32(U16(val >> 32)) * 8;
 		ret.ptrs = U32(U16(val >> 48));
 		e = d + ret.datasz + 8 * ret.ptrs;
@@ -382,7 +389,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 			ret.datasz = U32(U16(val >> 32)) * 8;
 			ret.ptrs = U32(U16(val >> 48));
 			ret.len = U32(val) >> 2;
-			ret.is_composite_list = 1;
+			ret.flags |= IS_COMPOSITE_LIST;
 
 			if ((ret.datasz + 8*ret.ptrs) * ret.len != e - d) {
 				goto err;
@@ -423,8 +430,7 @@ capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
 	case CAPN_LIST:
 		/* Return an inner pointer */
 		if (off < p.len) {
-			capn_ptr ret = {CAPN_STRUCT};
-			ret.is_list_member = 1;
+			capn_ptr ret = {CAPN_STRUCT, IS_LIST_MEMBER};
 			ret.data = p.data + off * (p.datasz + 8*p.ptrs);
 			ret.seg = p.seg;
 			ret.datasz = p.datasz;
@@ -472,7 +478,7 @@ static void write_ptr_tag(char *d, capn_ptr p, int off) {
 		break;
 
 	case CAPN_LIST:
-		if (p.is_composite_list) {
+		if (p.flags & IS_COMPOSITE_LIST) {
 			val |= LIST_PTR | (U64(COMPOSITE_LIST) << 32) | (U64(p.len * (p.datasz/8 + p.ptrs)) << 35);
 		} else {
 			val |= LIST_PTR | (U64(p.len) << 35);
@@ -525,20 +531,21 @@ static void write_double_far(char *d, struct capn_segment *s, char *tgt) {
 
 static int write_ptr(struct capn_segment *s, char *d, capn_ptr p) {
 	/* note p.seg can be NULL if its a ptr to static data */
-	char *pdata = p.data - 8*p.is_composite_list;
+	char *pdata = p.data - 8*((p.flags & IS_COMPOSITE_LIST) != 0);
 
 	if (p.type == CAPN_NULL || (p.type == CAPN_STRUCT && p.datasz == 0 && p.ptrs == 0)) {
 		write_ptr_tag(d, p, 0);
 		return 0;
 
-	} else if (!p.seg || p.seg->capn != s->capn || p.is_list_member) {
+	} else if (!p.seg || p.seg->capn != s->capn || (p.flags & IS_LIST_MEMBER)) {
 		return NEED_TO_COPY;
 
 	} else if (p.seg == s) {
 		write_ptr_tag(d, p, pdata - d - 8);
 		return 0;
 
-	} else if (p.has_ptr_tag) {
+	/* if its in the same context we can create a far pointer */
+	} else if (p.flags & HAS_PTR_TAG) {
 		/* By lucky chance, the data has a tag in front
 		 * of it. This happens when new_object had to move
 		 * the data to a new segment. */
@@ -614,7 +621,7 @@ static int data_size(struct capn_ptr p) {
 	case CAPN_STRUCT:
 		return p.datasz + 8*p.ptrs;
 	case CAPN_LIST:
-		return p.len * (p.datasz + 8*p.ptrs) + 8*p.is_composite_list;
+		return p.len * (p.datasz + 8*p.ptrs);
 	default:
 		return 0;
 	}
@@ -624,9 +631,13 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 	struct capn *c = seg->capn;
 	struct copy *cp = NULL;
 	struct capn_tree **xcp;
-	char *fbegin = f->data - 8*f->is_composite_list;
+	char *fbegin = f->data;
 	char *fend = fbegin + data_size(*f);
 	int zero_sized = (fend == fbegin);
+
+	if (f->flags & IS_COMPOSITE_LIST) {
+		fbegin -= 8;
+	}
 
 	/* We always copy list members as it would otherwise be an
 	 * overlapped pointer (the data is owned by the enclosing list).
@@ -953,7 +964,7 @@ static void new_object(capn_ptr *p, int bytes) {
 	if (ADD_TAG) {
 		write_ptr_tag(p->data, *p, 0);
 		p->data += 8;
-		p->has_ptr_tag = 1;
+		p->flags |= HAS_PTR_TAG;
 	}
 }
 
@@ -989,7 +1000,7 @@ capn_ptr capn_new_list(struct capn_segment *seg, int sz, int datasz, int ptrs) {
 	if (!sz) {
 		/* empty lists may as well be a len=0 void list */
 	} else if (ptrs || datasz > 8) {
-		p.is_composite_list = 1;
+		p.flags |= IS_COMPOSITE_LIST;
 		p.datasz = (datasz + 7) & ~7;
 		p.ptrs = ptrs;
 		new_object(&p, p.len * (p.datasz + 8*p.ptrs) + 8);

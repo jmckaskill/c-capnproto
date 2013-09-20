@@ -109,9 +109,7 @@ enum CAPN_TYPE {
 
 struct capn_ptr {
 	unsigned int type : 4;
-	unsigned int has_ptr_tag : 1;
-	unsigned int is_list_member : 1;
-	unsigned int is_composite_list : 1;
+	unsigned int flags : 3;
 	unsigned int datasz : 19;
 	unsigned int ptrs : 16;
 	int len;
