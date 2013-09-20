@@ -291,7 +291,7 @@ static char *struct_ptr(struct capn_segment *s, char *d, int minsz) {
 	datasz = U16(val >> 32);
 	d += (I32(U32(val)) << 1) + 8;
 
-	if (val != 0 && (val&3) != STRUCT_PTR && datasz >= minsz && s->data <= d && d < s->data + s->len) {
+	if ((val&3) == STRUCT_PTR && datasz >= minsz && s->data <= d && d + minsz <= s->data + s->len) {
 		return d;
 	}
 
@@ -863,61 +863,105 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 	return 0;
 }
 
-/* TODO: handle CAPN_LIST, CAPN_PTR_LIST for bit lists */
-
 int capn_get1(capn_list1 l, int off) {
-	return l.p.type == CAPN_BIT_LIST
-		&& off < l.p.len
-		&& (l.p.data[off/8] & (1 << (off%8))) != 0;
+	char *d;
+	if (off >= (int)l.p.len) {
+		return 0;
+	}
+
+	switch (l.p.type) {
+	case CAPN_BIT_LIST:
+		return (l.p.data[off/8] & (1 << ((unsigned)off%8))) != 0;
+
+	case CAPN_LIST:
+		d = l.p.data + off * (l.p.datasz + 8*l.p.ptrs);
+		return (*d & 1) != 0;
+
+	case CAPN_PTR_LIST:
+		d = struct_ptr(l.p.seg, l.p.data + 8*off, 1);
+		return d && (*d & 1) != 0;
+
+	default:
+		return 0;
+	}
 }
 
 int capn_set1(capn_list1 l, int off, int val) {
-	if (l.p.type != CAPN_BIT_LIST || off >= l.p.len)
+	char *d;
+	if (off >= (int)l.p.len) {
 		return -1;
-	if (val) {
-		l.p.data[off/8] |= 1 << (off%8);
-	} else {
-		l.p.data[off/8] &= ~(1 << (off%8));
 	}
-	return 0;
+
+	switch (l.p.type) {
+	case CAPN_BIT_LIST:
+		if (val) {
+			l.p.data[off/8] |= 1 << ((unsigned)off%8);
+		} else {
+			l.p.data[off/8] &= ~(1 << ((unsigned)off%8));
+		}
+		return 0;
+
+	case CAPN_LIST:
+		d = l.p.data + off * (l.p.datasz + 8*l.p.ptrs);
+		goto list_common;
+
+	case CAPN_PTR_LIST:
+		d = struct_ptr(l.p.seg, l.p.data + 8*off, 1);
+		if (!d)
+			return -1;
+		goto list_common;
+
+	list_common:
+		if (val) {
+			*d |= 1;
+		} else {
+			*d &= ~1;
+		}
+		return 0;
+
+	default:
+		return -1;
+	}
 }
 
 int capn_getv1(capn_list1 l, int off, uint8_t *data, int sz) {
-	/* Note we only support aligned reads */
-	int bsz;
-	capn_ptr p = l.p;
-	if (p.type != CAPN_BIT_LIST || (off & 7) != 0)
-		return -1;
-
-	bsz = (sz + 7) / 8;
-	off /= 8;
-
-	if (off + sz > (int)p.datasz) {
-		memcpy(data, p.data + off, p.datasz - off);
-		return p.len - off*8;
-	} else {
-		memcpy(data, p.data + off, bsz);
-		return sz;
+	if (off + sz > (int)l.p.len) {
+		sz = l.p.len - off;
 	}
+
+	if (l.p.type == CAPN_BIT_LIST && (off & 7) == 0) {
+		memcpy(data, l.p.data + off/8, (sz+7)/8);
+	} else {
+		int i;
+		for (i = 0; i < sz; i++) {
+			if (capn_get1(l, off + i)) {
+				data[i/8] |= 1 << ((unsigned)i%8);
+			} else {
+				data[i/8] &= ~(1 << ((unsigned)i%8));
+			}
+		}
+	}
+
+	return sz;
 }
 
 int capn_setv1(capn_list1 l, int off, const uint8_t *data, int sz) {
-	/* Note we only support aligned writes */
-	int bsz;
-	capn_ptr p = l.p;
-	if (p.type != CAPN_BIT_LIST || (off & 7) != 0)
-		return -1;
-
-	bsz = (sz + 7) / 8;
-	off /= 8;
-
-	if (off + sz > (int)p.datasz) {
-		memcpy(p.data + off, data, p.datasz - off);
-		return p.len - off*8;
-	} else {
-		memcpy(p.data + off, data, bsz);
-		return sz;
+	if (off + sz > (int)l.p.len) {
+		sz = l.p.len - off;
 	}
+
+	if (l.p.type == CAPN_BIT_LIST && (off & 7) == 0) {
+		memcpy(l.p.data + off/8, data, (sz+7)/8);
+	} else {
+		int i;
+		for (i = 0; i < sz; i++) {
+			if (capn_set1(l, off+i, data[off/8] & (1 << ((unsigned)off%8)))) {
+				return -1;
+			}
+		}
+	}
+
+	return sz;
 }
 
 /* pull out whether we add a tag or not as a define so the unit test can
