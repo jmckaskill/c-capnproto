@@ -33,6 +33,8 @@
 static int min(int a, int b) { return (a < b) ? a : b; }
 #endif
 
+const capn_ptr capn_null = {CAPN_NULL};
+
 struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n) {
 	n->red = 1;
 	n->link[0] = n->link[1] = NULL;
@@ -299,7 +301,7 @@ static char *struct_ptr(struct capn_segment *s, char *d, int minsz) {
 }
 
 static capn_ptr read_ptr(struct capn_segment *s, char *d) {
-	capn_ptr ret = {CAPN_NULL};
+	capn_ptr ret = capn_null;
 	uint64_t val;
 	char *e;
 
@@ -402,7 +404,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 	ret.seg = s;
 	return ret;
 err:
-	memset(&ret, 0, sizeof(ret));
+	ret = capn_null;
 	return ret;
 }
 
@@ -413,10 +415,7 @@ void capn_resolve(capn_ptr *p) {
 }
 
 /* TODO: should this handle CAPN_BIT_LIST? */
-capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
-	capn_ptr ret = {CAPN_FAR_POINTER};
-	ret.seg = p.seg;
-
+capn_ptr capn_getp(capn_ptr p, int off) {
 	capn_resolve(&p);
 
 	switch (p.type) {
@@ -429,36 +428,17 @@ capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
 			ret.datasz = p.datasz;
 			ret.ptrs = p.ptrs;
 			return ret;
-		} else {
-			goto err;
 		}
-
-	case CAPN_STRUCT:
-		if (off >= (int)p.ptrs) {
-			goto err;
-		}
-		ret.data = p.data + p.datasz + 8*off;
 		break;
 
 	case CAPN_PTR_LIST:
-		if (off >= p.len) {
-			goto err;
+		if (off < p.len) {
+			return read_ptr(p.seg, p.data + 8*off);
 		}
-		ret.data = p.data + 8*off;
 		break;
-
-	default:
-		goto err;
 	}
 
-	if (resolve) {
-		ret = read_ptr(ret.seg, ret.data);
-	}
-
-	return ret;
-
-err:
-	memset(&p, 0, sizeof(p));
+	p = capn_null;
 	return p;
 }
 
@@ -839,8 +819,8 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 		}
 
 		if (tc->type == CAPN_LIST) {
-			*fn = capn_getp(*fc, 0, 1);
-			*tn = capn_getp(*tc, 0, 1);
+			*fn = capn_getp(*fc, 0);
+			*tn = capn_getp(*tc, 0);
 
 			copy_list_member(tn, fn, &dep);
 
@@ -974,7 +954,7 @@ static void new_object(capn_ptr *p, int bytes) {
 	struct capn_segment *s = p->seg;
 
 	if (!s) {
-		memset(p, 0, sizeof(*p));
+		*p = capn_null;
 		return;
 	}
 
@@ -994,7 +974,7 @@ static void new_object(capn_ptr *p, int bytes) {
 	 * use it */
 	p->data = new_data(s->capn, bytes + ADD_TAG*8, &p->seg);
 	if (!p->data) {
-		memset(p, 0, sizeof(*p));
+		*p = capn_null;
 		return;
 	}
 
@@ -1012,7 +992,7 @@ capn_ptr capn_root(struct capn *c) {
 	r.len = 1;
 
 	if (!r.seg || r.seg->cap < 8) {
-		memset(&r, 0, sizeof(r));
+		r = capn_null;
 	} else if (r.seg->len < 8) {
 		r.seg->len = 8;
 	}
@@ -1091,19 +1071,19 @@ capn_ptr capn_new_string(struct capn_segment *seg, const char *str, int sz) {
 	return p;
 }
 
-capn_text capn_get_text(capn_ptr p, int off, capn_text def) {
-	capn_ptr m = capn_getp(p, off, 1);
-	capn_text ret = def;
-	if (m.type == CAPN_LIST && m.datasz == 1 && m.len && m.data[m.len - 1] == 0) {
-		ret.seg = m.seg;
-		ret.str = m.data;
-		ret.len = m.len - 1;
+capn_text capn_to_text(capn_ptr p) {
+	capn_text ret = {0, "", NULL};
+	capn_resolve(&p);
+	if (p.type == CAPN_LIST && p.datasz == 1 && p.len && p.data[p.len - 1] == 0) {
+		ret.seg = p.seg;
+		ret.str = p.data;
+		ret.len = p.len - 1;
 	}
 	return ret;
 }
 
 int capn_set_text(capn_ptr p, int off, capn_text tgt) {
-	capn_ptr m = {CAPN_NULL};
+	capn_ptr m = capn_null;
 	if (tgt.seg) {
 		m.type = CAPN_LIST;
 		m.seg = tgt.seg;
@@ -1116,14 +1096,17 @@ int capn_set_text(capn_ptr p, int off, capn_text tgt) {
 	return capn_setp(p, off, m);
 }
 
-capn_data capn_get_data(capn_ptr p, int off) {
+capn_data capn_to_data(capn_ptr p) {
 	capn_data ret;
-	ret.p = capn_getp(p, off, 1);
-	if (ret.p.type != CAPN_LIST || ret.p.datasz != 1) {
-		memset(&ret, 0, sizeof(ret));
+	capn_resolve(&p);
+	if (p.type == CAPN_LIST && p.datasz == 1) {
+		ret.p = p;
+	} else {
+		ret.p = capn_null;
 	}
 	return ret;
 }
+
 
 #define SZ 8
 #include "capn-list.inc"

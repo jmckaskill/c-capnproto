@@ -132,6 +132,8 @@ typedef struct {capn_ptr p;} capn_list16;
 typedef struct {capn_ptr p;} capn_list32;
 typedef struct {capn_ptr p;} capn_list64;
 
+extern const capn_ptr capn_null;
+
 struct capn_msg {
 	struct capn_segment *seg;
 	uint64_t iface;
@@ -147,17 +149,8 @@ void capn_resolve(capn_ptr *p);
 
 #define capn_len(list) ((list).p.type == CAPN_FAR_POINTER ? (capn_resolve(&(list).p), (list).p.len) : (list).p.len)
 
-/* capn_getp|setp functions get/set ptrs in list/structs
- * off is the list index or pointer index in a struct
- * capn_setp will copy the data, create far pointers, etc if the target
- * is in a different segment/context.
- * Both of these will use/return inner pointers for composite lists.
- */
-capn_ptr capn_getp(capn_ptr p, int off, int resolve);
-int capn_setp(capn_ptr p, int off, capn_ptr tgt);
-
-capn_text capn_get_text(capn_ptr p, int off, capn_text def);
-capn_data capn_get_data(capn_ptr p, int off);
+capn_text capn_to_text(capn_ptr p);
+capn_data capn_to_data(capn_ptr p);
 int capn_set_text(capn_ptr p, int off, capn_text tgt);
 
 /* capn_get* functions get data from a list
@@ -166,6 +159,7 @@ int capn_set_text(capn_ptr p, int off, capn_text tgt);
  * sz indicates the number of elements to get
  * The function returns the number of elements read or -1 on an error.
  * off must be byte aligned for capn_getv1
+ * capn_getp will return inner pointers for composite lists.
  */
 int capn_get1(capn_list1 p, int off);
 uint8_t capn_get8(capn_list8 p, int off);
@@ -177,12 +171,15 @@ int capn_getv8(capn_list8 p, int off, uint8_t *data, int sz);
 int capn_getv16(capn_list16 p, int off, uint16_t *data, int sz);
 int capn_getv32(capn_list32 p, int off, uint32_t *data, int sz);
 int capn_getv64(capn_list64 p, int off, uint64_t *data, int sz);
+capn_ptr capn_getp(capn_ptr p, int off);
 
 /* capn_set* functions set data in a list
  * off specifies how far into the list to start
  * sz indicates the number of elements to write
  * The function returns the number of elemnts written or -1 on an error.
  * off must be byte aligned for capn_setv1
+ * capn_setp will copy the data, create far pointers, etc if the target
+ * is in a different segment/context.
  */
 int capn_set1(capn_list1 p, int off, int v);
 int capn_set8(capn_list8 p, int off, uint8_t v);
@@ -194,6 +191,7 @@ int capn_setv8(capn_list8 p, int off, const uint8_t *data, int sz);
 int capn_setv16(capn_list16 p, int off, const uint16_t *data, int sz);
 int capn_setv32(capn_list32 p, int off, const uint32_t *data, int sz);
 int capn_setv64(capn_list64 p, int off, const uint64_t *data, int sz);
+int capn_setp(capn_ptr p, int off, capn_ptr tgt);
 
 /* capn_new_* functions create a new object
  * datasz is in bytes, ptrs is # of pointers, sz is # of elements in the list
@@ -383,6 +381,16 @@ CAPN_INLINE void capn_readp(capn_ptr p, int off, capn_ptr *to) {
 	} else {
 		to->type = CAPN_NULL;
 	}
+}
+
+CAPN_INLINE capn_text capn_read_text(capn_ptr p, int off) {
+  capn_readp(p, off, &p);
+  return capn_to_text(p);
+}
+
+CAPN_INLINE capn_data capn_read_data(capn_ptr p, int off) {
+  capn_readp(p, off, &p);
+  return capn_to_data(p);
 }
 
 union capn_conv_f32 {

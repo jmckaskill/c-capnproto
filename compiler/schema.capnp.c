@@ -1,6 +1,5 @@
 #include "schema.capnp.h"
 /* AUTO GENERATED - DO NOT EDIT */
-static const capn_text capn_val0 = {0,""};
 
 Node_ptr new_Node(struct capn_segment *s) {
 	Node_ptr p;
@@ -15,7 +14,7 @@ Node_list new_Node_list(struct capn_segment *s, int len) {
 void read_Node(struct Node *s, Node_ptr p) {
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
-	s->displayName = capn_get_text(p.p, 0, capn_val0);
+	s->displayName = capn_read_text(p.p, 0);
 	s->displayNamePrefixLength = capn_read32(p.p, 8);
 	s->scopeId = capn_read64(p.p, 16);
 	capn_readp(p.p, 1, &(s->nestedNodes.p));
@@ -110,12 +109,12 @@ void write_Node(const struct Node *s, Node_ptr p) {
 }
 void get_Node(struct Node *s, Node_list l, int i) {
 	Node_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Node(s, p);
 }
 void set_Node(const struct Node *s, Node_list l, int i) {
 	Node_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Node(s, p);
 }
 
@@ -131,7 +130,7 @@ Node_NestedNode_list new_Node_NestedNode_list(struct capn_segment *s, int len) {
 }
 void read_Node_NestedNode(struct Node_NestedNode *s, Node_NestedNode_ptr p) {
 	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 	s->id = capn_read64(p.p, 0);
 }
 void write_Node_NestedNode(const struct Node_NestedNode *s, Node_NestedNode_ptr p) {
@@ -141,12 +140,12 @@ void write_Node_NestedNode(const struct Node_NestedNode *s, Node_NestedNode_ptr 
 }
 void get_Node_NestedNode(struct Node_NestedNode *s, Node_NestedNode_list l, int i) {
 	Node_NestedNode_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Node_NestedNode(s, p);
 }
 void set_Node_NestedNode(const struct Node_NestedNode *s, Node_NestedNode_list l, int i) {
 	Node_NestedNode_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Node_NestedNode(s, p);
 }
 
@@ -162,7 +161,7 @@ Field_list new_Field_list(struct capn_segment *s, int len) {
 }
 void read_Field(struct Field *s, Field_ptr p) {
 	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 	s->codeOrder = capn_read16(p.p, 0);
 	capn_readp(p.p, 1, &(s->annotations.p));
 	s->discriminantValue = capn_read16(p.p, 2) ^ 65535u;
@@ -218,12 +217,12 @@ void write_Field(const struct Field *s, Field_ptr p) {
 }
 void get_Field(struct Field *s, Field_list l, int i) {
 	Field_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Field(s, p);
 }
 void set_Field(const struct Field *s, Field_list l, int i) {
 	Field_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Field(s, p);
 }
 
@@ -239,7 +238,7 @@ Enumerant_list new_Enumerant_list(struct capn_segment *s, int len) {
 }
 void read_Enumerant(struct Enumerant *s, Enumerant_ptr p) {
 	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 	s->codeOrder = capn_read16(p.p, 0);
 	capn_readp(p.p, 1, &(s->annotations.p));
 }
@@ -251,12 +250,12 @@ void write_Enumerant(const struct Enumerant *s, Enumerant_ptr p) {
 }
 void get_Enumerant(struct Enumerant *s, Enumerant_list l, int i) {
 	Enumerant_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Enumerant(s, p);
 }
 void set_Enumerant(const struct Enumerant *s, Enumerant_list l, int i) {
 	Enumerant_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Enumerant(s, p);
 }
 
@@ -272,7 +271,7 @@ Method_list new_Method_list(struct capn_segment *s, int len) {
 }
 void read_Method(struct Method *s, Method_ptr p) {
 	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 	s->codeOrder = capn_read16(p.p, 0);
 	capn_readp(p.p, 1, &(s->params.p));
 	s->requiredParamCount = capn_read16(p.p, 2);
@@ -290,12 +289,12 @@ void write_Method(const struct Method *s, Method_ptr p) {
 }
 void get_Method(struct Method *s, Method_list l, int i) {
 	Method_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Method(s, p);
 }
 void set_Method(const struct Method *s, Method_list l, int i) {
 	Method_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Method(s, p);
 }
 
@@ -311,7 +310,7 @@ Method_Param_list new_Method_Param_list(struct capn_segment *s, int len) {
 }
 void read_Method_Param(struct Method_Param *s, Method_Param_ptr p) {
 	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 	capn_readp(p.p, 1, &(s->type.p));
 	capn_readp(p.p, 2, &(s->defaultValue.p));
 	capn_readp(p.p, 3, &(s->annotations.p));
@@ -325,12 +324,12 @@ void write_Method_Param(const struct Method_Param *s, Method_Param_ptr p) {
 }
 void get_Method_Param(struct Method_Param *s, Method_Param_list l, int i) {
 	Method_Param_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Method_Param(s, p);
 }
 void set_Method_Param(const struct Method_Param *s, Method_Param_list l, int i) {
 	Method_Param_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Method_Param(s, p);
 }
 
@@ -386,12 +385,12 @@ void write_Type(const struct Type *s, Type_ptr p) {
 }
 void get_Type(struct Type *s, Type_list l, int i) {
 	Type_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Type(s, p);
 }
 void set_Type(const struct Type *s, Type_list l, int i) {
 	Type_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Type(s, p);
 }
 
@@ -432,10 +431,10 @@ void read_Value(struct Value *s, Value_ptr p) {
 		s->float64 = capn_to_f64(capn_read64(p.p, 8));
 		break;
 	case Value_text:
-		s->text = capn_get_text(p.p, 0, capn_val0);
+		s->text = capn_read_text(p.p, 0);
 		break;
 	case Value_data:
-		s->data = capn_get_data(p.p, 0);
+		s->data = capn_read_data(p.p, 0);
 		break;
 	case Value__list:
 	case Value__struct:
@@ -489,12 +488,12 @@ void write_Value(const struct Value *s, Value_ptr p) {
 }
 void get_Value(struct Value *s, Value_list l, int i) {
 	Value_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Value(s, p);
 }
 void set_Value(const struct Value *s, Value_list l, int i) {
 	Value_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Value(s, p);
 }
 
@@ -520,12 +519,12 @@ void write_Annotation(const struct Annotation *s, Annotation_ptr p) {
 }
 void get_Annotation(struct Annotation *s, Annotation_list l, int i) {
 	Annotation_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_Annotation(s, p);
 }
 void set_Annotation(const struct Annotation *s, Annotation_list l, int i) {
 	Annotation_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_Annotation(s, p);
 }
 
@@ -551,12 +550,12 @@ void write_CodeGeneratorRequest(const struct CodeGeneratorRequest *s, CodeGenera
 }
 void get_CodeGeneratorRequest(struct CodeGeneratorRequest *s, CodeGeneratorRequest_list l, int i) {
 	CodeGeneratorRequest_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_CodeGeneratorRequest(s, p);
 }
 void set_CodeGeneratorRequest(const struct CodeGeneratorRequest *s, CodeGeneratorRequest_list l, int i) {
 	CodeGeneratorRequest_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_CodeGeneratorRequest(s, p);
 }
 
@@ -573,7 +572,7 @@ CodeGeneratorRequest_RequestedFile_list new_CodeGeneratorRequest_RequestedFile_l
 void read_CodeGeneratorRequest_RequestedFile(struct CodeGeneratorRequest_RequestedFile *s, CodeGeneratorRequest_RequestedFile_ptr p) {
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
-	s->filename = capn_get_text(p.p, 0, capn_val0);
+	s->filename = capn_read_text(p.p, 0);
 	capn_readp(p.p, 1, &(s->imports.p));
 }
 void write_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_RequestedFile *s, CodeGeneratorRequest_RequestedFile_ptr p) {
@@ -584,12 +583,12 @@ void write_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_
 }
 void get_CodeGeneratorRequest_RequestedFile(struct CodeGeneratorRequest_RequestedFile *s, CodeGeneratorRequest_RequestedFile_list l, int i) {
 	CodeGeneratorRequest_RequestedFile_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_CodeGeneratorRequest_RequestedFile(s, p);
 }
 void set_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_RequestedFile *s, CodeGeneratorRequest_RequestedFile_list l, int i) {
 	CodeGeneratorRequest_RequestedFile_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_CodeGeneratorRequest_RequestedFile(s, p);
 }
 
@@ -606,7 +605,7 @@ CodeGeneratorRequest_RequestedFile_Import_list new_CodeGeneratorRequest_Requeste
 void read_CodeGeneratorRequest_RequestedFile_Import(struct CodeGeneratorRequest_RequestedFile_Import *s, CodeGeneratorRequest_RequestedFile_Import_ptr p) {
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
-	s->name = capn_get_text(p.p, 0, capn_val0);
+	s->name = capn_read_text(p.p, 0);
 }
 void write_CodeGeneratorRequest_RequestedFile_Import(const struct CodeGeneratorRequest_RequestedFile_Import *s, CodeGeneratorRequest_RequestedFile_Import_ptr p) {
 	capn_resolve(&p.p);
@@ -615,11 +614,11 @@ void write_CodeGeneratorRequest_RequestedFile_Import(const struct CodeGeneratorR
 }
 void get_CodeGeneratorRequest_RequestedFile_Import(struct CodeGeneratorRequest_RequestedFile_Import *s, CodeGeneratorRequest_RequestedFile_Import_list l, int i) {
 	CodeGeneratorRequest_RequestedFile_Import_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	read_CodeGeneratorRequest_RequestedFile_Import(s, p);
 }
 void set_CodeGeneratorRequest_RequestedFile_Import(const struct CodeGeneratorRequest_RequestedFile_Import *s, CodeGeneratorRequest_RequestedFile_Import_list l, int i) {
 	CodeGeneratorRequest_RequestedFile_Import_ptr p;
-	p.p = capn_getp(l.p, i, 0);
+	p.p = capn_getp(l.p, i);
 	write_CodeGeneratorRequest_RequestedFile_Import(s, p);
 }

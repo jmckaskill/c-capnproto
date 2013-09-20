@@ -31,7 +31,6 @@ static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
 static int g_valc;
-static int g_val0used, g_nullused;
 
 struct node_entry {
 	uint64_t id;
@@ -241,7 +240,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 				fprintf(stderr, "failed to copy text\n");
 				exit(2);
 			}
-			p = capn_getp(p, 0, 1);
+			p = capn_getp(p, 0);
 			if (!p.type)
 				break;
 
@@ -271,7 +270,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 				fprintf(stderr, "failed to copy object\n");
 				exit(2);
 			}
-			p = capn_getp(p, 0, 1);
+			p = capn_getp(p, 0);
 			if (!p.type)
 				break;
 
@@ -489,9 +488,12 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 		break;
 	case Type_text:
 		if (f->v.ptrval.type) {
-			g_val0used = 1;
-			str_addf(func, "capn_set_text(%s, %d, (%s.str != capn_val%d.str) ? %s : capn_val0);\n",
-					ptr, f->f.slot.offset, var, (int)f->v.intval, var);
+			str_addf(func, "if (%s.str != capn_val%d.str || %s.len != capn_val%d.len) {\n",
+					var, (int)f->v.intval, var, (int)f->v.intval);
+			str_addf(func, "%s\tcapn_set_text(%s, %d, %s);\n", tab, ptr, f->f.slot.offset, var);
+			str_addf(func, "%s} else {\n", tab);
+			str_addf(func, "%s\tcapn_setp(%s, %d, capn_null);\n", tab, ptr, f->f.slot.offset);
+			str_addf(func, "%s}\n", tab);
 		} else {
 			str_addf(func, "capn_set_text(%s, %d, %s);\n",
 					ptr, f->f.slot.offset, var);
@@ -506,11 +508,9 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 			str_addf(func, "capn_setp(%s, %d, %s);\n",
 					ptr, f->f.slot.offset, pvar);
 		} else if (!strcmp(f->v.tname, "capn_ptr")) {
-			g_nullused = 1;
 			str_addf(func, "capn_setp(%s, %d, (%s.data != capn_val%d.data) ? %s : capn_null);\n",
 					ptr, f->f.slot.offset, pvar, (int)f->v.intval, pvar);
 		} else {
-			g_nullused = 1;
 			str_addf(func, "capn_setp(%s, %d, (%s.data != capn_val%d.p.data) ? %s : capn_null);\n",
 					ptr, f->f.slot.offset, pvar, (int)f->v.intval, pvar);
 		}
@@ -568,13 +568,16 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "%s = (%s) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_text:
-		if (!f->v.intval)
-			g_val0used = 1;
-		str_addf(func, "%s = capn_get_text(%s, %d, capn_val%d);\n", var, ptr, f->f.slot.offset, (int)f->v.intval);
+		str_addf(func, "%s = capn_read_text(%s, %d);\n", var, ptr, f->f.slot.offset);
+		if (f->v.intval) {
+			str_addf(func, "%sif (!%s.seg) {\n", tab, var);
+			str_addf(func, "%s\t%s = capn_val%d;\n", tab, var, (int)f->v.intval);
+			str_addf(func, "%s}\n", tab);
+		}
 		return;
 
 	case Type_data:
-		str_addf(func, "%s = capn_get_data(%s, %d);\n", var, ptr, f->f.slot.offset);
+		str_addf(func, "%s = capn_read_data(%s, %d);\n", var, ptr, f->f.slot.offset);
 		break;
 	case Type__struct:
 	case Type__interface:
@@ -898,13 +901,13 @@ static void define_struct(struct node *n) {
 
 	str_addf(&SRC, "void get_%s(struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
+	str_addf(&SRC, "\tp.p = capn_getp(l.p, i);\n");
 	str_addf(&SRC, "\tread_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "void set_%s(const struct %s *s, %s_list l, int i) {\n", n->name.str, n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
-	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
+	str_addf(&SRC, "\tp.p = capn_getp(l.p, i);\n");
 	str_addf(&SRC, "\twrite_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
 }
@@ -1013,7 +1016,6 @@ static void define_method(struct node *iface, int ord) {
 	if (datasz || ptrs) {
 		str_addf(&SRC, "\tm->args = capn_new_struct(m->seg, %d, %d);\n", datasz, ptrs);
 	} else {
-		g_nullused = 1;
 		str_addf(&SRC, "\tm->args = capn_null;\n");
 	}
 
@@ -1085,7 +1087,7 @@ int main() {
 	g_valseg.data = calloc(1, capn.seglist->len);
 	g_valseg.cap = capn.seglist->len;
 
-	root.p = capn_getp(capn_root(&capn), 0, 1);
+	root.p = capn_getp(capn_root(&capn), 0);
 	read_CodeGeneratorRequest(&req, root);
 	g_nodes = calloc(capn_len(req.nodes), sizeof(g_nodes[0]));
 	g_nodelen = capn_len(req.nodes);
@@ -1141,8 +1143,6 @@ int main() {
 
 		g_valc = 0;
 		g_valseg.len = 0;
-		g_val0used = 0;
-		g_nullused = 0;
 		capn_init_malloc(&g_valcapn);
 		capn_append_segment(&g_valcapn, &g_valseg);
 
@@ -1221,11 +1221,6 @@ int main() {
 		p = strrchr(file_node->n.displayName.str, '/');
 		fprintf(srcf, "#include \"%s.h\"\n", p ? p+1 : file_node->n.displayName.str);
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
-
-		if (g_val0used)
-			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\"};\n");
-		if (g_nullused)
-			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
 		if (g_valseg.len > 8) {
 			fprintf(srcf, "static const uint8_t capn_buf[%d] = {", g_valseg.len-8);
