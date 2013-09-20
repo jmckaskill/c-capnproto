@@ -276,10 +276,15 @@ int capn_inflate(struct capn_stream*);
 
 /* Inline functions */
 
-
 CAPN_INLINE uint8_t capn_flip8(uint8_t v) {
 	return v;
 }
+
+#if _M_IX86 || _M_X64 || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+CAPN_INLINE uint16_t capn_flip16(uint16_t v) { return v; }
+CAPN_INLINE uint32_t capn_flip32(uint32_t v) { return v; }
+CAPN_INLINE uint64_t capn_flip64(uint64_t v) { return v; }
+#else
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
 	union { uint16_t u; uint8_t v[2]; } s;
 	s.v[0] = (uint8_t)v;
@@ -306,6 +311,7 @@ CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
 	s.v[7] = (uint8_t)(v>>56);
 	return s.u;
 }
+#endif
 
 CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 	if (off >= (int)p.datasz*8) {
