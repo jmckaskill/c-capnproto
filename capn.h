@@ -281,10 +281,12 @@ CAPN_INLINE uint8_t capn_flip8(uint8_t v) {
 }
 
 #if _M_IX86 || _M_X64 || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#define CAPN_LITTLE 1
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) { return v; }
 CAPN_INLINE uint32_t capn_flip32(uint32_t v) { return v; }
 CAPN_INLINE uint64_t capn_flip64(uint64_t v) { return v; }
 #else
+#define CAPN_LITTLE 0
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
 	union { uint16_t u; uint8_t v[2]; } s;
 	s.v[0] = (uint8_t)v;

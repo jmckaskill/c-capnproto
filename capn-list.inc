@@ -41,10 +41,13 @@ int CAT(capn_getv,SZ) (LIST_T l, int off, UINT_T *to, int sz) {
 
 	switch (p.type) {
 	case CAPN_LIST:
-		if (p.datasz == SZ/8 && !p.ptrs && (SZ == 8 || CAPN_LITTLE)) {
+#if SZ == 8 || CAPN_LITTLE
+		if (p.datasz == SZ/8 && !p.ptrs) {
 			memcpy(to, p.data + off, sz * (SZ/8));
 			return sz;
-		} else if (p.datasz < SZ/8) {
+		} else
+#endif
+		if (p.datasz < SZ/8) {
 			return -1;
 		}
 
@@ -107,10 +110,13 @@ int CAT(capn_setv,SZ) (LIST_T l, int off, const UINT_T *from, int sz) {
 
 	switch (p.type) {
 	case CAPN_LIST:
-		if (p.datasz == SZ/8 && !p.ptrs && (SZ == 8 || CAPN_LITTLE)) {
+#if SZ == 8 || CAPN_LITTLE
+		if (p.datasz == SZ/8 && !p.ptrs) {
 			memcpy(p.data + off, from, sz * (SZ/8));
 			return sz;
-		} else if (p.datasz < SZ/8) {
+		} else
+#endif
+		if (p.datasz < SZ/8) {
 			return -1;
 		}
 

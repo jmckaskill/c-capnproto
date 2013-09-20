@@ -45,7 +45,8 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				WarningLevel="3"
+				WarningLevel="4"
+				WarnAsError="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -115,7 +116,8 @@
 				PreprocessorDefinitions="NDEBUG;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				WarningLevel="3"
+				WarningLevel="4"
+				WarnAsError="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool

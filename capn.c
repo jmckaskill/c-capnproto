@@ -33,14 +33,6 @@
 static int min(int a, int b) { return (a < b) ? a : b; }
 #endif
 
-#ifdef BYTE_ORDER
-#define CAPN_LITTLE (BYTE_ORDER == LITTLE_ENDIAN)
-#elif defined(__BYTE_ORDER)
-#define CAPN_LITTLE (__BYTE_ORDER == __LITTLE_ENDIAN)
-#else
-#define CAPN_LITTLE 0
-#endif
-
 struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n) {
 	n->red = 1;
 	n->link[0] = n->link[1] = NULL;
@@ -189,8 +181,8 @@ end:
 }
 
 static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *s, uint32_t id) {
-	struct capn_tree **x;
-	struct capn_segment *y;
+	struct capn_tree **x = NULL;
+	struct capn_segment *y = NULL;
 
 	if (s && s->id == id)
 		return s;
@@ -330,6 +322,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 		goto err;
 
 	d += (I32(U32(val)) >> 2) * 8 + 8;
+	e = d;
 
 	if (d < s->data) {
 		goto err;
@@ -391,7 +384,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 			ret.len = U32(val) >> 2;
 			ret.flags |= IS_COMPOSITE_LIST;
 
-			if ((ret.datasz + 8*ret.ptrs) * ret.len != e - d) {
+			if ((int)(ret.datasz + 8*ret.ptrs) * ret.len != e - d) {
 				goto err;
 			}
 			break;
@@ -961,11 +954,11 @@ static void new_object(capn_ptr *p, int bytes) {
 		return;
 	}
 
-	if (ADD_TAG) {
-		write_ptr_tag(p->data, *p, 0);
-		p->data += 8;
-		p->flags |= HAS_PTR_TAG;
-	}
+#if ADD_TAG
+	write_ptr_tag(p->data, *p, 0);
+	p->data += 8;
+	p->flags |= HAS_PTR_TAG;
+#endif
 }
 
 capn_ptr capn_root(struct capn *c) {

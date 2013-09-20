@@ -53,8 +53,9 @@ static int compare_node(const void *a, const void *b) {
 }
 
 struct node *find_node(uint64_t id) {
-	struct node_entry key = {id, NULL};
-	struct node_entry *np = (struct node_entry*) bsearch(&key, g_nodes, g_nodelen, sizeof(g_nodes[0]), &compare_node);
+	struct node_entry *np, key;
+	key.id = id;
+	np = (struct node_entry*) bsearch(&key, g_nodes, g_nodelen, sizeof(g_nodes[0]), &compare_node);
 	if (np == NULL) {
 		fprintf(stderr, "cant find node with id 0x%x%x\n", (uint32_t) (id >> 32), (uint32_t) id);
 		exit(2);
@@ -1076,8 +1077,6 @@ int main() {
 	struct node *all_files = NULL, *all_structs = NULL;
 	int i, j;
 
-  __asm{int 3};
-
 	if (capn_init_fp(&capn, stdin, 0)) {
 		fprintf(stderr, "failed to read schema from stdin\n");
 		return -1;
@@ -1168,6 +1167,7 @@ int main() {
 		}
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
+		str_addf(&HDR, "\n#ifdef _MSC_VER\n#pragma warning(push)\n#pragma warning(disable:4201)\n#endif\n");
 
 		declare(file_node, "struct %s;\n", 1);
 		declare(file_node, "typedef struct {capn_ptr p;} %s_ptr;\n", 1);
@@ -1198,6 +1198,7 @@ int main() {
 		declare(file_node, "void get_%s(struct %s*, %s_list, int i);\n", 3);
 		declare(file_node, "void set_%s(const struct %s*, %s_list, int i);\n", 3);
 
+		str_addf(&HDR, "\n#ifdef _MSC_VER\n#pragma warning(pop)\n#endif\n");
 		str_addf(&HDR, "\n#ifdef __cplusplus\n}\n#endif\n#endif\n");
 
 		/* write out the header */

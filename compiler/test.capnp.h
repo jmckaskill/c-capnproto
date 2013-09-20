@@ -13,6 +13,11 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4201)
+#endif
+
 struct TestAllTypes;
 struct TestDefaults;
 struct TestObject;
@@ -876,6 +881,10 @@ void set_TestNewVersion(const struct TestNewVersion*, TestNewVersion_list, int i
 void set_TestStructUnion(const struct TestStructUnion*, TestStructUnion_list, int i);
 void set_TestEmptyStruct(const struct TestEmptyStruct*, TestEmptyStruct_list, int i);
 void set_TestConstants(const struct TestConstants*, TestConstants_list, int i);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #ifdef __cplusplus
 }

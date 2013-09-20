@@ -26,6 +26,8 @@ static struct capn_segment *create(void *u, uint32_t id, int sz) {
 	s->s.data = (char*) (s+1);
 	s->s.cap = sz - sizeof(*s);
 	s->s.user = s;
+	(void) id;
+	(void) u;
 	return &s->s;
 }
 

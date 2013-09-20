@@ -13,6 +13,11 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4201)
+#endif
+
 struct Node;
 struct Node_NestedNode;
 struct Field;
@@ -355,6 +360,10 @@ void set_Annotation(const struct Annotation*, Annotation_list, int i);
 void set_CodeGeneratorRequest(const struct CodeGeneratorRequest*, CodeGeneratorRequest_list, int i);
 void set_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_RequestedFile*, CodeGeneratorRequest_RequestedFile_list, int i);
 void set_CodeGeneratorRequest_RequestedFile_Import(const struct CodeGeneratorRequest_RequestedFile_Import*, CodeGeneratorRequest_RequestedFile_Import_list, int i);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #ifdef __cplusplus
 }
