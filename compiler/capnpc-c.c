@@ -575,7 +575,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	case Type__interface:
 	case Type_object:
 	case Type__list:
-		str_addf(func, "%s = capn_getp(%s, %d, 0);\n", pvar, ptr, f->f.slot.offset);
+		str_addf(func, "capn_readp(%s, %d, &(%s));\n", ptr, f->f.slot.offset, pvar);
 		break;
 	default:
 		return;

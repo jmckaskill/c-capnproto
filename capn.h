@@ -224,6 +224,7 @@ CAPN_INLINE int capn_write8(capn_ptr p, int off, uint8_t val);
 CAPN_INLINE int capn_write16(capn_ptr p, int off, uint16_t val);
 CAPN_INLINE int capn_write32(capn_ptr p, int off, uint32_t val);
 CAPN_INLINE int capn_write64(capn_ptr p, int off, uint64_t val);
+CAPN_INLINE void capn_readp(capn_ptr p, int off, capn_ptr *to);
 
 /* capn_init_malloc inits the capn struct with a create function which
  * allocates segments on the heap using malloc
@@ -363,6 +364,16 @@ CAPN_INLINE int capn_write64(capn_ptr p, int off, uint64_t val) {
 		return 0;
 	} else {
 		return -1;
+	}
+}
+
+CAPN_INLINE void capn_readp(capn_ptr p, int off, capn_ptr *to) {
+	if (off < (int)p.ptrs) {
+		to->type = CAPN_FAR_POINTER;
+		to->seg = p.seg;
+		to->data = p.data + p.datasz + off*8;
+	} else {
+		to->type = CAPN_NULL;
 	}
 }
 

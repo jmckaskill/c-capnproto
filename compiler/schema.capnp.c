@@ -18,8 +18,8 @@ void read_Node(struct Node *s, Node_ptr p) {
 	s->displayName = capn_get_text(p.p, 0, capn_val0);
 	s->displayNamePrefixLength = capn_read32(p.p, 8);
 	s->scopeId = capn_read64(p.p, 16);
-	s->nestedNodes.p = capn_getp(p.p, 1, 0);
-	s->annotations.p = capn_getp(p.p, 2, 0);
+	capn_readp(p.p, 1, &(s->nestedNodes.p));
+	capn_readp(p.p, 2, &(s->annotations.p));
 	s->which = (enum Node_which) capn_read16(p.p, 12);
 	switch (s->which) {
 	case Node__struct:
@@ -29,20 +29,20 @@ void read_Node(struct Node *s, Node_ptr p) {
 		s->_struct.isGroup = (capn_read8(p.p, 28) & 1) != 0;
 		s->_struct.discriminantCount = capn_read16(p.p, 30);
 		s->_struct.discriminantOffset = capn_read32(p.p, 32);
-		s->_struct.fields.p = capn_getp(p.p, 3, 0);
+		capn_readp(p.p, 3, &(s->_struct.fields.p));
 		break;
 	case Node__enum:
-		s->_enum.enumerants.p = capn_getp(p.p, 3, 0);
+		capn_readp(p.p, 3, &(s->_enum.enumerants.p));
 		break;
 	case Node__interface:
-		s->_interface.methods.p = capn_getp(p.p, 3, 0);
+		capn_readp(p.p, 3, &(s->_interface.methods.p));
 		break;
 	case Node__const:
-		s->_const.type.p = capn_getp(p.p, 3, 0);
-		s->_const.value.p = capn_getp(p.p, 4, 0);
+		capn_readp(p.p, 3, &(s->_const.type.p));
+		capn_readp(p.p, 4, &(s->_const.value.p));
 		break;
 	case Node_annotation:
-		s->annotation.type.p = capn_getp(p.p, 3, 0);
+		capn_readp(p.p, 3, &(s->annotation.type.p));
 		s->annotation.targetsFile = (capn_read8(p.p, 14) & 1) != 0;
 		s->annotation.targetsConst = (capn_read8(p.p, 14) & 2) != 0;
 		s->annotation.targetsEnum = (capn_read8(p.p, 14) & 4) != 0;
@@ -164,14 +164,14 @@ void read_Field(struct Field *s, Field_ptr p) {
 	capn_resolve(&p.p);
 	s->name = capn_get_text(p.p, 0, capn_val0);
 	s->codeOrder = capn_read16(p.p, 0);
-	s->annotations.p = capn_getp(p.p, 1, 0);
+	capn_readp(p.p, 1, &(s->annotations.p));
 	s->discriminantValue = capn_read16(p.p, 2) ^ 65535u;
 	s->which = (enum Field_which) capn_read16(p.p, 8);
 	switch (s->which) {
 	case Field_slot:
 		s->slot.offset = capn_read32(p.p, 4);
-		s->slot.type.p = capn_getp(p.p, 2, 0);
-		s->slot.defaultValue.p = capn_getp(p.p, 3, 0);
+		capn_readp(p.p, 2, &(s->slot.type.p));
+		capn_readp(p.p, 3, &(s->slot.defaultValue.p));
 		break;
 	case Field_group:
 		s->group.typeId = capn_read64(p.p, 16);
@@ -241,7 +241,7 @@ void read_Enumerant(struct Enumerant *s, Enumerant_ptr p) {
 	capn_resolve(&p.p);
 	s->name = capn_get_text(p.p, 0, capn_val0);
 	s->codeOrder = capn_read16(p.p, 0);
-	s->annotations.p = capn_getp(p.p, 1, 0);
+	capn_readp(p.p, 1, &(s->annotations.p));
 }
 void write_Enumerant(const struct Enumerant *s, Enumerant_ptr p) {
 	capn_resolve(&p.p);
@@ -274,10 +274,10 @@ void read_Method(struct Method *s, Method_ptr p) {
 	capn_resolve(&p.p);
 	s->name = capn_get_text(p.p, 0, capn_val0);
 	s->codeOrder = capn_read16(p.p, 0);
-	s->params.p = capn_getp(p.p, 1, 0);
+	capn_readp(p.p, 1, &(s->params.p));
 	s->requiredParamCount = capn_read16(p.p, 2);
-	s->returnType.p = capn_getp(p.p, 2, 0);
-	s->annotations.p = capn_getp(p.p, 3, 0);
+	capn_readp(p.p, 2, &(s->returnType.p));
+	capn_readp(p.p, 3, &(s->annotations.p));
 }
 void write_Method(const struct Method *s, Method_ptr p) {
 	capn_resolve(&p.p);
@@ -312,9 +312,9 @@ Method_Param_list new_Method_Param_list(struct capn_segment *s, int len) {
 void read_Method_Param(struct Method_Param *s, Method_Param_ptr p) {
 	capn_resolve(&p.p);
 	s->name = capn_get_text(p.p, 0, capn_val0);
-	s->type.p = capn_getp(p.p, 1, 0);
-	s->defaultValue.p = capn_getp(p.p, 2, 0);
-	s->annotations.p = capn_getp(p.p, 3, 0);
+	capn_readp(p.p, 1, &(s->type.p));
+	capn_readp(p.p, 2, &(s->defaultValue.p));
+	capn_readp(p.p, 3, &(s->annotations.p));
 }
 void write_Method_Param(const struct Method_Param *s, Method_Param_ptr p) {
 	capn_resolve(&p.p);
@@ -349,7 +349,7 @@ void read_Type(struct Type *s, Type_ptr p) {
 	s->which = (enum Type_which) capn_read16(p.p, 0);
 	switch (s->which) {
 	case Type__list:
-		s->_list.elementType.p = capn_getp(p.p, 0, 0);
+		capn_readp(p.p, 0, &(s->_list.elementType.p));
 		break;
 	case Type__enum:
 		s->_enum.typeId = capn_read64(p.p, 8);
@@ -440,7 +440,7 @@ void read_Value(struct Value *s, Value_ptr p) {
 	case Value__list:
 	case Value__struct:
 	case Value_object:
-		s->object = capn_getp(p.p, 0, 0);
+		capn_readp(p.p, 0, &(s->object));
 		break;
 	default:
 		break;
@@ -511,7 +511,7 @@ Annotation_list new_Annotation_list(struct capn_segment *s, int len) {
 void read_Annotation(struct Annotation *s, Annotation_ptr p) {
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
-	s->value.p = capn_getp(p.p, 0, 0);
+	capn_readp(p.p, 0, &(s->value.p));
 }
 void write_Annotation(const struct Annotation *s, Annotation_ptr p) {
 	capn_resolve(&p.p);
@@ -541,8 +541,8 @@ CodeGeneratorRequest_list new_CodeGeneratorRequest_list(struct capn_segment *s, 
 }
 void read_CodeGeneratorRequest(struct CodeGeneratorRequest *s, CodeGeneratorRequest_ptr p) {
 	capn_resolve(&p.p);
-	s->nodes.p = capn_getp(p.p, 0, 0);
-	s->requestedFiles.p = capn_getp(p.p, 1, 0);
+	capn_readp(p.p, 0, &(s->nodes.p));
+	capn_readp(p.p, 1, &(s->requestedFiles.p));
 }
 void write_CodeGeneratorRequest(const struct CodeGeneratorRequest *s, CodeGeneratorRequest_ptr p) {
 	capn_resolve(&p.p);
@@ -574,7 +574,7 @@ void read_CodeGeneratorRequest_RequestedFile(struct CodeGeneratorRequest_Request
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
 	s->filename = capn_get_text(p.p, 0, capn_val0);
-	s->imports.p = capn_getp(p.p, 1, 0);
+	capn_readp(p.p, 1, &(s->imports.p));
 }
 void write_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_RequestedFile *s, CodeGeneratorRequest_RequestedFile_ptr p) {
 	capn_resolve(&p.p);
