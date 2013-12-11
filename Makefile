@@ -2,6 +2,7 @@
 
 LDFLAGS=-O2 -Wall -Werror -fPIC
 CFLAGS=-O2 -Wall -Werror -fPIC -I. -Wno-unused-function
+GTEST_CFLAGS=-I../gtest/include
 
 all: capn.so capnpc-c test
 
@@ -21,7 +22,7 @@ test: capn-test
 	./capn-test
 
 %-test.o: %-test.cpp *.h *.c *.inc
-	$(CXX) -g -Wall -Werror -I. `gtest-config --cppflags --cxxflags` -o $@ -c $<
+	$(CXX) -g -Wall -Werror -I. $(GTEST_CFLAGS) -o $@ -c $<
 
-capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o
-	$(CXX) -g -Wall -Werror -I. `gtest-config --ldflags --libs` -o $@ $^
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o gtest-all-test.o
+	$(CXX) -g -Wall -Werror -I. -o $@ $^
