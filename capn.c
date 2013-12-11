@@ -413,6 +413,7 @@ void capn_resolve(capn_ptr *p) {
 	}
 }
 
+/* TODO: should this handle CAPN_BIT_LIST? */
 capn_ptr capn_getp(capn_ptr p, int off, int resolve) {
 	capn_ptr ret = {CAPN_FAR_POINTER};
 	ret.seg = p.seg;
@@ -477,16 +478,22 @@ static void write_ptr_tag(char *d, capn_ptr p, int off) {
 		} else {
 			val |= LIST_PTR | (U64(p.len) << 35);
 
-			if (p.datasz == 8) {
+			switch (p.datasz) {
+			case 8:
 				val |= (U64(BYTE_8_LIST) << 32);
-			} else if (p.datasz == 4) {
+				break;
+			case 4:
 				val |= (U64(BYTE_4_LIST) << 32);
-			} else if (p.datasz == 2) {
+				break;
+			case 2:
 				val |= (U64(BYTE_2_LIST) << 32);
-			} else if (p.datasz == 1) {
+				break;
+			case 1:
 				val |= (U64(BYTE_1_LIST) << 32);
-			} else {
+				break;
+			case 0:
 				val |= (U64(VOID_LIST) << 32);
+				break;
 			}
 		}
 		break;
@@ -532,45 +539,41 @@ static int write_ptr(struct capn_segment *s, char *d, capn_ptr p) {
 		write_ptr_tag(d, p, pdata - d - 8);
 		return 0;
 
+	} else if (p.has_ptr_tag) {
+		/* By lucky chance, the data has a tag in front
+		 * of it. This happens when new_object had to move
+		 * the data to a new segment. */
+		write_far_ptr(d, p.seg, pdata-8);
+		return 0;
+
+	} else if (p.seg->len + 8 <= p.seg->cap) {
+		/* The target segment has enough room for tag */
+		char *t = p.seg->data + p.seg->len;
+		write_ptr_tag(t, p, pdata - t - 8);
+		write_far_ptr(d, p.seg, t);
+		p.seg->len += 8;
+		return 0;
+
 	} else {
-		/* if its in the same context we can create a far pointer */
+		/* have to allocate room for a double far
+		 * pointer */
+		char *t;
 
-		if (p.has_ptr_tag) {
-			/* By lucky chance, the data has a tag in front
-			 * of it. This happens when new_object had to move
-			 * the data to a new segment. */
-			write_far_ptr(d, p.seg, pdata-8);
-			return 0;
-
-		} else if (p.seg->len + 8 <= p.seg->cap) {
-			/* The target segment has enough room for tag */
-			char *t = p.seg->data + p.seg->len;
-			write_ptr_tag(t, p, pdata - t - 8);
-			write_far_ptr(d, p.seg, t);
-			p.seg->len += 8;
-			return 0;
-
+		if (s->len + 16 <= s->cap) {
+			/* Try and allocate in the src segment
+			 * first. This should improve lookup on
+			 * read. */
+			t = s->data + s->len;
+			s->len += 16;
 		} else {
-			/* have to allocate room for a double far
-			 * pointer */
-			char *t;
-
-			if (s->len + 16 <= s->cap) {
-				/* Try and allocate in the src segment
-				 * first. This should improve lookup on
-				 * read. */
-				t = s->data + s->len;
-				s->len += 16;
-			} else {
-				t = new_data(s->capn, 16, &s);
-				if (!t) return -1;
-			}
-
-			write_far_ptr(t, p.seg, pdata);
-			write_ptr_tag(t+8, p, 0);
-			write_double_far(d, s, t);
-			return 0;
+			t = new_data(s->capn, 16, &s);
+			if (!t) return -1;
 		}
+
+		write_far_ptr(t, p.seg, pdata);
+		write_ptr_tag(t+8, p, 0);
+		write_double_far(d, s, t);
+		return 0;
 	}
 }
 
@@ -756,6 +759,7 @@ static void copy_list_member(capn_ptr* t, capn_ptr *f, int *dep) {
 
 #define MAX_COPY_DEPTH 32
 
+/* TODO: handle CAPN_BIT_LIST and setting from an inner bit list member */
 int capn_setp(capn_ptr p, int off, capn_ptr tgt) {
 	struct capn_ptr to[MAX_COPY_DEPTH], from[MAX_COPY_DEPTH];
 	char *data;
