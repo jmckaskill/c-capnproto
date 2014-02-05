@@ -19,7 +19,7 @@ capn.so: $(OBJS)
 capn.a: $(OBJS)
 	$(AR) rcs $@ $^
 
-capnpc-c: compiler/capnpc-c.o compiler/schema.capnp.o compiler/str.o capn.so
+capnpc-c: compiler/capnpc-c.o compiler/schema.capnp.o compiler/str.o capn.a
 	$(CC) $(LDFLAGS) $^ -o $@
 
 test: capn-test
