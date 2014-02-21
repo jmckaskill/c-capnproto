@@ -155,3 +155,61 @@ int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed) {
 	z.avail_in = sz;
 	return init_fp(c, NULL, &z, packed);
 }
+
+int
+capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
+{
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	int i;
+	uint32_t headerlen;
+	size_t datasz;
+	uint32_t *header;
+
+	if (c->segnum == 0)
+		return -1;
+
+	root = capn_root(c);
+	/* segnum == 1:
+	 *   [segnum][segsiz]
+	 * segnum == 2:
+	 *   [segnum][segsiz][segsiz][zeroes]
+	 * segnum == 3:
+	 *   [segnum][segsiz][segsiz][segsiz]
+	 * segnum == 4:
+	 *   [segnum][segsiz][segsiz][segsiz][segsiz][zeroes]
+	 */
+	headerlen = ((2 + c->segnum) / 2) * 2;
+	datasz = 4 * headerlen;
+	header = (uint32_t*) p;
+
+	if (sz < datasz)
+		return -1;
+
+	header[0] = capn_flip32(c->segnum - 1);
+	header[headerlen-1] = 0;
+	for (i = 0, seg = root.seg; i < c->segnum; i++, seg = seg->next) {
+		if (0 == seg)
+			return -1;
+		datasz += seg->len;
+		header[1 + i] = capn_flip32(seg->len / 8);
+	}
+	if (0 != seg)
+		return -1;
+
+	if (sz < datasz)
+		return -1;
+
+	p += 4 * headerlen;
+	sz -= 4 * headerlen;
+
+	for (seg = root.seg; seg; seg = seg->next) {
+		if (sz < seg->len)
+			return -1;
+		memcpy(p, seg->data, seg->len);
+		p += seg->len;
+		sz -= seg->len;
+	}
+
+	return datasz;
+}
