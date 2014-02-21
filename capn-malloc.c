@@ -166,6 +166,10 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 	size_t datasz;
 	uint32_t *header;
 
+	/* TODO support packing */
+	if (packed)
+		return -1;
+
 	if (c->segnum == 0)
 		return -1;
 
