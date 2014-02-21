@@ -241,6 +241,13 @@ void capn_init_malloc(struct capn *c);
 int capn_init_fp(struct capn *c, FILE *f, int packed);
 int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed);
 
+/* capn_write_(fp|mem) writes segments to the file/memory buffer in
+ * serialized form and returns the number of bytes written.
+ */
+/* TODO */
+/*int capn_write_fp(struct capn *c, FILE *f, int packed);*/
+int capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed);
+
 void capn_free(struct capn *c);
 void capn_reset_copy(struct capn *c);
 
