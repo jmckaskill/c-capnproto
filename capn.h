@@ -89,6 +89,7 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  */
 struct capn_segment {
 	struct capn_tree hdr;
+	void *pad1;
 	struct capn_segment *next;
 	struct capn *capn;
 	uint32_t id;
