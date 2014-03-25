@@ -1,7 +1,7 @@
 .PHONY: all clean test
 
-LDFLAGS=-O2 -Wall -fPIC
-CFLAGS=-O2 -Wall -fPIC -I. -Wno-unused-function
+LDFLAGS=-O2 -Wall -fPIC 
+CFLAGS=-O2 -Wall -fPIC --std=gnu11 -I. -Wno-unused-function
 OBJS=capn-malloc.o capn-stream.o capn.o
 prefix = /usr
 
@@ -26,10 +26,10 @@ test: capn-test
 	./capn-test
 
 %-test.o: %-test.cpp *.h *.c *.inc
-	$(CXX) -std=c++11 -g -I. -Igtest/include -o $@ -c $<
+	$(CXX) --std=c++11 -g -I. -Igtest/include -o $@ -c $<
 	
 gtest-all.o: gtest/src/*.cc
-	$(CXX) -std=c++11 -g -I. -Igtest/include -Igtest -o $@ -c $<
+	$(CXX) --std=c++11 -g -I. -Igtest/include -Igtest -o $@ -c $<
 
 capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a gtest-all.o -lpthread
 	$(CXX) -std=c++11 -g -I. -o $@ $^
