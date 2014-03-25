@@ -161,7 +161,7 @@ struct TestDefaults {
 }
 
 struct TestObject {
-  objectField @0 :Object;
+  objectField @0 :AnyPointer;
 
   # Do not add any other fields here!  Some tests rely on objectField being the last pointer
   # in the struct.
