@@ -5,6 +5,8 @@ CFLAGS=-O2 -Wall -Werror -fPIC -I. -Wno-unused-function
 GTEST_CFLAGS=-I../gtest/include
 OBJS=capn-malloc.o capn-stream.o capn.o
 
+prefix = /usr
+
 all: capn.a capn.so capnpc-c test
 
 clean:
@@ -30,3 +32,8 @@ test: capn-test
 
 capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o gtest-all-test.o
 	$(CXX) -g -Wall -Werror -I. -o $@ $^
+	
+install:
+	install -c capnpc-c $(prefix)/bin/capnpc-c
+	install -c capn.so $(prefix)/lib/capn.so
+	install -c capn.a $(prefix)/lib/capn.a
