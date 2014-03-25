@@ -3,3 +3,6 @@
 /capn-test
 /capnpc-c
 /capn.a
+.cproject
+.project
+.settings
