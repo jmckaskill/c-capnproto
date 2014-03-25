@@ -905,7 +905,7 @@ static void define_struct(struct node *n) {
 }
 
 #if 0
-Commenting out interfaces until the RPC protocol has been spec'd
+Commenting out interfaces until the RPC protocol has been specified
 static int find_offset(struct str *v, int inc, uint64_t mask) {
 	int i, j;
 	union {uint64_t u; char c[8];} umask;
