@@ -8,7 +8,7 @@ prefix = /usr
 all: capn.a capn.so capnpc-c test
 
 clean:
-	rm -f *.o *.so capnpc-c compiler/*.o
+	rm -f *.o *.so capnpc-c compiler/*.o *.a gtest/src/*.o
 
 %.o: %.c *.h *.inc compiler/*.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -26,12 +26,15 @@ test: capn-test
 	./capn-test
 
 %-test.o: %-test.cpp *.h *.c *.inc
-	$(CXX) --std=c++11 -g -I. -Igtest/include -o $@ -c $<
+	$(CXX) --std=c++11 -g -I. -Igtest -o $@ -c $<
 	
-gtest-all.o: gtest/src/*.cc
-	$(CXX) --std=c++11 -g -I. -Igtest/include -Igtest -o $@ -c $<
+gtest/src/%.o: gtest/src/%.cc gtest/src/*.h
+	$(CXX) --std=c++11 -g -I. -Igtest -o $@ -c $<
 
-capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a gtest-all.o -lpthread
+gtest-all.a: $(patsubst %.cc,%.o,$(wildcard gtest/src/*.cc))
+	$(AR) rcs $@ $^
+
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a gtest-all.a -lpthread
 	$(CXX) -std=c++11 -g -I. -o $@ $^
 	
 install:

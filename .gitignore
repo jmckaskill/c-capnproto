@@ -3,6 +3,7 @@
 /capn-test
 /capnpc-c
 /capn.a
+/gtest-all.a
 .cproject
 .project
 .settings
