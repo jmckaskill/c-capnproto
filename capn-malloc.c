@@ -205,14 +205,10 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 		return -1;
 
 	p += 4 * headerlen;
-	sz -= 4 * headerlen;
 
 	for (seg = root.seg; seg; seg = seg->next) {
-		if (sz < seg->len)
-			return -1;
 		memcpy(p, seg->data, seg->len);
 		p += seg->len;
-		sz -= seg->len;
 	}
 
 	return datasz;
