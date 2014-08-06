@@ -98,14 +98,16 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 
 	capn_init_malloc(c);
 
+	/* Read the first four bytes to know how many headers we have */
 	if (read_fp(&segnum, 4, f, z, zbuf, packed))
 		goto err;
 
 	segnum = capn_flip32(segnum);
 	if (segnum > 1023)
 		goto err;
-	segnum++;
+	segnum++; /* The wire encoding was zero-based */
 
+	/* Read the header list */
 	if (read_fp(hdr, 8 * (segnum/2) + 4, f, z, zbuf, packed))
 		goto err;
 
@@ -117,10 +119,12 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 		total += hdr[i];
 	}
 
+	/* Allocate space for the data and the capn_segment structs */
 	s = (struct capn_segment*) calloc(1, total + (sizeof(*s) * segnum));
 	if (!s)
 		goto err;
 
+	/* Now read the data and setup the capn_segment structs */
 	data = (char*) (s+segnum);
 	if (read_fp(data, total, f, z, zbuf, packed))
 		goto err;
@@ -132,6 +136,7 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 		capn_append_segment(c, &s[i]);
 	}
 
+    /* Set the entire region to be freed on the last segment */
 	s[segnum-1].user = s;
 
 	return 0;
