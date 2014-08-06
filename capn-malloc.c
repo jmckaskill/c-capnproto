@@ -161,24 +161,8 @@ int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed) {
 	return init_fp(c, NULL, &z, packed);
 }
 
-int
-capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
+static void header_calc(struct capn *c, uint32_t *headerlen, size_t *headersz)
 {
-	struct capn_segment *seg;
-	struct capn_ptr root;
-	int i;
-	uint32_t headerlen;
-	size_t datasz;
-	uint32_t *header;
-
-	/* TODO support packing */
-	if (packed)
-		return -1;
-
-	if (c->segnum == 0)
-		return -1;
-
-	root = capn_root(c);
 	/* segnum == 1:
 	 *   [segnum][segsiz]
 	 * segnum == 2:
@@ -188,33 +172,107 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 	 * segnum == 4:
 	 *   [segnum][segsiz][segsiz][segsiz][segsiz][zeroes]
 	 */
-	headerlen = ((2 + c->segnum) / 2) * 2;
-	datasz = 4 * headerlen;
-	header = (uint32_t*) p;
+	*headerlen = ((2 + c->segnum) / 2) * 2;
+	*headersz = 4 * *headerlen;
+}
 
-	if (sz < datasz)
-		return -1;
+static int header_render(struct capn *c, struct capn_segment *seg, uint32_t *header, uint32_t headerlen, size_t *datasz)
+{
+	int i;
 
 	header[0] = capn_flip32(c->segnum - 1);
-	header[headerlen-1] = 0;
-	for (i = 0, seg = root.seg; i < c->segnum; i++, seg = seg->next) {
+	header[headerlen-1] = 0; /* Zero out the spare position in the header sizes */
+	for (i = 0; i < c->segnum; i++, seg = seg->next) {
 		if (0 == seg)
 			return -1;
-		datasz += seg->len;
+		*datasz += seg->len;
 		header[1 + i] = capn_flip32(seg->len / 8);
 	}
 	if (0 != seg)
 		return -1;
 
-	if (sz < datasz)
+	return 0;
+}
+
+int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
+{
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	uint32_t *header;
+	struct capn_stream z;
+	int ret;
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+	header = (uint32_t*) p + headersz + 2; /* must reserve two bytes for worst case expansion */
+
+	if (sz < headersz*2 + 2) /* We must have space for temporary writing of header to deflate */
 		return -1;
 
-	p += 4 * headerlen;
+	ret = header_render(c, root.seg, header, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	memset(&z, 0, sizeof(z));
+	z.next_in = (uint8_t *)header;
+	z.avail_in = headersz;
+	z.next_out = p;
+	z.avail_out = sz;
+
+	// pack the headers
+	ret = capn_deflate(&z);
+	if (ret != 0 || z.avail_in != 0)
+		return -1;
+
+	for (seg = root.seg; seg; seg = seg->next) {
+		z.next_in = (uint8_t *)seg->data;
+		z.avail_in = seg->len;
+		ret = capn_deflate(&z);
+		if (ret != 0 || z.avail_in != 0)
+			return -1;
+	}
+
+	return sz - z.avail_out;
+}
+
+int
+capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
+{
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	uint32_t *header;
+	int ret;
+
+	if (c->segnum == 0)
+		return -1;
+
+	if (packed)
+		return capn_write_mem_packed(c, p, sz);
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+	header = (uint32_t*) p;
+
+	if (sz < headersz)
+		return -1;
+
+	ret = header_render(c, root.seg, header, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	if (sz < headersz + datasz)
+		return -1;
+
+	p += headersz;
 
 	for (seg = root.seg; seg; seg = seg->next) {
 		memcpy(p, seg->data, seg->len);
 		p += seg->len;
 	}
 
-	return datasz;
+	return headersz+datasz;
 }
