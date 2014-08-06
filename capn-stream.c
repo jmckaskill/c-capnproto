@@ -46,7 +46,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 2)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0;
 			for (sz = 1; sz < min(s->avail_in/8, 256); sz++) {
 				if (((uint64_t*) s->next_in)[sz] != 0) {
 					break;
@@ -64,7 +64,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 10)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0xFF;
 			memcpy(s->next_out+1, s->next_in, 8);
 			s->next_in += 8;
 			s->avail_in -= 8;
