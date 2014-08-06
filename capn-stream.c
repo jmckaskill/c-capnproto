@@ -161,16 +161,16 @@ int capn_inflate(struct capn_stream* s) {
 			continue;
 
 		default:
+			hdr = s->next_in[0];
 			sz = 0;
-			hdr = s->next_in[1];
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i))
 					sz++;
 			}
-			if (s->avail_in < 2 + sz)
+			if (s->avail_in < 1 + sz)
 				return CAPN_NEED_MORE;
 
-			s->next_in += 2;
+			s->next_in += 1;
 
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i)) {
@@ -181,7 +181,7 @@ int capn_inflate(struct capn_stream* s) {
 			}
 
 			s->avail_out -= 8;
-			s->avail_in -= 2 + sz;
+			s->avail_in -= 1 + sz;
 			continue;
 		}
 	}
