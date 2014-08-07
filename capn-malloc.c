@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 struct check_segment_alignment {
 	unsigned int foo : (sizeof(struct capn_segment)&7) ? -1 : 1;
@@ -275,4 +276,99 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 	}
 
 	return headersz+datasz;
+}
+
+static int _write_fd(ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, void *p, size_t count)
+{
+	int ret;
+	int sent = 0;
+
+	while (sent < count) {
+		ret = write_fd(fd, ((uint8_t*)p)+sent, count-sent);
+		if (ret < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			else
+				return -1;
+		}
+		sent += ret;
+	}
+
+	return 0;
+}
+
+int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, int packed)
+{
+	unsigned char buf[4096];
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	int ret;
+	struct capn_stream z;
+	unsigned char *p;
+
+	if (c->segnum == 0)
+		return -1;
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+
+	if (sizeof(buf) < headersz)
+		return -1;
+
+	ret = header_render(c, root.seg, (uint32_t*)buf, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	if (packed) {
+		const int headerrem = sizeof(buf) - headersz;
+		const int maxpack = headersz + 2;
+		if (headerrem < maxpack)
+			return -1;
+
+		memset(&z, 0, sizeof(z));
+		z.next_in = buf;
+		z.avail_in = headersz;
+		z.next_out = buf + headersz;
+		z.avail_out = headerrem;
+		ret = capn_deflate(&z);
+		if (ret != 0)
+			return -1;
+
+		p = buf + headersz;
+		headersz = headerrem - z.avail_out;
+	} else {
+		p = buf;
+	}
+
+	ret = _write_fd(write_fd, fd, p, headersz);
+	if (ret < 0)
+		return -1;
+
+	datasz = headersz;
+	for (seg = root.seg; seg; seg = seg->next) {
+		size_t bufsz;
+		if (packed) {
+			memset(&z, 0, sizeof(z));
+			z.next_in = (uint8_t*)seg->data;
+			z.avail_in = seg->len;
+			z.next_out = buf;
+			z.avail_out = sizeof(buf);
+			ret = capn_deflate(&z);
+			if (ret != 0)
+				return -1;
+			p = buf;
+			bufsz = sizeof(buf) - z.avail_out;
+		} else {
+			p = (uint8_t*)seg->data;
+			bufsz = seg->len;
+		}
+		ret = _write_fd(write_fd, fd, p, bufsz);
+		if (ret < 0)
+			return -1;
+		datasz += bufsz;
+	}
+
+	return datasz;
 }
