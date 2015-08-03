@@ -161,7 +161,7 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 {
 	struct capn_segment *seg;
 	struct capn_ptr root;
-	int i;
+	unsigned i;
 	uint32_t headerlen;
 	size_t datasz;
 	uint32_t *header;
