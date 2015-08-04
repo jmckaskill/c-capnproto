@@ -90,6 +90,17 @@ static int read_fp(void *p, size_t sz, FILE *f, struct capn_stream *z, uint8_t* 
 }
 
 static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
+	/*
+	 * Initialize 'c' from the contents of 'f', assuming the message has been
+	 * serialized with the standard framing format. From https://capnproto.org/encoding.html:
+	 *
+	 * When transmitting over a stream, the following should be sent. All integers are unsigned and little-endian.
+	 *   (4 bytes) The number of segments, minus one (since there is always at least one segment).
+	 *   (N * 4 bytes) The size of each segment, in words.
+	 *   (0 or 4 bytes) Padding up to the next word boundary.
+	 *   The content of each segment, in order.
+	 */
+
 	struct capn_segment *s = NULL;
 	uint32_t i, segnum, total = 0;
 	uint32_t hdr[1024];
