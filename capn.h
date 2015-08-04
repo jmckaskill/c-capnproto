@@ -94,7 +94,7 @@ struct capn_segment {
 	uint32_t id;
 	/* user settable */
 	char *data;
-	int len, cap;
+	unsigned len, cap;
 	void *user;
 };
 
@@ -261,10 +261,10 @@ void capn_reset_copy(struct capn *c);
  */
 struct capn_stream {
 	const uint8_t *next_in;
-	int avail_in;
+	unsigned avail_in;
 	uint8_t *next_out;
-	int avail_out;
-	int zeros, raw;
+	unsigned avail_out;
+	unsigned zeros, raw;
 };
 
 #define CAPN_MISALIGNED -1

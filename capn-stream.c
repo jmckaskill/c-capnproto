@@ -3,7 +3,7 @@
 #include <string.h>
 
 #ifndef min
-static int min(int a, int b) { return (a < b) ? a : b; }
+static unsigned min(unsigned a, unsigned b) { return (a < b) ? a : b; }
 #endif
 
 int capn_deflate(struct capn_stream* s) {
@@ -12,7 +12,7 @@ int capn_deflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_in) {
-		int i, sz = 0;
+		unsigned i, sz = 0;
 		uint8_t hdr = 0;
 		uint8_t *p;
 
@@ -104,7 +104,7 @@ int capn_inflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_out) {
-		int i, sz;
+		unsigned i, sz;
 		uint8_t hdr;
 
 		if (s->zeros > 0) {
@@ -143,7 +143,7 @@ int capn_inflate(struct capn_stream* s) {
 				return CAPN_NEED_MORE;
 
 			memcpy(s->next_out, s->next_in+1, 8);
-			s->raw = (int) s->next_in[9] * 8;
+			s->raw = s->next_in[9] * 8;
 			s->next_in += 10;
 			s->avail_in -= 10;
 			s->next_out += 8;
@@ -154,7 +154,7 @@ int capn_inflate(struct capn_stream* s) {
 			/* 0x00 is followed by a single byte indicating
 			 * the count of consecutive zero value words
 			 * minus 1 */
-			s->zeros = (int) (s->next_in[1] + 1) * 8;
+			s->zeros = (s->next_in[1] + 1) * 8;
 			s->next_in += 2;
 			s->avail_in -= 2;
 			continue;

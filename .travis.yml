@@ -1,0 +1,22 @@
+language: cpp
+
+sudo: required
+# not totally clear why this is required, but travis support recommended it
+# to allow gcc-4.8 to be installed as the system gcc
+services:
+- docker
+
+# need at least gcc 4.8 for -std=c++11
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+    - g++-4.8
+ 
+script: make
+
+compiler:
+- clang
+- gcc
