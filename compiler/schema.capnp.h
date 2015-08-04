@@ -14,12 +14,16 @@ extern "C" {
 #endif
 
 struct Node;
+struct Node_Parameter;
 struct Node_NestedNode;
 struct Field;
 struct Enumerant;
+struct Superclass;
 struct Method;
-struct Method_Param;
 struct Type;
+struct Brand;
+struct Brand_Scope;
+struct Brand_Binding;
 struct Value;
 struct Annotation;
 struct CodeGeneratorRequest;
@@ -27,12 +31,16 @@ struct CodeGeneratorRequest_RequestedFile;
 struct CodeGeneratorRequest_RequestedFile_Import;
 
 typedef struct {capn_ptr p;} Node_ptr;
+typedef struct {capn_ptr p;} Node_Parameter_ptr;
 typedef struct {capn_ptr p;} Node_NestedNode_ptr;
 typedef struct {capn_ptr p;} Field_ptr;
 typedef struct {capn_ptr p;} Enumerant_ptr;
+typedef struct {capn_ptr p;} Superclass_ptr;
 typedef struct {capn_ptr p;} Method_ptr;
-typedef struct {capn_ptr p;} Method_Param_ptr;
 typedef struct {capn_ptr p;} Type_ptr;
+typedef struct {capn_ptr p;} Brand_ptr;
+typedef struct {capn_ptr p;} Brand_Scope_ptr;
+typedef struct {capn_ptr p;} Brand_Binding_ptr;
 typedef struct {capn_ptr p;} Value_ptr;
 typedef struct {capn_ptr p;} Annotation_ptr;
 typedef struct {capn_ptr p;} CodeGeneratorRequest_ptr;
@@ -40,12 +48,16 @@ typedef struct {capn_ptr p;} CodeGeneratorRequest_RequestedFile_ptr;
 typedef struct {capn_ptr p;} CodeGeneratorRequest_RequestedFile_Import_ptr;
 
 typedef struct {capn_ptr p;} Node_list;
+typedef struct {capn_ptr p;} Node_Parameter_list;
 typedef struct {capn_ptr p;} Node_NestedNode_list;
 typedef struct {capn_ptr p;} Field_list;
 typedef struct {capn_ptr p;} Enumerant_list;
+typedef struct {capn_ptr p;} Superclass_list;
 typedef struct {capn_ptr p;} Method_list;
-typedef struct {capn_ptr p;} Method_Param_list;
 typedef struct {capn_ptr p;} Type_list;
+typedef struct {capn_ptr p;} Brand_list;
+typedef struct {capn_ptr p;} Brand_Scope_list;
+typedef struct {capn_ptr p;} Brand_Binding_list;
 typedef struct {capn_ptr p;} Value_list;
 typedef struct {capn_ptr p;} Annotation_list;
 typedef struct {capn_ptr p;} CodeGeneratorRequest_list;
@@ -62,6 +74,7 @@ enum ElementSize {
 	ElementSize_pointer = 6,
 	ElementSize_inlineComposite = 7
 };
+extern uint16_t Field_noDiscriminant;
 enum Node_which {
 	Node_file = 0,
 	Node__struct = 1,
@@ -76,6 +89,8 @@ struct Node {
 	capn_text displayName;
 	uint32_t displayNamePrefixLength;
 	uint64_t scopeId;
+	Node_Parameter_list parameters;
+	unsigned isGeneric : 1;
 	Node_NestedNode_list nestedNodes;
 	Annotation_list annotations;
 	enum Node_which which;
@@ -94,6 +109,7 @@ struct Node {
 		} _enum;
 		struct {
 			Method_list methods;
+			Superclass_list superclasses;
 		} _interface;
 		struct {
 			Type_ptr type;
@@ -115,6 +131,10 @@ struct Node {
 			unsigned targetsAnnotation : 1;
 		} annotation;
 	};
+};
+
+struct Node_Parameter {
+	capn_text name;
 };
 
 struct Node_NestedNode {
@@ -141,6 +161,7 @@ struct Field {
 			uint32_t offset;
 			Type_ptr type;
 			Value_ptr defaultValue;
+			unsigned hadExplicitDefault : 1;
 		} slot;
 		struct {
 			uint64_t typeId;
@@ -158,20 +179,25 @@ struct Enumerant {
 	Annotation_list annotations;
 };
 
+struct Superclass {
+	uint64_t id;
+	Brand_ptr brand;
+};
+
 struct Method {
 	capn_text name;
 	uint16_t codeOrder;
-	Method_Param_list params;
-	uint16_t requiredParamCount;
-	Type_ptr returnType;
+	Node_Parameter_list implicitParameters;
+	uint64_t paramStructType;
+	Brand_ptr paramBrand;
+	uint64_t resultStructType;
+	Brand_ptr resultBrand;
 	Annotation_list annotations;
 };
-
-struct Method_Param {
-	capn_text name;
-	Type_ptr type;
-	Value_ptr defaultValue;
-	Annotation_list annotations;
+enum Type_anyPointer_which {
+	Type_anyPointer_unconstrained = 0,
+	Type_anyPointer_parameter = 1,
+	Type_anyPointer_implicitMethodParameter = 2
 };
 enum Type_which {
 	Type__void = 0,
@@ -192,7 +218,7 @@ enum Type_which {
 	Type__enum = 15,
 	Type__struct = 16,
 	Type__interface = 17,
-	Type_object = 18
+	Type_anyPointer = 18
 };
 
 struct Type {
@@ -203,13 +229,53 @@ struct Type {
 		} _list;
 		struct {
 			uint64_t typeId;
+			Brand_ptr brand;
 		} _enum;
 		struct {
 			uint64_t typeId;
+			Brand_ptr brand;
 		} _struct;
 		struct {
 			uint64_t typeId;
+			Brand_ptr brand;
 		} _interface;
+		enum Type_anyPointer_which anyPointer_which;
+		union {
+			struct {
+				uint64_t scopeId;
+				uint16_t parameterIndex;
+			} parameter;
+			struct {
+				uint16_t parameterIndex;
+			} implicitMethodParameter;
+		} anyPointer;
+	};
+};
+
+struct Brand {
+	Brand_Scope_list scopes;
+};
+enum Brand_Scope_which {
+	Brand_Scope_bind = 0,
+	Brand_Scope_inherit = 1
+};
+
+struct Brand_Scope {
+	uint64_t scopeId;
+	enum Brand_Scope_which which;
+	union {
+		Brand_Binding_list bind;
+	};
+};
+enum Brand_Binding_which {
+	Brand_Binding_unbound = 0,
+	Brand_Binding_type = 1
+};
+
+struct Brand_Binding {
+	enum Brand_Binding_which which;
+	union {
+		Type_ptr type;
 	};
 };
 enum Value_which {
@@ -231,7 +297,7 @@ enum Value_which {
 	Value__enum = 15,
 	Value__struct = 16,
 	Value__interface = 17,
-	Value_object = 18
+	Value_anyPointer = 18
 };
 
 struct Value {
@@ -253,12 +319,13 @@ struct Value {
 		capn_ptr _list;
 		uint16_t _enum;
 		capn_ptr _struct;
-		capn_ptr object;
+		capn_ptr anyPointer;
 	};
 };
 
 struct Annotation {
 	uint64_t id;
+	Brand_ptr brand;
 	Value_ptr value;
 };
 
@@ -279,12 +346,16 @@ struct CodeGeneratorRequest_RequestedFile_Import {
 };
 
 Node_ptr new_Node(struct capn_segment*);
+Node_Parameter_ptr new_Node_Parameter(struct capn_segment*);
 Node_NestedNode_ptr new_Node_NestedNode(struct capn_segment*);
 Field_ptr new_Field(struct capn_segment*);
 Enumerant_ptr new_Enumerant(struct capn_segment*);
+Superclass_ptr new_Superclass(struct capn_segment*);
 Method_ptr new_Method(struct capn_segment*);
-Method_Param_ptr new_Method_Param(struct capn_segment*);
 Type_ptr new_Type(struct capn_segment*);
+Brand_ptr new_Brand(struct capn_segment*);
+Brand_Scope_ptr new_Brand_Scope(struct capn_segment*);
+Brand_Binding_ptr new_Brand_Binding(struct capn_segment*);
 Value_ptr new_Value(struct capn_segment*);
 Annotation_ptr new_Annotation(struct capn_segment*);
 CodeGeneratorRequest_ptr new_CodeGeneratorRequest(struct capn_segment*);
@@ -292,12 +363,16 @@ CodeGeneratorRequest_RequestedFile_ptr new_CodeGeneratorRequest_RequestedFile(st
 CodeGeneratorRequest_RequestedFile_Import_ptr new_CodeGeneratorRequest_RequestedFile_Import(struct capn_segment*);
 
 Node_list new_Node_list(struct capn_segment*, int len);
+Node_Parameter_list new_Node_Parameter_list(struct capn_segment*, int len);
 Node_NestedNode_list new_Node_NestedNode_list(struct capn_segment*, int len);
 Field_list new_Field_list(struct capn_segment*, int len);
 Enumerant_list new_Enumerant_list(struct capn_segment*, int len);
+Superclass_list new_Superclass_list(struct capn_segment*, int len);
 Method_list new_Method_list(struct capn_segment*, int len);
-Method_Param_list new_Method_Param_list(struct capn_segment*, int len);
 Type_list new_Type_list(struct capn_segment*, int len);
+Brand_list new_Brand_list(struct capn_segment*, int len);
+Brand_Scope_list new_Brand_Scope_list(struct capn_segment*, int len);
+Brand_Binding_list new_Brand_Binding_list(struct capn_segment*, int len);
 Value_list new_Value_list(struct capn_segment*, int len);
 Annotation_list new_Annotation_list(struct capn_segment*, int len);
 CodeGeneratorRequest_list new_CodeGeneratorRequest_list(struct capn_segment*, int len);
@@ -305,12 +380,16 @@ CodeGeneratorRequest_RequestedFile_list new_CodeGeneratorRequest_RequestedFile_l
 CodeGeneratorRequest_RequestedFile_Import_list new_CodeGeneratorRequest_RequestedFile_Import_list(struct capn_segment*, int len);
 
 void read_Node(struct Node*, Node_ptr);
+void read_Node_Parameter(struct Node_Parameter*, Node_Parameter_ptr);
 void read_Node_NestedNode(struct Node_NestedNode*, Node_NestedNode_ptr);
 void read_Field(struct Field*, Field_ptr);
 void read_Enumerant(struct Enumerant*, Enumerant_ptr);
+void read_Superclass(struct Superclass*, Superclass_ptr);
 void read_Method(struct Method*, Method_ptr);
-void read_Method_Param(struct Method_Param*, Method_Param_ptr);
 void read_Type(struct Type*, Type_ptr);
+void read_Brand(struct Brand*, Brand_ptr);
+void read_Brand_Scope(struct Brand_Scope*, Brand_Scope_ptr);
+void read_Brand_Binding(struct Brand_Binding*, Brand_Binding_ptr);
 void read_Value(struct Value*, Value_ptr);
 void read_Annotation(struct Annotation*, Annotation_ptr);
 void read_CodeGeneratorRequest(struct CodeGeneratorRequest*, CodeGeneratorRequest_ptr);
@@ -318,12 +397,16 @@ void read_CodeGeneratorRequest_RequestedFile(struct CodeGeneratorRequest_Request
 void read_CodeGeneratorRequest_RequestedFile_Import(struct CodeGeneratorRequest_RequestedFile_Import*, CodeGeneratorRequest_RequestedFile_Import_ptr);
 
 void write_Node(const struct Node*, Node_ptr);
+void write_Node_Parameter(const struct Node_Parameter*, Node_Parameter_ptr);
 void write_Node_NestedNode(const struct Node_NestedNode*, Node_NestedNode_ptr);
 void write_Field(const struct Field*, Field_ptr);
 void write_Enumerant(const struct Enumerant*, Enumerant_ptr);
+void write_Superclass(const struct Superclass*, Superclass_ptr);
 void write_Method(const struct Method*, Method_ptr);
-void write_Method_Param(const struct Method_Param*, Method_Param_ptr);
 void write_Type(const struct Type*, Type_ptr);
+void write_Brand(const struct Brand*, Brand_ptr);
+void write_Brand_Scope(const struct Brand_Scope*, Brand_Scope_ptr);
+void write_Brand_Binding(const struct Brand_Binding*, Brand_Binding_ptr);
 void write_Value(const struct Value*, Value_ptr);
 void write_Annotation(const struct Annotation*, Annotation_ptr);
 void write_CodeGeneratorRequest(const struct CodeGeneratorRequest*, CodeGeneratorRequest_ptr);
@@ -331,12 +414,16 @@ void write_CodeGeneratorRequest_RequestedFile(const struct CodeGeneratorRequest_
 void write_CodeGeneratorRequest_RequestedFile_Import(const struct CodeGeneratorRequest_RequestedFile_Import*, CodeGeneratorRequest_RequestedFile_Import_ptr);
 
 void get_Node(struct Node*, Node_list, int i);
+void get_Node_Parameter(struct Node_Parameter*, Node_Parameter_list, int i);
 void get_Node_NestedNode(struct Node_NestedNode*, Node_NestedNode_list, int i);
 void get_Field(struct Field*, Field_list, int i);
 void get_Enumerant(struct Enumerant*, Enumerant_list, int i);
+void get_Superclass(struct Superclass*, Superclass_list, int i);
 void get_Method(struct Method*, Method_list, int i);
-void get_Method_Param(struct Method_Param*, Method_Param_list, int i);
 void get_Type(struct Type*, Type_list, int i);
+void get_Brand(struct Brand*, Brand_list, int i);
+void get_Brand_Scope(struct Brand_Scope*, Brand_Scope_list, int i);
+void get_Brand_Binding(struct Brand_Binding*, Brand_Binding_list, int i);
 void get_Value(struct Value*, Value_list, int i);
 void get_Annotation(struct Annotation*, Annotation_list, int i);
 void get_CodeGeneratorRequest(struct CodeGeneratorRequest*, CodeGeneratorRequest_list, int i);
@@ -344,12 +431,16 @@ void get_CodeGeneratorRequest_RequestedFile(struct CodeGeneratorRequest_Requeste
 void get_CodeGeneratorRequest_RequestedFile_Import(struct CodeGeneratorRequest_RequestedFile_Import*, CodeGeneratorRequest_RequestedFile_Import_list, int i);
 
 void set_Node(const struct Node*, Node_list, int i);
+void set_Node_Parameter(const struct Node_Parameter*, Node_Parameter_list, int i);
 void set_Node_NestedNode(const struct Node_NestedNode*, Node_NestedNode_list, int i);
 void set_Field(const struct Field*, Field_list, int i);
 void set_Enumerant(const struct Enumerant*, Enumerant_list, int i);
+void set_Superclass(const struct Superclass*, Superclass_list, int i);
 void set_Method(const struct Method*, Method_list, int i);
-void set_Method_Param(const struct Method_Param*, Method_Param_list, int i);
 void set_Type(const struct Type*, Type_list, int i);
+void set_Brand(const struct Brand*, Brand_list, int i);
+void set_Brand_Scope(const struct Brand_Scope*, Brand_Scope_list, int i);
+void set_Brand_Binding(const struct Brand_Binding*, Brand_Binding_list, int i);
 void set_Value(const struct Value*, Value_list, int i);
 void set_Annotation(const struct Annotation*, Annotation_list, int i);
 void set_CodeGeneratorRequest(const struct CodeGeneratorRequest*, CodeGeneratorRequest_list, int i);

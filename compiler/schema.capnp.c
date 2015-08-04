@@ -1,15 +1,16 @@
 #include "schema.capnp.h"
 /* AUTO GENERATED - DO NOT EDIT */
 static const capn_text capn_val0 = {0,""};
+uint16_t Field_noDiscriminant = 65535;
 
 Node_ptr new_Node(struct capn_segment *s) {
 	Node_ptr p;
-	p.p = capn_new_struct(s, 40, 5);
+	p.p = capn_new_struct(s, 40, 6);
 	return p;
 }
 Node_list new_Node_list(struct capn_segment *s, int len) {
 	Node_list p;
-	p.p = capn_new_list(s, len, 40, 5);
+	p.p = capn_new_list(s, len, 40, 6);
 	return p;
 }
 void read_Node(struct Node *s, Node_ptr p) {
@@ -18,6 +19,8 @@ void read_Node(struct Node *s, Node_ptr p) {
 	s->displayName = capn_get_text(p.p, 0, capn_val0);
 	s->displayNamePrefixLength = capn_read32(p.p, 8);
 	s->scopeId = capn_read64(p.p, 16);
+	s->parameters.p = capn_getp(p.p, 5, 0);
+	s->isGeneric = (capn_read8(p.p, 36) & 1) != 0;
 	s->nestedNodes.p = capn_getp(p.p, 1, 0);
 	s->annotations.p = capn_getp(p.p, 2, 0);
 	s->which = (enum Node_which) capn_read16(p.p, 12);
@@ -36,6 +39,7 @@ void read_Node(struct Node *s, Node_ptr p) {
 		break;
 	case Node__interface:
 		s->_interface.methods.p = capn_getp(p.p, 3, 0);
+		s->_interface.superclasses.p = capn_getp(p.p, 4, 0);
 		break;
 	case Node__const:
 		s->_const.type.p = capn_getp(p.p, 3, 0);
@@ -66,6 +70,8 @@ void write_Node(const struct Node *s, Node_ptr p) {
 	capn_set_text(p.p, 0, s->displayName);
 	capn_write32(p.p, 8, s->displayNamePrefixLength);
 	capn_write64(p.p, 16, s->scopeId);
+	capn_setp(p.p, 5, s->parameters.p);
+	capn_write1(p.p, 288, s->isGeneric != 0);
 	capn_setp(p.p, 1, s->nestedNodes.p);
 	capn_setp(p.p, 2, s->annotations.p);
 	capn_write16(p.p, 12, s->which);
@@ -84,6 +90,7 @@ void write_Node(const struct Node *s, Node_ptr p) {
 		break;
 	case Node__interface:
 		capn_setp(p.p, 3, s->_interface.methods.p);
+		capn_setp(p.p, 4, s->_interface.superclasses.p);
 		break;
 	case Node__const:
 		capn_setp(p.p, 3, s->_const.type.p);
@@ -117,6 +124,35 @@ void set_Node(const struct Node *s, Node_list l, int i) {
 	Node_ptr p;
 	p.p = capn_getp(l.p, i, 0);
 	write_Node(s, p);
+}
+
+Node_Parameter_ptr new_Node_Parameter(struct capn_segment *s) {
+	Node_Parameter_ptr p;
+	p.p = capn_new_struct(s, 0, 1);
+	return p;
+}
+Node_Parameter_list new_Node_Parameter_list(struct capn_segment *s, int len) {
+	Node_Parameter_list p;
+	p.p = capn_new_list(s, len, 0, 1);
+	return p;
+}
+void read_Node_Parameter(struct Node_Parameter *s, Node_Parameter_ptr p) {
+	capn_resolve(&p.p);
+	s->name = capn_get_text(p.p, 0, capn_val0);
+}
+void write_Node_Parameter(const struct Node_Parameter *s, Node_Parameter_ptr p) {
+	capn_resolve(&p.p);
+	capn_set_text(p.p, 0, s->name);
+}
+void get_Node_Parameter(struct Node_Parameter *s, Node_Parameter_list l, int i) {
+	Node_Parameter_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	read_Node_Parameter(s, p);
+}
+void set_Node_Parameter(const struct Node_Parameter *s, Node_Parameter_list l, int i) {
+	Node_Parameter_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	write_Node_Parameter(s, p);
 }
 
 Node_NestedNode_ptr new_Node_NestedNode(struct capn_segment *s) {
@@ -172,6 +208,7 @@ void read_Field(struct Field *s, Field_ptr p) {
 		s->slot.offset = capn_read32(p.p, 4);
 		s->slot.type.p = capn_getp(p.p, 2, 0);
 		s->slot.defaultValue.p = capn_getp(p.p, 3, 0);
+		s->slot.hadExplicitDefault = (capn_read8(p.p, 16) & 1) != 0;
 		break;
 	case Field_group:
 		s->group.typeId = capn_read64(p.p, 16);
@@ -200,6 +237,7 @@ void write_Field(const struct Field *s, Field_ptr p) {
 		capn_write32(p.p, 4, s->slot.offset);
 		capn_setp(p.p, 2, s->slot.type.p);
 		capn_setp(p.p, 3, s->slot.defaultValue.p);
+		capn_write1(p.p, 128, s->slot.hadExplicitDefault != 0);
 		break;
 	case Field_group:
 		capn_write64(p.p, 16, s->group.typeId);
@@ -260,33 +298,68 @@ void set_Enumerant(const struct Enumerant *s, Enumerant_list l, int i) {
 	write_Enumerant(s, p);
 }
 
+Superclass_ptr new_Superclass(struct capn_segment *s) {
+	Superclass_ptr p;
+	p.p = capn_new_struct(s, 8, 1);
+	return p;
+}
+Superclass_list new_Superclass_list(struct capn_segment *s, int len) {
+	Superclass_list p;
+	p.p = capn_new_list(s, len, 8, 1);
+	return p;
+}
+void read_Superclass(struct Superclass *s, Superclass_ptr p) {
+	capn_resolve(&p.p);
+	s->id = capn_read64(p.p, 0);
+	s->brand.p = capn_getp(p.p, 0, 0);
+}
+void write_Superclass(const struct Superclass *s, Superclass_ptr p) {
+	capn_resolve(&p.p);
+	capn_write64(p.p, 0, s->id);
+	capn_setp(p.p, 0, s->brand.p);
+}
+void get_Superclass(struct Superclass *s, Superclass_list l, int i) {
+	Superclass_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	read_Superclass(s, p);
+}
+void set_Superclass(const struct Superclass *s, Superclass_list l, int i) {
+	Superclass_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	write_Superclass(s, p);
+}
+
 Method_ptr new_Method(struct capn_segment *s) {
 	Method_ptr p;
-	p.p = capn_new_struct(s, 8, 4);
+	p.p = capn_new_struct(s, 24, 5);
 	return p;
 }
 Method_list new_Method_list(struct capn_segment *s, int len) {
 	Method_list p;
-	p.p = capn_new_list(s, len, 8, 4);
+	p.p = capn_new_list(s, len, 24, 5);
 	return p;
 }
 void read_Method(struct Method *s, Method_ptr p) {
 	capn_resolve(&p.p);
 	s->name = capn_get_text(p.p, 0, capn_val0);
 	s->codeOrder = capn_read16(p.p, 0);
-	s->params.p = capn_getp(p.p, 1, 0);
-	s->requiredParamCount = capn_read16(p.p, 2);
-	s->returnType.p = capn_getp(p.p, 2, 0);
-	s->annotations.p = capn_getp(p.p, 3, 0);
+	s->implicitParameters.p = capn_getp(p.p, 4, 0);
+	s->paramStructType = capn_read64(p.p, 8);
+	s->paramBrand.p = capn_getp(p.p, 2, 0);
+	s->resultStructType = capn_read64(p.p, 16);
+	s->resultBrand.p = capn_getp(p.p, 3, 0);
+	s->annotations.p = capn_getp(p.p, 1, 0);
 }
 void write_Method(const struct Method *s, Method_ptr p) {
 	capn_resolve(&p.p);
 	capn_set_text(p.p, 0, s->name);
 	capn_write16(p.p, 0, s->codeOrder);
-	capn_setp(p.p, 1, s->params.p);
-	capn_write16(p.p, 2, s->requiredParamCount);
-	capn_setp(p.p, 2, s->returnType.p);
-	capn_setp(p.p, 3, s->annotations.p);
+	capn_setp(p.p, 4, s->implicitParameters.p);
+	capn_write64(p.p, 8, s->paramStructType);
+	capn_setp(p.p, 2, s->paramBrand.p);
+	capn_write64(p.p, 16, s->resultStructType);
+	capn_setp(p.p, 3, s->resultBrand.p);
+	capn_setp(p.p, 1, s->annotations.p);
 }
 void get_Method(struct Method *s, Method_list l, int i) {
 	Method_ptr p;
@@ -299,49 +372,14 @@ void set_Method(const struct Method *s, Method_list l, int i) {
 	write_Method(s, p);
 }
 
-Method_Param_ptr new_Method_Param(struct capn_segment *s) {
-	Method_Param_ptr p;
-	p.p = capn_new_struct(s, 0, 4);
-	return p;
-}
-Method_Param_list new_Method_Param_list(struct capn_segment *s, int len) {
-	Method_Param_list p;
-	p.p = capn_new_list(s, len, 0, 4);
-	return p;
-}
-void read_Method_Param(struct Method_Param *s, Method_Param_ptr p) {
-	capn_resolve(&p.p);
-	s->name = capn_get_text(p.p, 0, capn_val0);
-	s->type.p = capn_getp(p.p, 1, 0);
-	s->defaultValue.p = capn_getp(p.p, 2, 0);
-	s->annotations.p = capn_getp(p.p, 3, 0);
-}
-void write_Method_Param(const struct Method_Param *s, Method_Param_ptr p) {
-	capn_resolve(&p.p);
-	capn_set_text(p.p, 0, s->name);
-	capn_setp(p.p, 1, s->type.p);
-	capn_setp(p.p, 2, s->defaultValue.p);
-	capn_setp(p.p, 3, s->annotations.p);
-}
-void get_Method_Param(struct Method_Param *s, Method_Param_list l, int i) {
-	Method_Param_ptr p;
-	p.p = capn_getp(l.p, i, 0);
-	read_Method_Param(s, p);
-}
-void set_Method_Param(const struct Method_Param *s, Method_Param_list l, int i) {
-	Method_Param_ptr p;
-	p.p = capn_getp(l.p, i, 0);
-	write_Method_Param(s, p);
-}
-
 Type_ptr new_Type(struct capn_segment *s) {
 	Type_ptr p;
-	p.p = capn_new_struct(s, 16, 1);
+	p.p = capn_new_struct(s, 24, 1);
 	return p;
 }
 Type_list new_Type_list(struct capn_segment *s, int len) {
 	Type_list p;
-	p.p = capn_new_list(s, len, 16, 1);
+	p.p = capn_new_list(s, len, 24, 1);
 	return p;
 }
 void read_Type(struct Type *s, Type_ptr p) {
@@ -353,12 +391,29 @@ void read_Type(struct Type *s, Type_ptr p) {
 		break;
 	case Type__enum:
 		s->_enum.typeId = capn_read64(p.p, 8);
+		s->_enum.brand.p = capn_getp(p.p, 0, 0);
 		break;
 	case Type__struct:
 		s->_struct.typeId = capn_read64(p.p, 8);
+		s->_struct.brand.p = capn_getp(p.p, 0, 0);
 		break;
 	case Type__interface:
 		s->_interface.typeId = capn_read64(p.p, 8);
+		s->_interface.brand.p = capn_getp(p.p, 0, 0);
+		break;
+	case Type_anyPointer:
+		s->anyPointer_which = (enum Type_anyPointer_which) capn_read16(p.p, 8);
+		switch (s->anyPointer_which) {
+		case Type_anyPointer_parameter:
+			s->anyPointer.parameter.scopeId = capn_read64(p.p, 16);
+			s->anyPointer.parameter.parameterIndex = capn_read16(p.p, 10);
+			break;
+		case Type_anyPointer_implicitMethodParameter:
+			s->anyPointer.implicitMethodParameter.parameterIndex = capn_read16(p.p, 10);
+			break;
+		default:
+			break;
+		}
 		break;
 	default:
 		break;
@@ -373,12 +428,29 @@ void write_Type(const struct Type *s, Type_ptr p) {
 		break;
 	case Type__enum:
 		capn_write64(p.p, 8, s->_enum.typeId);
+		capn_setp(p.p, 0, s->_enum.brand.p);
 		break;
 	case Type__struct:
 		capn_write64(p.p, 8, s->_struct.typeId);
+		capn_setp(p.p, 0, s->_struct.brand.p);
 		break;
 	case Type__interface:
 		capn_write64(p.p, 8, s->_interface.typeId);
+		capn_setp(p.p, 0, s->_interface.brand.p);
+		break;
+	case Type_anyPointer:
+		capn_write16(p.p, 8, s->anyPointer_which);
+		switch (s->anyPointer_which) {
+		case Type_anyPointer_parameter:
+			capn_write64(p.p, 16, s->anyPointer.parameter.scopeId);
+			capn_write16(p.p, 10, s->anyPointer.parameter.parameterIndex);
+			break;
+		case Type_anyPointer_implicitMethodParameter:
+			capn_write16(p.p, 10, s->anyPointer.implicitMethodParameter.parameterIndex);
+			break;
+		default:
+			break;
+		}
 		break;
 	default:
 		break;
@@ -393,6 +465,123 @@ void set_Type(const struct Type *s, Type_list l, int i) {
 	Type_ptr p;
 	p.p = capn_getp(l.p, i, 0);
 	write_Type(s, p);
+}
+
+Brand_ptr new_Brand(struct capn_segment *s) {
+	Brand_ptr p;
+	p.p = capn_new_struct(s, 0, 1);
+	return p;
+}
+Brand_list new_Brand_list(struct capn_segment *s, int len) {
+	Brand_list p;
+	p.p = capn_new_list(s, len, 0, 1);
+	return p;
+}
+void read_Brand(struct Brand *s, Brand_ptr p) {
+	capn_resolve(&p.p);
+	s->scopes.p = capn_getp(p.p, 0, 0);
+}
+void write_Brand(const struct Brand *s, Brand_ptr p) {
+	capn_resolve(&p.p);
+	capn_setp(p.p, 0, s->scopes.p);
+}
+void get_Brand(struct Brand *s, Brand_list l, int i) {
+	Brand_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	read_Brand(s, p);
+}
+void set_Brand(const struct Brand *s, Brand_list l, int i) {
+	Brand_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	write_Brand(s, p);
+}
+
+Brand_Scope_ptr new_Brand_Scope(struct capn_segment *s) {
+	Brand_Scope_ptr p;
+	p.p = capn_new_struct(s, 16, 1);
+	return p;
+}
+Brand_Scope_list new_Brand_Scope_list(struct capn_segment *s, int len) {
+	Brand_Scope_list p;
+	p.p = capn_new_list(s, len, 16, 1);
+	return p;
+}
+void read_Brand_Scope(struct Brand_Scope *s, Brand_Scope_ptr p) {
+	capn_resolve(&p.p);
+	s->scopeId = capn_read64(p.p, 0);
+	s->which = (enum Brand_Scope_which) capn_read16(p.p, 8);
+	switch (s->which) {
+	case Brand_Scope_bind:
+		s->bind.p = capn_getp(p.p, 0, 0);
+		break;
+	default:
+		break;
+	}
+}
+void write_Brand_Scope(const struct Brand_Scope *s, Brand_Scope_ptr p) {
+	capn_resolve(&p.p);
+	capn_write64(p.p, 0, s->scopeId);
+	capn_write16(p.p, 8, s->which);
+	switch (s->which) {
+	case Brand_Scope_bind:
+		capn_setp(p.p, 0, s->bind.p);
+		break;
+	default:
+		break;
+	}
+}
+void get_Brand_Scope(struct Brand_Scope *s, Brand_Scope_list l, int i) {
+	Brand_Scope_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	read_Brand_Scope(s, p);
+}
+void set_Brand_Scope(const struct Brand_Scope *s, Brand_Scope_list l, int i) {
+	Brand_Scope_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	write_Brand_Scope(s, p);
+}
+
+Brand_Binding_ptr new_Brand_Binding(struct capn_segment *s) {
+	Brand_Binding_ptr p;
+	p.p = capn_new_struct(s, 8, 1);
+	return p;
+}
+Brand_Binding_list new_Brand_Binding_list(struct capn_segment *s, int len) {
+	Brand_Binding_list p;
+	p.p = capn_new_list(s, len, 8, 1);
+	return p;
+}
+void read_Brand_Binding(struct Brand_Binding *s, Brand_Binding_ptr p) {
+	capn_resolve(&p.p);
+	s->which = (enum Brand_Binding_which) capn_read16(p.p, 0);
+	switch (s->which) {
+	case Brand_Binding_type:
+		s->type.p = capn_getp(p.p, 0, 0);
+		break;
+	default:
+		break;
+	}
+}
+void write_Brand_Binding(const struct Brand_Binding *s, Brand_Binding_ptr p) {
+	capn_resolve(&p.p);
+	capn_write16(p.p, 0, s->which);
+	switch (s->which) {
+	case Brand_Binding_type:
+		capn_setp(p.p, 0, s->type.p);
+		break;
+	default:
+		break;
+	}
+}
+void get_Brand_Binding(struct Brand_Binding *s, Brand_Binding_list l, int i) {
+	Brand_Binding_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	read_Brand_Binding(s, p);
+}
+void set_Brand_Binding(const struct Brand_Binding *s, Brand_Binding_list l, int i) {
+	Brand_Binding_ptr p;
+	p.p = capn_getp(l.p, i, 0);
+	write_Brand_Binding(s, p);
 }
 
 Value_ptr new_Value(struct capn_segment *s) {
@@ -439,8 +628,8 @@ void read_Value(struct Value *s, Value_ptr p) {
 		break;
 	case Value__list:
 	case Value__struct:
-	case Value_object:
-		s->object = capn_getp(p.p, 0, 0);
+	case Value_anyPointer:
+		s->anyPointer = capn_getp(p.p, 0, 0);
 		break;
 	default:
 		break;
@@ -480,8 +669,8 @@ void write_Value(const struct Value *s, Value_ptr p) {
 		break;
 	case Value__list:
 	case Value__struct:
-	case Value_object:
-		capn_setp(p.p, 0, s->object);
+	case Value_anyPointer:
+		capn_setp(p.p, 0, s->anyPointer);
 		break;
 	default:
 		break;
@@ -500,22 +689,24 @@ void set_Value(const struct Value *s, Value_list l, int i) {
 
 Annotation_ptr new_Annotation(struct capn_segment *s) {
 	Annotation_ptr p;
-	p.p = capn_new_struct(s, 8, 1);
+	p.p = capn_new_struct(s, 8, 2);
 	return p;
 }
 Annotation_list new_Annotation_list(struct capn_segment *s, int len) {
 	Annotation_list p;
-	p.p = capn_new_list(s, len, 8, 1);
+	p.p = capn_new_list(s, len, 8, 2);
 	return p;
 }
 void read_Annotation(struct Annotation *s, Annotation_ptr p) {
 	capn_resolve(&p.p);
 	s->id = capn_read64(p.p, 0);
+	s->brand.p = capn_getp(p.p, 1, 0);
 	s->value.p = capn_getp(p.p, 0, 0);
 }
 void write_Annotation(const struct Annotation *s, Annotation_ptr p) {
 	capn_resolve(&p.p);
 	capn_write64(p.p, 0, s->id);
+	capn_setp(p.p, 1, s->brand.p);
 	capn_setp(p.p, 0, s->value.p);
 }
 void get_Annotation(struct Annotation *s, Annotation_list l, int i) {
