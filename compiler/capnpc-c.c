@@ -28,6 +28,10 @@ struct node {
 	struct field *fields;
 };
 
+// annotation ids introduced via c++.capnp, see comments in find_node()
+static const uint64_t NAMESPACE_ANNOTATION_ID = 0xb9c6f99ebf805f2cull;
+static const uint64_t NAME_ANNOTATION_ID = 0xf264a779fef191ceull;
+
 static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
@@ -37,6 +41,24 @@ static int g_val0used, g_nullused;
 static struct capn_tree *g_node_tree;
 
 struct node *find_node(uint64_t id) {
+
+	/*
+	 * TODO: an Annotation is technically a node (since it can show up in
+	 * a Node's NestedNode list), but a `struct node` is currently configured
+	 * to represent only Nodes. So when processing all nested nodes,
+	 * we need a way to handle entities (like Annotation) which can't be
+	 * represented by a `struct node`.
+	 *
+	 * Current workaround is a hard coded test for the annotations
+	 * introduced via c++.capnp (NAME_ANNOTATION_ID and NAMESPACE_ANNOTATION_ID),
+	 * and to report that we don't have a node associated with them
+	 * (but at least don't fail and stop further processing).
+	 */
+
+	if (id == NAME_ANNOTATION_ID || id == NAMESPACE_ANNOTATION_ID) {
+		return NULL;
+	}
+
 	struct node *s = (struct node*) g_node_tree;
 	while (s && s->n.id != id) {
 		s = (struct node*) s->hdr.link[s->n.id < id];
@@ -71,7 +93,10 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 	for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
-		resolve_names(b, find_node(nest.id), nest.name, file);
+		struct node *nn = find_node(nest.id);
+		if (nn != NULL) {
+			resolve_names(b, nn, nest.name, file);
+		}
 	}
 
 	if (n->n.which == Node__struct) {
@@ -161,7 +186,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 	case Type__interface:
 		v->tname = strf(&v->tname_buf, "%s_ptr", find_node(v->t._struct.typeId)->name.str);
 		break;
-	case Type_object:
+	case Type_anyPointer:
 		v->tname = "capn_ptr";
 		break;
 	case Type__list:
@@ -195,7 +220,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			break;
 		case Type_text:
 		case Type_data:
-		case Type_object:
+		case Type_anyPointer:
 		case Type__list:
 			v->tname = "capn_ptr";
 			break;
@@ -258,11 +283,11 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 	case Value_data:
 	case Value__struct:
-	case Value_object:
+	case Value_anyPointer:
 	case Value__list:
-		if (v->v.object.type) {
+		if (v->v.anyPointer.type) {
 			capn_ptr p = capn_root(&g_valcapn);
-			if (capn_setp(p, 0, v->v.object)) {
+			if (capn_setp(p, 0, v->v.anyPointer)) {
 				fprintf(stderr, "failed to copy object\n");
 				exit(2);
 			}
@@ -359,7 +384,7 @@ static void define_const(struct node *n) {
 	case Value_text:
 	case Value_data:
 	case Value__struct:
-	case Value_object:
+	case Value_anyPointer:
 	case Value__list:
 		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		if (!v.ptrval.type) {
@@ -498,7 +523,7 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 	case Type__struct:
 	case Type__interface:
 	case Type__list:
-	case Type_object:
+	case Type_anyPointer:
 		if (!f->v.intval) {
 			str_addf(func, "capn_setp(%s, %d, %s);\n",
 					ptr, f->f.slot.offset, pvar);
@@ -575,7 +600,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		break;
 	case Type__struct:
 	case Type__interface:
-	case Type_object:
+	case Type_anyPointer:
 	case Type__list:
 		str_addf(func, "%s = capn_getp(%s, %d, 0);\n", pvar, ptr, f->f.slot.offset);
 		break;
@@ -728,7 +753,7 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	union_cases(s, n, first_field, (1 << Type_int64) | (1 << Type_uint64) | (1 << Type_float64));
 	union_cases(s, n, first_field, (1 << Type_text));
 	union_cases(s, n, first_field, (1 << Type_data));
-	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_object) | (1 << Type__list));
+	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_anyPointer) | (1 << Type__list));
 
 	str_addf(&s->decl, "%sunion {\n", s->dtab.str);
 	str_add(&s->dtab, "\t", -1);
@@ -980,7 +1005,7 @@ static void define_method(struct node *iface, int ord) {
 		case Type__list:
 		case Type__struct:
 		case Type__interface:
-		case Type_object:
+		case Type_anyPointer:
 			m->f.offset = ptrs++;
 			break;
 		}
@@ -1117,7 +1142,10 @@ int main() {
 		for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
 			get_Node_NestedNode(&nest, n->n.nestedNodes, i);
-			resolve_names(&b, find_node(nest.id), nest.name, n);
+			struct node *nn = find_node(nest.id);
+			if (nn) {
+				resolve_names(&b, nn, nest.name, n);
+			}
 		}
 
 		str_release(&b);
@@ -1138,6 +1166,10 @@ int main() {
 
 		get_CodeGeneratorRequest_RequestedFile(&file_req, req.requestedFiles, i);
 		file_node = find_node(file_req.id);
+		if (file_node == NULL) {
+			fprintf(stderr, "invalid file_node specified\n");
+			exit(2);
+		}
 
 		str_reset(&HDR);
 		str_reset(&SRC);
