@@ -63,10 +63,6 @@ TEST(WireFormat, SimpleRawDataStruct) {
   EXPECT_EQ(UINT16_C(0), capn_read16(ptr, 8));
 }
 
-static const AlignedData<2> SUBSTRUCT_DEFAULT = {{0,0,0,0,1,0,0,0,  0,0,0,0,0,0,0,0}};
-static const AlignedData<2> STRUCTLIST_ELEMENT_SUBSTRUCT_DEFAULT =
-    {{0,0,0,0,1,0,0,0,  0,0,0,0,0,0,0,0}};
-
 static void setupStruct(struct capn *ctx) {
   struct capn_ptr root = capn_root(ctx);
   ASSERT_EQ(CAPN_PTR_LIST, root.type);
