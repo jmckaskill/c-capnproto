@@ -318,7 +318,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -374,7 +374,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation_NoTag) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -424,7 +424,7 @@ TEST(WireFormat, StructRoundTrip_MultipleSegmentsWithMultipleAllocations) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
