@@ -273,11 +273,11 @@ static void getSegments(struct capn *c, struct capn_segment **s, size_t num) {
   ASSERT_EQ(num, c->segnum);
 
   s[0] = c->seglist;
-  for (int i = 1; i < num; i++) {
+  for (size_t i = 1; i < num; i++) {
     s[i] = s[i-1]->next;
   }
 
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     EXPECT_EQ(s[i]->id, i);
   }
 }
