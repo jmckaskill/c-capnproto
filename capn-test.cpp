@@ -63,10 +63,6 @@ TEST(WireFormat, SimpleRawDataStruct) {
   EXPECT_EQ(UINT16_C(0), capn_read16(ptr, 8));
 }
 
-static const AlignedData<2> SUBSTRUCT_DEFAULT = {{0,0,0,0,1,0,0,0,  0,0,0,0,0,0,0,0}};
-static const AlignedData<2> STRUCTLIST_ELEMENT_SUBSTRUCT_DEFAULT =
-    {{0,0,0,0,1,0,0,0,  0,0,0,0,0,0,0,0}};
-
 static void setupStruct(struct capn *ctx) {
   struct capn_ptr root = capn_root(ctx);
   ASSERT_EQ(CAPN_PTR_LIST, root.type);
@@ -277,11 +273,11 @@ static void getSegments(struct capn *c, struct capn_segment **s, size_t num) {
   ASSERT_EQ(num, c->segnum);
 
   s[0] = c->seglist;
-  for (int i = 1; i < num; i++) {
+  for (size_t i = 1; i < num; i++) {
     s[i] = s[i-1]->next;
   }
 
-  for (int i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     EXPECT_EQ(s[i]->id, i);
   }
 }
@@ -318,7 +314,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -374,7 +370,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation_NoTag) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -424,7 +420,7 @@ TEST(WireFormat, StructRoundTrip_MultipleSegmentsWithMultipleAllocations) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (int i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 

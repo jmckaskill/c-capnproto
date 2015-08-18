@@ -187,7 +187,7 @@ end:
 
 static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *s, uint32_t id) {
 	struct capn_tree **x;
-	struct capn_segment *y;
+	struct capn_segment *y = NULL;
 
 	if (s && s->id == id)
 		return s;
@@ -196,7 +196,6 @@ static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *
 
 	if (id < c->segnum) {
 		x = &c->segtree;
-		y = NULL;
 		while (*x) {
 			y = (struct capn_segment*) *x;
 			if (id == y->id) {
@@ -207,6 +206,9 @@ static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *
 				x = &y->hdr.link[1];
 			}
 		}
+	} else {
+		/* Otherwise `x` may be uninitialized */
+		return NULL;
 	}
 
 	s = c->lookup ? c->lookup(c->user, id) : NULL;
@@ -231,7 +233,7 @@ static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *
 
 static uint64_t lookup_double(struct capn_segment **s, char **d, uint64_t val) {
 	uint64_t far, tag;
-	uint32_t off = (U32(val) >> 3) * 8;
+	size_t off = (U32(val) >> 3) * 8;
 	char *p;
 
 	if ((*s = lookup_segment((*s)->capn, *s, U32(val >> 32))) == NULL) {
@@ -266,7 +268,7 @@ static uint64_t lookup_double(struct capn_segment **s, char **d, uint64_t val) {
 }
 
 static uint64_t lookup_far(struct capn_segment **s, char **d, uint64_t val) {
-	uint32_t off = (U32(val) >> 3) * 8;
+	size_t off = (U32(val) >> 3) * 8;
 
 	if ((*s = lookup_segment((*s)->capn, *s, U32(val >> 32))) == NULL) {
 		return 0;
@@ -371,7 +373,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 			e = d + ret.len * 8;
 			break;
 		case COMPOSITE_LIST:
-			if (d+8-s->data > s->len) {
+			if ((size_t)((d+8) - s->data) > s->len) {
 				goto err;
 			}
 
@@ -396,7 +398,7 @@ static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 		goto err;
 	}
 
-	if (e - s->data > s->len)
+	if ((size_t)(e - s->data) > s->len)
 		goto err;
 
 	ret.data = d;
@@ -666,7 +668,7 @@ static int copy_ptr(struct capn_segment *seg, char *data, struct capn_ptr *t, st
 		struct capn_segment *cs = c->copylist;
 
 		/* need to allocate a struct copy */
-		if (!cs || cs->len + sizeof(*n) > cs->cap) {
+		if (!cs || cs->len + (int)sizeof(*n) > cs->cap) {
 			cs = c->create_local ? c->create_local(c->user, sizeof(*n)) : NULL;
 			if (!cs) {
 				/* can't allocate a copy structure */

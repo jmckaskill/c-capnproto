@@ -79,7 +79,7 @@ int capn_deflate(struct capn_stream* s) {
 			continue;
 
 		default:
-			if (s->avail_out < 1 + sz)
+			if (s->avail_out < 1U + sz)
 				return CAPN_NEED_MORE;
 
 			*(s->next_out++) = hdr;
@@ -166,7 +166,7 @@ int capn_inflate(struct capn_stream* s) {
 				if (hdr & (1 << i))
 					sz++;
 			}
-			if (s->avail_in < 2 + sz)
+			if (s->avail_in < 2U + sz)
 				return CAPN_NEED_MORE;
 
 			s->next_in += 2;

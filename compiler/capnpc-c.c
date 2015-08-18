@@ -905,7 +905,7 @@ static void define_struct(struct node *n) {
 }
 
 #if 0
-Commenting out interfaces until the RPC protocol has been spec'd
+/* Commenting out interfaces until the RPC protocol has been spec'd */
 static int find_offset(struct str *v, int inc, uint64_t mask) {
 	int i, j;
 	union {uint64_t u; char c[8];} umask;
@@ -1216,7 +1216,7 @@ int main() {
 			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
 		if (g_valseg.len > 8) {
-			fprintf(srcf, "static const uint8_t capn_buf[%d] = {", g_valseg.len-8);
+			fprintf(srcf, "static const uint8_t capn_buf[%lu] = {", g_valseg.len-8);
 			for (j = 8; j < g_valseg.len; j++) {
 				if (j > 8)
 					fprintf(srcf, ",");
@@ -1226,7 +1226,7 @@ int main() {
 			}
 			fprintf(srcf, "\n};\n");
 
-			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%d,%d};\n",
+			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%lu,%lu};\n",
 					g_valseg.len-8, g_valseg.len-8);
 		}
 
