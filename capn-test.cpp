@@ -274,11 +274,11 @@ static void getSegments(struct capn *c, struct capn_segment **s, size_t num) {
   ASSERT_EQ(num, c->segnum);
 
   s[0] = c->seglist;
-  for (unsigned i = 1; i < num; i++) {
+  for (size_t i = 1; i < num; i++) {
     s[i] = s[i-1]->next;
   }
 
-  for (unsigned i = 0; i < num; i++) {
+  for (size_t i = 0; i < num; i++) {
     EXPECT_EQ(s[i]->id, i);
   }
 }
@@ -315,7 +315,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (unsigned i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -371,7 +371,7 @@ TEST(WireFormat, StructRoundTrip_OneSegmentPerAllocation_NoTag) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (unsigned i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 
@@ -421,7 +421,7 @@ TEST(WireFormat, StructRoundTrip_MultipleSegmentsWithMultipleAllocations) {
 
   struct capn ctx2;
   memset(&ctx2, 0, sizeof(ctx2));
-  for (unsigned i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
+  for (size_t i = 0; i < sizeof(segments)/sizeof(segments[0]); i++) {
     capn_append_segment(&ctx2, segments[i]);
   }
 

@@ -94,7 +94,7 @@ struct capn_segment {
 	uint32_t id;
 	/* user settable */
 	char *data;
-	unsigned len, cap;
+	size_t len, cap;
 	void *user;
 };
 
@@ -262,9 +262,9 @@ void capn_reset_copy(struct capn *c);
  */
 struct capn_stream {
 	const uint8_t *next_in;
-	unsigned avail_in;
+	size_t avail_in;
 	uint8_t *next_out;
-	unsigned avail_out;
+	size_t avail_out;
 	unsigned zeros, raw;
 };
 
