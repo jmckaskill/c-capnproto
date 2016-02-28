@@ -656,7 +656,7 @@ static const char *field_name(struct field *f) {
 		"_Thread_local",
 	};
 
-	int i;
+	size_t i;
 	const char *s = f->f.name.str;
 	for (i = 0; i < sizeof(reserved)/sizeof(reserved[0]); i++) {
 		if (!strcmp(s, reserved[i])) {
@@ -1248,13 +1248,14 @@ int main() {
 			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
 		if (g_valseg.len > 8) {
+			size_t k;
 			fprintf(srcf, "static const uint8_t capn_buf[%lu] = {", g_valseg.len-8);
-			for (j = 8; j < g_valseg.len; j++) {
-				if (j > 8)
+			for (k = 8; k < g_valseg.len; k++) {
+				if (k > 8)
 					fprintf(srcf, ",");
-				if ((j % 8) == 0)
+				if ((k % 8) == 0)
 					fprintf(srcf, "\n\t");
-				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[j]);
+				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[k]);
 			}
 			fprintf(srcf, "\n};\n");
 

@@ -190,7 +190,7 @@ static void header_calc(struct capn *c, uint32_t *headerlen, size_t *headersz)
 
 static int header_render(struct capn *c, struct capn_segment *seg, uint32_t *header, uint32_t headerlen, size_t *datasz)
 {
-	int i;
+	size_t i;
 
 	header[0] = capn_flip32(c->segnum - 1);
 	header[headerlen-1] = 0; /* Zero out the spare position in the header sizes */
@@ -291,8 +291,8 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 
 static int _write_fd(ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, void *p, size_t count)
 {
-	int ret;
-	int sent = 0;
+	ssize_t ret;
+	size_t sent = 0;
 
 	while (sent < count) {
 		ret = write_fd(fd, ((uint8_t*)p)+sent, count-sent);

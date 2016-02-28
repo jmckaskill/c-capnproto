@@ -1,7 +1,8 @@
 .PHONY: all clean test
 
-LDFLAGS=-O2 -Wall -fPIC
-CFLAGS=-O2 -Wall -fPIC -I. -Wno-unused-function
+LDFLAGS=-O2 -fPIC
+CFLAGS=-O2 -std=gnu11 -Wall -Wextra -fPIC -I. \
+       -Wno-unused-function -Wno-missing-field-initializers -Wno-unused-parameter
 ifneq (,$(findstring gcc, $(CC)))
 	# gcc's maybe-unintialized is too imprecise, disable it.
 	# clang disbles this functionality by default and doesn't recognize the flag.

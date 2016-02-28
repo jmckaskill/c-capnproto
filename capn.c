@@ -1034,10 +1034,10 @@ capn_ptr capn_new_ptr_list(struct capn_segment *seg, int sz) {
 	return p;
 }
 
-capn_ptr capn_new_string(struct capn_segment *seg, const char *str, int sz) {
+capn_ptr capn_new_string(struct capn_segment *seg, const char *str, ssize_t sz) {
 	capn_ptr p = {CAPN_LIST};
 	p.seg = seg;
-	p.len = ((sz >= 0) ? sz : strlen(str)) + 1;
+	p.len = ((sz >= 0) ? (size_t)sz : strlen(str)) + 1;
 	p.datasz = 1;
 	new_object(&p, p.len);
 	if (p.data) {
