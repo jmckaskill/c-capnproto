@@ -9,6 +9,7 @@ addons:
     - gcc-4.8
     - g++-4.8
     - libgtest-dev
+    - capnproto
 
 # use gcc-4.8
 install:

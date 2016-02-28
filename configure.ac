@@ -9,7 +9,7 @@ AC_CANONICAL_BUILD()
 AC_CANONICAL_HOST()
 AC_CANONICAL_TARGET()
 
-AM_INIT_AUTOMAKE(1.14)
+AM_INIT_AUTOMAKE(1.11)
 AM_SILENT_RULES([yes])
 AC_CONFIG_HEADERS([config.h])
 
@@ -31,9 +31,9 @@ if test x"${enable_werror}" = x"yes" ; then
 fi
 AC_SUBST(WERROR)
 
-PKG_CHECK_MODULES(CAPNP, [capnp >= 0.5.2], [], [
-  AC_MSG_ERROR([capnproto base package (0.5.2 or newer) not found])
-])
+#PKG_CHECK_MODULES(CAPNP, [capnp >= 0.5.2], [], [
+#  AC_MSG_ERROR([capnproto base package (0.5.2 or newer) not found])
+#])
 
 AC_ARG_WITH(gtest,
   AS_HELP_STRING([--without-gtest], [disable unit tests using gtest]))
