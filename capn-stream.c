@@ -12,7 +12,7 @@ int capn_deflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_in) {
-		unsigned i, sz = 0;
+		int i, sz = 0;
 		uint8_t hdr = 0;
 		uint8_t *p;
 
@@ -104,7 +104,7 @@ int capn_inflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_out) {
-		unsigned i, sz;
+		int i, sz;
 		uint8_t hdr;
 
 		if (s->zeros > 0) {
