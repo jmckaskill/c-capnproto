@@ -8,7 +8,7 @@ prefix = /usr
 all: capn.a capn.so capnpc-c test
 
 clean:
-	rm -f *.o *.so capnpc-c compiler/*.o *.a gtest/src/*.o
+	rm -f *.o *.so capnpc-c compiler/*.o *.a
 
 %.o: %.c *.h *.inc compiler/*.h
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -26,14 +26,11 @@ test: capn-test
 	./capn-test
 
 %-test.o: %-test.cpp *.h *.c *.inc
-	$(CXX) --std=c++11 -g -I. -Igtest -o $@ -c $<
-	
-gtest-all.o: gtest/src/gtest-all.cc gtest/src/*.h gtest/src/*.cc
-	$(CXX) --std=c++11 -g -I. -Igtest -o $@ -c $<
+	$(CXX) --std=c++11 -g -I. `gtest-config --cppflags --cxxflags` -o $@ -c $<
 
-capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a gtest-all.o -lpthread
-	$(CXX) -std=c++11 -g -I. -o $@ $^
-	
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a
+	$(CXX) -std=c++11 -g -I. $^ `gtest-config --ldflags --libs` -o $@
+
 install:
 	install -c capnpc-c $(prefix)/bin/capnpc-c
 	install -c capn.so $(prefix)/lib/capn.so
