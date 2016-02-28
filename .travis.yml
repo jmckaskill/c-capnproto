@@ -8,14 +8,12 @@ addons:
     packages:
     - gcc-4.8
     - g++-4.8
-    - libgtest-dev
-    - capnproto
 
 # use gcc-4.8
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 
-script: autoreconf -f -i -s && ./configure && make && make check
+script: autoreconf -f -i -s && ./configure --without-gtest && make && make check
 
 compiler:
 - clang
