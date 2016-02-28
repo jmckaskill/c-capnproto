@@ -1,7 +1,5 @@
 .PHONY: all clean test
 
-GTEST := gtest-1.7.0
-
 LDFLAGS=-O2 -Wall -Werror -fPIC
 CFLAGS=-O2 -Wall -Werror -fPIC -I. -Wno-unused-function
 ifneq (,$(findstring gcc, $(CC)))
@@ -12,8 +10,8 @@ ifneq (,$(findstring gcc, $(CC)))
 	CFLAGS += -Wno-maybe-uninitialized
 endif
 
-GTEST_CFLAGS=-I$(GTEST)/include -std=c++11
-GTEST_LDFLAGS=-lpthread
+GTEST_CFLAGS=-std=c++11 `gtest-config --cppflags --cxxflags`
+GTEST_LDFLAGS=`gtest-config --ldflags --libs`
 
 all: capn.so capnpc-c test
 
@@ -35,8 +33,5 @@ test: capn-test
 %-test.o: %-test.cpp *.h *.c *.inc
 	$(CXX) -g -Wall -Werror -I. $(GTEST_CFLAGS) -o $@ -c $<
 
-gtest-all.o: $(GTEST)/src/*.cc
-	$(CXX) -g -Wall -Werror -I. $(GTEST_CFLAGS) -I$(GTEST) -o $@ -c $<
-
-capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o gtest-all.o
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o
 	$(CXX) -g -Wall -Werror -I. $^ $(GTEST_LDFLAGS) -o $@
