@@ -14,7 +14,14 @@ utilize it as:
 
 ## status
 
-This is a fork of [James McKaskill's great work](https://github.com/jmckaskill/c-capnproto), which has been untouched for a while, so I've been bringing it up to date with current cap'n proto progress, and doing some doc/testing work. Should the upstream fork become active again, I'd hope to merge any relevant changes back in.
+This is a merge of 3 forks of [James McKaskill's great
+work](https://github.com/jmckaskill/c-capnproto), which has been untouched for
+a while:
+
+- [liamstask's fork](https://github.com/liamstask/c-capnproto)
+- [baruch's fork](https://github.com/baruch/c-capnproto)
+- [kylemanna's fork](https://github.com/kylemanna/c-capnproto)
+
 
 ## usage
 
