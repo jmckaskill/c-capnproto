@@ -1,4 +1,12 @@
 /* vim: set sw=8 ts=8 sts=8 noet: */
+/* capn.c
+ *
+ * Copyright (C) 2013 James McKaskill
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+
 #include "capn.h"
 
 #include <stdlib.h>
