@@ -1,7 +1,7 @@
 .PHONY: all clean test
 
-LDFLAGS=-O2 -Wall -Werror -fPIC
-CFLAGS=-O2 -Wall -Werror -fPIC -I. -Wno-unused-function
+LDFLAGS=-O2 -Wall -fPIC
+CFLAGS=-O2 -Wall -fPIC -I. -Wno-unused-function
 ifneq (,$(findstring gcc, $(CC)))
 	# gcc's maybe-unintialized is too imprecise, disable it.
 	# clang disbles this functionality by default and doesn't recognize the flag.
@@ -13,25 +13,36 @@ endif
 GTEST_CFLAGS=-std=c++11 `gtest-config --cppflags --cxxflags`
 GTEST_LDFLAGS=`gtest-config --ldflags --libs`
 
-all: capn.so capnpc-c test
+OBJS=capn-malloc.o capn-stream.o capn.o
+prefix = /usr
+
+all: capn.a capn.so capnpc-c test
 
 clean:
-	rm -f *.o *.so capnpc-c compiler/*.o
+	rm -f *.o *.so capnpc-c compiler/*.o *.a
 
 %.o: %.c *.h *.inc compiler/*.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-capn.so: capn-malloc.o capn-stream.o capn.o
+capn.so: $(OBJS)
 	$(CC) -shared $(LDFLAGS) $^ -o $@
 
-capnpc-c: compiler/capnpc-c.o compiler/schema.capnp.o compiler/str.o capn.so
+capn.a: $(OBJS)
+	$(AR) rcs $@ $^
+
+capnpc-c: compiler/capnpc-c.o compiler/schema.capnp.o compiler/str.o capn.a
 	$(CC) $(LDFLAGS) $^ -o $@
 
 test: capn-test
 	./capn-test
 
 %-test.o: %-test.cpp *.h *.c *.inc
-	$(CXX) -g -Wall -Werror -I. $(GTEST_CFLAGS) -o $@ -c $<
+	$(CXX) --std=c++11 -g -I. `gtest-config --cppflags --cxxflags` -o $@ -c $<
 
-capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o
-	$(CXX) -g -Wall -Werror -I. $^ $(GTEST_LDFLAGS) -o $@
+capn-test: capn-test.o capn-stream-test.o compiler/test.capnp.o compiler/schema-test.o compiler/schema.capnp.o capn.a
+	$(CXX) -std=c++11 -g -I. $^ `gtest-config --ldflags --libs` -o $@
+
+install:
+	install -c capnpc-c $(prefix)/bin/capnpc-c
+	install -c capn.so $(prefix)/lib/capn.so
+	install -c capn.a $(prefix)/lib/capn.a

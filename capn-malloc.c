@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 struct check_segment_alignment {
 	unsigned int foo : (sizeof(struct capn_segment)&7) ? -1 : 1;
@@ -109,14 +110,16 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 
 	capn_init_malloc(c);
 
+	/* Read the first four bytes to know how many headers we have */
 	if (read_fp(&segnum, 4, f, z, zbuf, packed))
 		goto err;
 
 	segnum = capn_flip32(segnum);
 	if (segnum > 1023)
 		goto err;
-	segnum++;
+	segnum++; /* The wire encoding was zero-based */
 
+	/* Read the header list */
 	if (read_fp(hdr, 8 * (segnum/2) + 4, f, z, zbuf, packed))
 		goto err;
 
@@ -128,10 +131,12 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 		total += hdr[i];
 	}
 
+	/* Allocate space for the data and the capn_segment structs */
 	s = (struct capn_segment*) calloc(1, total + (sizeof(*s) * segnum));
 	if (!s)
 		goto err;
 
+	/* Now read the data and setup the capn_segment structs */
 	data = (char*) (s+segnum);
 	if (read_fp(data, total, f, z, zbuf, packed))
 		goto err;
@@ -143,6 +148,7 @@ static int init_fp(struct capn *c, FILE *f, struct capn_stream *z, int packed) {
 		capn_append_segment(c, &s[i]);
 	}
 
+    /* Set the entire region to be freed on the last segment */
 	s[segnum-1].user = s;
 
 	return 0;
@@ -167,24 +173,8 @@ int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed) {
 	return init_fp(c, NULL, &z, packed);
 }
 
-int
-capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
+static void header_calc(struct capn *c, uint32_t *headerlen, size_t *headersz)
 {
-	struct capn_segment *seg;
-	struct capn_ptr root;
-	int i;
-	uint32_t headerlen;
-	size_t datasz;
-	uint32_t *header;
-
-	/* TODO support packing */
-	if (packed)
-		return -1;
-
-	if (c->segnum == 0)
-		return -1;
-
-	root = capn_root(c);
 	/* segnum == 1:
 	 *   [segnum][segsiz]
 	 * segnum == 2:
@@ -194,36 +184,201 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 	 * segnum == 4:
 	 *   [segnum][segsiz][segsiz][segsiz][segsiz][zeroes]
 	 */
-	headerlen = ((2 + c->segnum) / 2) * 2;
-	datasz = 4 * headerlen;
-	header = (uint32_t*) p;
+	*headerlen = ((2 + c->segnum) / 2) * 2;
+	*headersz = 4 * *headerlen;
+}
 
-	if (sz < datasz)
-		return -1;
+static int header_render(struct capn *c, struct capn_segment *seg, uint32_t *header, uint32_t headerlen, size_t *datasz)
+{
+	int i;
 
 	header[0] = capn_flip32(c->segnum - 1);
-	header[headerlen-1] = 0;
-	for (i = 0, seg = root.seg; i < c->segnum; i++, seg = seg->next) {
+	header[headerlen-1] = 0; /* Zero out the spare position in the header sizes */
+	for (i = 0; i < c->segnum; i++, seg = seg->next) {
 		if (0 == seg)
 			return -1;
-		datasz += seg->len;
+		*datasz += seg->len;
 		header[1 + i] = capn_flip32(seg->len / 8);
 	}
 	if (0 != seg)
 		return -1;
 
-	if (sz < datasz)
+	return 0;
+}
+
+int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
+{
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	uint32_t *header;
+	struct capn_stream z;
+	int ret;
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+	header = (uint32_t*) p + headersz + 2; /* must reserve two bytes for worst case expansion */
+
+	if (sz < headersz*2 + 2) /* We must have space for temporary writing of header to deflate */
 		return -1;
 
-	p += 4 * headerlen;
-	sz -= 4 * headerlen;
+	ret = header_render(c, root.seg, header, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	memset(&z, 0, sizeof(z));
+	z.next_in = (uint8_t *)header;
+	z.avail_in = headersz;
+	z.next_out = p;
+	z.avail_out = sz;
+
+	// pack the headers
+	ret = capn_deflate(&z);
+	if (ret != 0 || z.avail_in != 0)
+		return -1;
 
 	for (seg = root.seg; seg; seg = seg->next) {
-		if (sz < seg->len)
+		z.next_in = (uint8_t *)seg->data;
+		z.avail_in = seg->len;
+		ret = capn_deflate(&z);
+		if (ret != 0 || z.avail_in != 0)
 			return -1;
+	}
+
+	return sz - z.avail_out;
+}
+
+int
+capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
+{
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	uint32_t *header;
+	int ret;
+
+	if (c->segnum == 0)
+		return -1;
+
+	if (packed)
+		return capn_write_mem_packed(c, p, sz);
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+	header = (uint32_t*) p;
+
+	if (sz < headersz)
+		return -1;
+
+	ret = header_render(c, root.seg, header, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	if (sz < headersz + datasz)
+		return -1;
+
+	p += headersz;
+
+	for (seg = root.seg; seg; seg = seg->next) {
 		memcpy(p, seg->data, seg->len);
 		p += seg->len;
-		sz -= seg->len;
+	}
+
+	return headersz+datasz;
+}
+
+static int _write_fd(ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, void *p, size_t count)
+{
+	int ret;
+	int sent = 0;
+
+	while (sent < count) {
+		ret = write_fd(fd, ((uint8_t*)p)+sent, count-sent);
+		if (ret < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			else
+				return -1;
+		}
+		sent += ret;
+	}
+
+	return 0;
+}
+
+int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, int packed)
+{
+	unsigned char buf[4096];
+	struct capn_segment *seg;
+	struct capn_ptr root;
+	uint32_t headerlen;
+	size_t headersz, datasz = 0;
+	int ret;
+	struct capn_stream z;
+	unsigned char *p;
+
+	if (c->segnum == 0)
+		return -1;
+
+	root = capn_root(c);
+	header_calc(c, &headerlen, &headersz);
+
+	if (sizeof(buf) < headersz)
+		return -1;
+
+	ret = header_render(c, root.seg, (uint32_t*)buf, headerlen, &datasz);
+	if (ret != 0)
+		return -1;
+
+	if (packed) {
+		const int headerrem = sizeof(buf) - headersz;
+		const int maxpack = headersz + 2;
+		if (headerrem < maxpack)
+			return -1;
+
+		memset(&z, 0, sizeof(z));
+		z.next_in = buf;
+		z.avail_in = headersz;
+		z.next_out = buf + headersz;
+		z.avail_out = headerrem;
+		ret = capn_deflate(&z);
+		if (ret != 0)
+			return -1;
+
+		p = buf + headersz;
+		headersz = headerrem - z.avail_out;
+	} else {
+		p = buf;
+	}
+
+	ret = _write_fd(write_fd, fd, p, headersz);
+	if (ret < 0)
+		return -1;
+
+	datasz = headersz;
+	for (seg = root.seg; seg; seg = seg->next) {
+		size_t bufsz;
+		if (packed) {
+			memset(&z, 0, sizeof(z));
+			z.next_in = (uint8_t*)seg->data;
+			z.avail_in = seg->len;
+			z.next_out = buf;
+			z.avail_out = sizeof(buf);
+			ret = capn_deflate(&z);
+			if (ret != 0)
+				return -1;
+			p = buf;
+			bufsz = sizeof(buf) - z.avail_out;
+		} else {
+			p = (uint8_t*)seg->data;
+			bufsz = seg->len;
+		}
+		ret = _write_fd(write_fd, fd, p, bufsz);
+		if (ret < 0)
+			return -1;
+		datasz += bufsz;
 	}
 
 	return datasz;

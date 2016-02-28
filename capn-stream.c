@@ -12,7 +12,7 @@ int capn_deflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_in) {
-		int i, sz = 0;
+		int i, sz;
 		uint8_t hdr = 0;
 		uint8_t *p;
 
@@ -33,6 +33,7 @@ int capn_deflate(struct capn_stream* s) {
 		if (s->avail_in < 8)
 			return CAPN_NEED_MORE;
 
+		sz = 0;
 		for (i = 0; i < 8; i++) {
 			if (s->next_in[i]) {
 				sz ++;
@@ -45,7 +46,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 2)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0;
 			for (sz = 1; sz < min(s->avail_in/8, 256); sz++) {
 				if (((uint64_t*) s->next_in)[sz] != 0) {
 					break;
@@ -63,7 +64,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 10)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0xFF;
 			memcpy(s->next_out+1, s->next_in, 8);
 			s->next_in += 8;
 			s->avail_in -= 8;
@@ -160,16 +161,16 @@ int capn_inflate(struct capn_stream* s) {
 			continue;
 
 		default:
+			hdr = s->next_in[0];
 			sz = 0;
-			hdr = s->next_in[1];
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i))
 					sz++;
 			}
-			if (s->avail_in < 2 + sz)
+			if (s->avail_in < 1 + sz)
 				return CAPN_NEED_MORE;
 
-			s->next_in += 2;
+			s->next_in += 1;
 
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i)) {
@@ -180,7 +181,7 @@ int capn_inflate(struct capn_stream* s) {
 			}
 
 			s->avail_out -= 8;
-			s->avail_in -= 2 + sz;
+			s->avail_in -= 1 + sz;
 			continue;
 		}
 	}

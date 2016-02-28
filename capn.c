@@ -186,8 +186,8 @@ end:
 }
 
 static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *s, uint32_t id) {
-	struct capn_tree **x;
-	struct capn_segment *y;
+	struct capn_tree **x = &c->segtree;
+	struct capn_segment *y = NULL;
 
 	if (s && s->id == id)
 		return s;
@@ -195,8 +195,6 @@ static struct capn_segment *lookup_segment(struct capn* c, struct capn_segment *
 		return NULL;
 
 	if (id < c->segnum) {
-		x = &c->segtree;
-		y = NULL;
 		while (*x) {
 			y = (struct capn_segment*) *x;
 			if (id == y->id) {
