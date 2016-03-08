@@ -941,8 +941,11 @@ static void new_object(capn_ptr *p, int bytes) {
 		return;
 	}
 
-	if (!bytes)
+	/* pointer needs to be initialised to get a valid offset on write */
+	if (!bytes) {
+		p->data = s->data + s->len;
 		return;
+	}
 
 	/* all allocations are 8 byte aligned */
 	bytes = (bytes + 7) & ~7;
