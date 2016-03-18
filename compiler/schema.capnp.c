@@ -23,12 +23,12 @@ void read_Node(struct Node *s, Node_ptr p) {
 	s->isGeneric = (capn_read8(p.p, 36) & 1) != 0;
 	s->nestedNodes.p = capn_getp(p.p, 1, 0);
 	s->annotations.p = capn_getp(p.p, 2, 0);
-	s->which = (enum Node_which) capn_read16(p.p, 12);
+	s->which = (enum Node_which)(int) capn_read16(p.p, 12);
 	switch (s->which) {
 	case Node__struct:
 		s->_struct.dataWordCount = capn_read16(p.p, 14);
 		s->_struct.pointerCount = capn_read16(p.p, 24);
-		s->_struct.preferredListEncoding = (enum ElementSize) capn_read16(p.p, 26);
+		s->_struct.preferredListEncoding = (enum ElementSize)(int) capn_read16(p.p, 26);
 		s->_struct.isGroup = (capn_read8(p.p, 28) & 1) != 0;
 		s->_struct.discriminantCount = capn_read16(p.p, 30);
 		s->_struct.discriminantOffset = capn_read32(p.p, 32);
@@ -202,7 +202,7 @@ void read_Field(struct Field *s, Field_ptr p) {
 	s->codeOrder = capn_read16(p.p, 0);
 	s->annotations.p = capn_getp(p.p, 1, 0);
 	s->discriminantValue = capn_read16(p.p, 2) ^ 65535u;
-	s->which = (enum Field_which) capn_read16(p.p, 8);
+	s->which = (enum Field_which)(int) capn_read16(p.p, 8);
 	switch (s->which) {
 	case Field_slot:
 		s->slot.offset = capn_read32(p.p, 4);
@@ -216,7 +216,7 @@ void read_Field(struct Field *s, Field_ptr p) {
 	default:
 		break;
 	}
-	s->ordinal_which = (enum Field_ordinal_which) capn_read16(p.p, 10);
+	s->ordinal_which = (enum Field_ordinal_which)(int) capn_read16(p.p, 10);
 	switch (s->ordinal_which) {
 	case Field_ordinal__explicit:
 		s->ordinal._explicit = capn_read16(p.p, 12);
@@ -384,7 +384,7 @@ Type_list new_Type_list(struct capn_segment *s, int len) {
 }
 void read_Type(struct Type *s, Type_ptr p) {
 	capn_resolve(&p.p);
-	s->which = (enum Type_which) capn_read16(p.p, 0);
+	s->which = (enum Type_which)(int) capn_read16(p.p, 0);
 	switch (s->which) {
 	case Type__list:
 		s->_list.elementType.p = capn_getp(p.p, 0, 0);
@@ -402,7 +402,7 @@ void read_Type(struct Type *s, Type_ptr p) {
 		s->_interface.brand.p = capn_getp(p.p, 0, 0);
 		break;
 	case Type_anyPointer:
-		s->anyPointer_which = (enum Type_anyPointer_which) capn_read16(p.p, 8);
+		s->anyPointer_which = (enum Type_anyPointer_which)(int) capn_read16(p.p, 8);
 		switch (s->anyPointer_which) {
 		case Type_anyPointer_parameter:
 			s->anyPointer.parameter.scopeId = capn_read64(p.p, 16);
@@ -509,7 +509,7 @@ Brand_Scope_list new_Brand_Scope_list(struct capn_segment *s, int len) {
 void read_Brand_Scope(struct Brand_Scope *s, Brand_Scope_ptr p) {
 	capn_resolve(&p.p);
 	s->scopeId = capn_read64(p.p, 0);
-	s->which = (enum Brand_Scope_which) capn_read16(p.p, 8);
+	s->which = (enum Brand_Scope_which)(int) capn_read16(p.p, 8);
 	switch (s->which) {
 	case Brand_Scope_bind:
 		s->bind.p = capn_getp(p.p, 0, 0);
@@ -553,7 +553,7 @@ Brand_Binding_list new_Brand_Binding_list(struct capn_segment *s, int len) {
 }
 void read_Brand_Binding(struct Brand_Binding *s, Brand_Binding_ptr p) {
 	capn_resolve(&p.p);
-	s->which = (enum Brand_Binding_which) capn_read16(p.p, 0);
+	s->which = (enum Brand_Binding_which)(int) capn_read16(p.p, 0);
 	switch (s->which) {
 	case Brand_Binding_type:
 		s->type.p = capn_getp(p.p, 0, 0);
@@ -596,7 +596,7 @@ Value_list new_Value_list(struct capn_segment *s, int len) {
 }
 void read_Value(struct Value *s, Value_ptr p) {
 	capn_resolve(&p.p);
-	s->which = (enum Value_which) capn_read16(p.p, 0);
+	s->which = (enum Value_which)(int) capn_read16(p.p, 0);
 	switch (s->which) {
 	case Value__bool:
 		s->_bool = (capn_read8(p.p, 2) & 1) != 0;
