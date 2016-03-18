@@ -595,7 +595,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "%s = capn_to_f64(capn_read64(%s, %d)%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
 	case Type__enum:
-		str_addf(func, "%s = (%s) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
+		str_addf(func, "%s = (%s)(int) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_text:
 		if (!f->v.intval)
@@ -737,13 +737,13 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 		str_addf(&tag, "%.*s_which", s->var.len - 1, s->var.str);
 		str_addf(&enums, "enum %s_which {", n->name.str);
 		str_addf(&s->decl, "%senum %s_which %s_which;\n", s->dtab.str, n->name.str, union_name);
-		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+		str_addf(&s->get, "%s%s = (enum %s_which)(int) capn_read16(p.p, %d);\n",
 				s->ftab.str, tag.str, n->name.str, tagoff);
 	} else {
 		str_addf(&tag, "%swhich", s->var.str);
 		str_addf(&enums, "enum %s_which {", n->name.str);
 		str_addf(&s->decl, "%senum %s_which which;\n", s->dtab.str, n->name.str);
-		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+		str_addf(&s->get, "%s%s = (enum %s_which)(int) capn_read16(p.p, %d);\n",
 				s->ftab.str, tag.str, n->name.str, tagoff);
 	}
 
