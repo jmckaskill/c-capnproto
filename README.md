@@ -10,7 +10,7 @@ utilize it as:
 
     capnpc compiler/test.capnp -oc
 
-[![Build Status](https://travis-ci.org/opensourcerouting/c-capnproto.svg?branch=master)](https://travis-ci.org/liamstask/c-capnproto)
+[![Build Status](https://travis-ci.org/opensourcerouting/c-capnproto.svg?branch=master)](https://travis-ci.org/opensourcerouting/c-capnproto)
 
 ## status
 
