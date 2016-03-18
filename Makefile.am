@@ -9,6 +9,8 @@ noinst_HEADERS =
 include_HEADERS =
 
 
+EXTRA_DIST += README.md
+
 AM_CPPFLAGS = -I${srcdir}/lib
 
 lib_LTLIBRARIES += libcapnp_c.la
