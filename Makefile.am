@@ -11,6 +11,10 @@ include_HEADERS =
 
 EXTRA_DIST += README.md
 
+EXTRA_DIST += c-capnproto.pc.in
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = c-capnproto.pc
+
 AM_CPPFLAGS = -I${srcdir}/lib
 
 lib_LTLIBRARIES += libcapnp_c.la

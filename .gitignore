@@ -2,6 +2,7 @@ aclocal.m4
 autom4te*.cache
 configure
 config.h*
+confdefs.h
 config.status
 libtool
 stamp-h*
@@ -23,5 +24,6 @@ test-driver
 
 capn-test
 capnpc-c
+c-capnproto.pc
 
 *.tar.gz

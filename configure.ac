@@ -39,5 +39,6 @@ AC_CONFIG_SUBDIRS([gtest/googletest])
 
 AC_CONFIG_FILES([
 	Makefile
+	c-capnproto.pc
 ])
 AC_OUTPUT
