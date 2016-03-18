@@ -48,7 +48,7 @@ static int g_val0used, g_nullused;
 
 static struct capn_tree *g_node_tree;
 
-struct node *find_node(uint64_t id) {
+static struct node *find_node(uint64_t id) {
 
 	/*
 	 * TODO: an Annotation is technically a node (since it can show up in

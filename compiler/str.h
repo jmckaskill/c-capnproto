@@ -20,27 +20,27 @@ extern char str_static[];
 
 void str_reserve(struct str *v, int sz);
 
-static void str_init(struct str *v, int sz) {
+static inline void str_init(struct str *v, int sz) {
 	v->str = str_static;
 	v->len = v->cap = 0;
 	if (sz)
 		str_reserve(v, sz);
 }
 
-static void str_release(struct str *v) {
+static inline void str_release(struct str *v) {
 	if (v->cap) {
 		free(v->str);
 	}
 }
 
-static void str_reset(struct str *v) {
+static inline void str_reset(struct str *v) {
 	if (v->len) {
 		v->len = 0;
 		v->str[0] = '\0';
 	}
 }
 
-static void str_setlen(struct str *v, int sz) {
+static inline void str_setlen(struct str *v, int sz) {
 	str_reserve(v, sz);
 	v->str[sz] = '\0';
 	v->len = sz;
