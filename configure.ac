@@ -35,20 +35,7 @@ AC_SUBST(WERROR)
 #  AC_MSG_ERROR([capnproto base package (0.5.2 or newer) not found])
 #])
 
-AC_ARG_WITH(gtest,
-  AS_HELP_STRING([--without-gtest], [disable unit tests using gtest]))
-if test "x$with_gtest" != "xno" ; then
-  AC_PATH_TOOL([GTEST_CONFIG], [gtest-config], [no])
-  if test x"$GTEST_CONFIG" = x"no"; then
-    AC_MSG_ERROR([gtest installation not found])
-  fi
-  GTEST_LDFLAGS="`${GTEST_CONFIG} --ldflags --libs`"
-  GTEST_CFLAGS="`${GTEST_CONFIG} --cppflags --cxxflags`"
-  gtest=yes
-fi
-AC_SUBST(GTEST_LDFLAGS)
-AC_SUBST(GTEST_CFLAGS)
-AM_CONDITIONAL([GTEST], [test "x$gtest" = "xyes"])
+AC_CONFIG_SUBDIRS([gtest/googletest])
 
 AC_CONFIG_FILES([
 	Makefile
