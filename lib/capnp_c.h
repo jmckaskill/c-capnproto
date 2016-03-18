@@ -209,6 +209,7 @@ int capn_setv64(capn_list64 p, int off, const uint64_t *data, int sz);
  * datasz is in bytes, ptrs is # of pointers, sz is # of elements in the list
  * On an error a CAPN_NULL pointer is returned
  */
+capn_ptr capn_new_string(struct capn_segment *seg, const char *str, ssize_t sz);
 capn_ptr capn_new_struct(struct capn_segment *seg, int datasz, int ptrs);
 capn_ptr capn_new_interface(struct capn_segment *seg, int datasz, int ptrs);
 capn_ptr capn_new_ptr_list(struct capn_segment *seg, int sz);

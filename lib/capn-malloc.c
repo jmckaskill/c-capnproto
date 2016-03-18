@@ -215,7 +215,7 @@ static int header_render(struct capn *c, struct capn_segment *seg, uint32_t *hea
 	return 0;
 }
 
-int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
+static int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
 {
 	struct capn_segment *seg;
 	struct capn_ptr root;
