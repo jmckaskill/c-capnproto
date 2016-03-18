@@ -1185,9 +1185,9 @@ int main() {
 		str_addf(&HDR, "#ifndef CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
 		str_addf(&HDR, "#define CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
 		str_addf(&HDR, "/* AUTO GENERATED - DO NOT EDIT */\n");
-		str_addf(&HDR, "#include <capn.h>\n\n");
+		str_addf(&HDR, "#include <capnp_c.h>\n\n");
 		str_addf(&HDR, "#if CAPN_VERSION != 1\n");
-		str_addf(&HDR, "#error \"version mismatch between capn.h and generated code\"\n");
+		str_addf(&HDR, "#error \"version mismatch between capnp_c.h and generated code\"\n");
 		str_addf(&HDR, "#endif\n\n");
 
 		for (j = 0; j < capn_len(file_req.imports); j++) {

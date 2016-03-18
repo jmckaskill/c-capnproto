@@ -1,10 +1,10 @@
 #ifndef CAPN_A93FC509624C72D9
 #define CAPN_A93FC509624C72D9
 /* AUTO GENERATED - DO NOT EDIT */
-#include <capn.h>
+#include <capnp_c.h>
 
 #if CAPN_VERSION != 1
-#error "version mismatch between capn.h and generated code"
+#error "version mismatch between capnp_c.h and generated code"
 #endif
 
 #include "c++.capnp.h"

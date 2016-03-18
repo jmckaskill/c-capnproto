@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 
 AC_INIT(c-capnproto, 0.1, [])
-AC_CONFIG_SRCDIR(capn.h)
+AC_CONFIG_SRCDIR(lib/capnp_c.h)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([ac])
 

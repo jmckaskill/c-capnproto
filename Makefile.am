@@ -9,25 +9,26 @@ noinst_HEADERS =
 include_HEADERS =
 
 
+AM_CPPFLAGS = -I${srcdir}/lib
 
-lib_LTLIBRARIES += libcapn.la
-libcapn_la_LDFLAGS = -version-info 1:0:0 
-libcapn_la_SOURCES = \
-	capn-malloc.c \
-	capn-stream.c \
-	capn.c
+lib_LTLIBRARIES += libcapnp_c.la
+libcapnp_c_la_LDFLAGS = -version-info 0:0:0
+libcapnp_c_la_SOURCES = \
+	lib/capn-malloc.c \
+	lib/capn-stream.c \
+	lib/capn.c
+EXTRA_DIST += \
+	lib/capn-list.inc
 
 bin_PROGRAMS += capnpc-c
 capnpc_c_SOURCES = \
 	compiler/capnpc-c.c \
 	compiler/schema.capnp.c \
 	compiler/str.c
-capnpc_c_LDADD = libcapn.la
+capnpc_c_LDADD = libcapnp_c.la
 include_HEADERS += \
-	capn.h
+	lib/capnp_c.h
 
-EXTRA_DIST += \
-	capn-list.inc
 noinst_HEADERS += \
 	compiler/str.h \
 	compiler/schema.capnp.h \
@@ -45,6 +46,6 @@ capn_test_SOURCES = \
 	compiler/schema-test.cpp \
 	compiler/schema.capnp.c
 capn_test_CFLAGS = $(GTEST_CFLAGS)
-capn_test_LDADD = libcapn.la $(GTEST_LDFLAGS)
+capn_test_LDADD = libcapnp_c.la $(GTEST_LDFLAGS)
 TESTS = capn-test 
 endif
