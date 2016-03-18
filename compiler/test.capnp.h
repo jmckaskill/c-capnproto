@@ -15,7 +15,7 @@ extern "C" {
 
 struct TestAllTypes;
 struct TestDefaults;
-struct TestObject;
+struct TestAnyPointer;
 struct TestOutOfOrder;
 struct TestUnion;
 struct TestUnnamedUnion;
@@ -47,12 +47,25 @@ struct TestLateUnion;
 struct TestOldVersion;
 struct TestNewVersion;
 struct TestStructUnion;
+struct TestStructUnion_SomeStruct;
+struct TestPrintInlineStructs;
+struct TestPrintInlineStructs_InlineStruct;
+struct TestWholeFloatDefault;
 struct TestEmptyStruct;
 struct TestConstants;
+struct TestSturdyRef;
+struct TestSturdyRefHostId;
+struct TestSturdyRefObjectId;
+struct TestProvisionId;
+struct TestRecipientId;
+struct TestThirdPartyCapId;
+struct TestJoinResult;
+struct TestNameAnnotation;
+struct TestNameAnnotation_NestedStruct;
 
 typedef struct {capn_ptr p;} TestAllTypes_ptr;
 typedef struct {capn_ptr p;} TestDefaults_ptr;
-typedef struct {capn_ptr p;} TestObject_ptr;
+typedef struct {capn_ptr p;} TestAnyPointer_ptr;
 typedef struct {capn_ptr p;} TestOutOfOrder_ptr;
 typedef struct {capn_ptr p;} TestUnion_ptr;
 typedef struct {capn_ptr p;} TestUnnamedUnion_ptr;
@@ -84,12 +97,25 @@ typedef struct {capn_ptr p;} TestLateUnion_ptr;
 typedef struct {capn_ptr p;} TestOldVersion_ptr;
 typedef struct {capn_ptr p;} TestNewVersion_ptr;
 typedef struct {capn_ptr p;} TestStructUnion_ptr;
+typedef struct {capn_ptr p;} TestStructUnion_SomeStruct_ptr;
+typedef struct {capn_ptr p;} TestPrintInlineStructs_ptr;
+typedef struct {capn_ptr p;} TestPrintInlineStructs_InlineStruct_ptr;
+typedef struct {capn_ptr p;} TestWholeFloatDefault_ptr;
 typedef struct {capn_ptr p;} TestEmptyStruct_ptr;
 typedef struct {capn_ptr p;} TestConstants_ptr;
+typedef struct {capn_ptr p;} TestSturdyRef_ptr;
+typedef struct {capn_ptr p;} TestSturdyRefHostId_ptr;
+typedef struct {capn_ptr p;} TestSturdyRefObjectId_ptr;
+typedef struct {capn_ptr p;} TestProvisionId_ptr;
+typedef struct {capn_ptr p;} TestRecipientId_ptr;
+typedef struct {capn_ptr p;} TestThirdPartyCapId_ptr;
+typedef struct {capn_ptr p;} TestJoinResult_ptr;
+typedef struct {capn_ptr p;} TestNameAnnotation_ptr;
+typedef struct {capn_ptr p;} TestNameAnnotation_NestedStruct_ptr;
 
 typedef struct {capn_ptr p;} TestAllTypes_list;
 typedef struct {capn_ptr p;} TestDefaults_list;
-typedef struct {capn_ptr p;} TestObject_list;
+typedef struct {capn_ptr p;} TestAnyPointer_list;
 typedef struct {capn_ptr p;} TestOutOfOrder_list;
 typedef struct {capn_ptr p;} TestUnion_list;
 typedef struct {capn_ptr p;} TestUnnamedUnion_list;
@@ -121,8 +147,21 @@ typedef struct {capn_ptr p;} TestLateUnion_list;
 typedef struct {capn_ptr p;} TestOldVersion_list;
 typedef struct {capn_ptr p;} TestNewVersion_list;
 typedef struct {capn_ptr p;} TestStructUnion_list;
+typedef struct {capn_ptr p;} TestStructUnion_SomeStruct_list;
+typedef struct {capn_ptr p;} TestPrintInlineStructs_list;
+typedef struct {capn_ptr p;} TestPrintInlineStructs_InlineStruct_list;
+typedef struct {capn_ptr p;} TestWholeFloatDefault_list;
 typedef struct {capn_ptr p;} TestEmptyStruct_list;
 typedef struct {capn_ptr p;} TestConstants_list;
+typedef struct {capn_ptr p;} TestSturdyRef_list;
+typedef struct {capn_ptr p;} TestSturdyRefHostId_list;
+typedef struct {capn_ptr p;} TestSturdyRefObjectId_list;
+typedef struct {capn_ptr p;} TestProvisionId_list;
+typedef struct {capn_ptr p;} TestRecipientId_list;
+typedef struct {capn_ptr p;} TestThirdPartyCapId_list;
+typedef struct {capn_ptr p;} TestJoinResult_list;
+typedef struct {capn_ptr p;} TestNameAnnotation_list;
+typedef struct {capn_ptr p;} TestNameAnnotation_NestedStruct_list;
 
 enum TestEnum {
 	TestEnum_foo = 0,
@@ -145,6 +184,29 @@ enum TestNestedTypes_NestedStruct_NestedEnum {
 	TestNestedTypes_NestedStruct_NestedEnum_qux = 1,
 	TestNestedTypes_NestedStruct_NestedEnum_quux = 2
 };
+
+enum TestSturdyRefObjectId_Tag {
+	TestSturdyRefObjectId_Tag_testInterface = 0,
+	TestSturdyRefObjectId_Tag_testExtends = 1,
+	TestSturdyRefObjectId_Tag_testPipeline = 2,
+	TestSturdyRefObjectId_Tag_testTailCallee = 3,
+	TestSturdyRefObjectId_Tag_testTailCaller = 4,
+	TestSturdyRefObjectId_Tag_testMoreStuff = 5
+};
+
+enum TestNameAnnotation_BadlyNamedEnum {
+	TestNameAnnotation_BadlyNamedEnum_foo = 0,
+	TestNameAnnotation_BadlyNamedEnum_bar = 1,
+	TestNameAnnotation_BadlyNamedEnum_baz = 2
+};
+
+enum TestNameAnnotation_NestedStruct_DeeplyNestedEnum {
+	TestNameAnnotation_NestedStruct_DeeplyNestedEnum_quux = 0,
+	TestNameAnnotation_NestedStruct_DeeplyNestedEnum_corge = 1,
+	TestNameAnnotation_NestedStruct_DeeplyNestedEnum_grault = 2
+};
+extern union capn_conv_f32 TestWholeFloatDefault_constant;
+extern union capn_conv_f32 TestWholeFloatDefault_bigConstant;
 extern unsigned TestConstants_boolConst;
 extern int8_t TestConstants_int8Const;
 extern int16_t TestConstants_int16Const;
@@ -179,6 +241,7 @@ extern capn_list16 TestConstants_enumListConst;
 extern uint32_t globalInt;
 extern capn_text globalText;
 extern TestAllTypes_ptr globalStruct;
+extern TestPrintInlineStructs_ptr globalPrintableStruct;
 extern TestAllTypes_ptr derivedConstant;
 
 struct TestAllTypes {
@@ -251,8 +314,8 @@ struct TestDefaults {
 	capn_ptr interfaceList;
 };
 
-struct TestObject {
-	capn_ptr objectField;
+struct TestAnyPointer {
+	capn_ptr anyPointerField;
 };
 
 struct TestOutOfOrder {
@@ -637,16 +700,36 @@ struct TestNewVersion {
 	capn_text new2;
 };
 enum TestStructUnion_un_which {
-	TestStructUnion_un_allTypes = 0,
+	TestStructUnion_un__struct = 0,
 	TestStructUnion_un_object = 1
 };
 
 struct TestStructUnion {
 	enum TestStructUnion_un_which un_which;
 	union {
-		TestAllTypes_ptr allTypes;
-		TestObject_ptr object;
+		TestStructUnion_SomeStruct_ptr _struct;
+		TestAnyPointer_ptr object;
 	} un;
+};
+
+struct TestStructUnion_SomeStruct {
+	capn_text someText;
+	capn_text moreText;
+};
+
+struct TestPrintInlineStructs {
+	capn_text someText;
+	TestPrintInlineStructs_InlineStruct_list structList;
+};
+
+struct TestPrintInlineStructs_InlineStruct {
+	int32_t int32Field;
+	capn_text textField;
+};
+
+struct TestWholeFloatDefault {
+	float field;
+	float bigField;
 };
 
 struct TestEmptyStruct {
@@ -655,9 +738,62 @@ struct TestEmptyStruct {
 struct TestConstants {
 };
 
+struct TestSturdyRef {
+	TestSturdyRefHostId_ptr hostId;
+	capn_ptr objectId;
+};
+
+struct TestSturdyRefHostId {
+	capn_text host;
+};
+
+struct TestSturdyRefObjectId {
+	enum TestSturdyRefObjectId_Tag tag;
+};
+
+struct TestProvisionId {
+};
+
+struct TestRecipientId {
+};
+
+struct TestThirdPartyCapId {
+};
+
+struct TestJoinResult {
+};
+enum TestNameAnnotation_which {
+	TestNameAnnotation_badFieldName = 0,
+	TestNameAnnotation_bar = 1
+};
+enum TestNameAnnotation_badlyNamedUnion_which {
+	TestNameAnnotation_badlyNamedUnion_badlyNamedGroup = 0,
+	TestNameAnnotation_badlyNamedUnion_baz = 1
+};
+
+struct TestNameAnnotation {
+	enum TestNameAnnotation_which which;
+	union {
+		unsigned badFieldName : 1;
+		int8_t bar;
+	};
+	enum TestNameAnnotation_BadlyNamedEnum anotherBadFieldName;
+	enum TestNameAnnotation_badlyNamedUnion_which badlyNamedUnion_which;
+	union {
+		struct {
+		} badlyNamedGroup;
+		TestNameAnnotation_NestedStruct_ptr baz;
+	} badlyNamedUnion;
+};
+
+struct TestNameAnnotation_NestedStruct {
+	unsigned badNestedFieldName : 1;
+	TestNameAnnotation_NestedStruct_ptr anotherBadNestedFieldName;
+};
+
 TestAllTypes_ptr new_TestAllTypes(struct capn_segment*);
 TestDefaults_ptr new_TestDefaults(struct capn_segment*);
-TestObject_ptr new_TestObject(struct capn_segment*);
+TestAnyPointer_ptr new_TestAnyPointer(struct capn_segment*);
 TestOutOfOrder_ptr new_TestOutOfOrder(struct capn_segment*);
 TestUnion_ptr new_TestUnion(struct capn_segment*);
 TestUnnamedUnion_ptr new_TestUnnamedUnion(struct capn_segment*);
@@ -689,12 +825,25 @@ TestLateUnion_ptr new_TestLateUnion(struct capn_segment*);
 TestOldVersion_ptr new_TestOldVersion(struct capn_segment*);
 TestNewVersion_ptr new_TestNewVersion(struct capn_segment*);
 TestStructUnion_ptr new_TestStructUnion(struct capn_segment*);
+TestStructUnion_SomeStruct_ptr new_TestStructUnion_SomeStruct(struct capn_segment*);
+TestPrintInlineStructs_ptr new_TestPrintInlineStructs(struct capn_segment*);
+TestPrintInlineStructs_InlineStruct_ptr new_TestPrintInlineStructs_InlineStruct(struct capn_segment*);
+TestWholeFloatDefault_ptr new_TestWholeFloatDefault(struct capn_segment*);
 TestEmptyStruct_ptr new_TestEmptyStruct(struct capn_segment*);
 TestConstants_ptr new_TestConstants(struct capn_segment*);
+TestSturdyRef_ptr new_TestSturdyRef(struct capn_segment*);
+TestSturdyRefHostId_ptr new_TestSturdyRefHostId(struct capn_segment*);
+TestSturdyRefObjectId_ptr new_TestSturdyRefObjectId(struct capn_segment*);
+TestProvisionId_ptr new_TestProvisionId(struct capn_segment*);
+TestRecipientId_ptr new_TestRecipientId(struct capn_segment*);
+TestThirdPartyCapId_ptr new_TestThirdPartyCapId(struct capn_segment*);
+TestJoinResult_ptr new_TestJoinResult(struct capn_segment*);
+TestNameAnnotation_ptr new_TestNameAnnotation(struct capn_segment*);
+TestNameAnnotation_NestedStruct_ptr new_TestNameAnnotation_NestedStruct(struct capn_segment*);
 
 TestAllTypes_list new_TestAllTypes_list(struct capn_segment*, int len);
 TestDefaults_list new_TestDefaults_list(struct capn_segment*, int len);
-TestObject_list new_TestObject_list(struct capn_segment*, int len);
+TestAnyPointer_list new_TestAnyPointer_list(struct capn_segment*, int len);
 TestOutOfOrder_list new_TestOutOfOrder_list(struct capn_segment*, int len);
 TestUnion_list new_TestUnion_list(struct capn_segment*, int len);
 TestUnnamedUnion_list new_TestUnnamedUnion_list(struct capn_segment*, int len);
@@ -726,12 +875,25 @@ TestLateUnion_list new_TestLateUnion_list(struct capn_segment*, int len);
 TestOldVersion_list new_TestOldVersion_list(struct capn_segment*, int len);
 TestNewVersion_list new_TestNewVersion_list(struct capn_segment*, int len);
 TestStructUnion_list new_TestStructUnion_list(struct capn_segment*, int len);
+TestStructUnion_SomeStruct_list new_TestStructUnion_SomeStruct_list(struct capn_segment*, int len);
+TestPrintInlineStructs_list new_TestPrintInlineStructs_list(struct capn_segment*, int len);
+TestPrintInlineStructs_InlineStruct_list new_TestPrintInlineStructs_InlineStruct_list(struct capn_segment*, int len);
+TestWholeFloatDefault_list new_TestWholeFloatDefault_list(struct capn_segment*, int len);
 TestEmptyStruct_list new_TestEmptyStruct_list(struct capn_segment*, int len);
 TestConstants_list new_TestConstants_list(struct capn_segment*, int len);
+TestSturdyRef_list new_TestSturdyRef_list(struct capn_segment*, int len);
+TestSturdyRefHostId_list new_TestSturdyRefHostId_list(struct capn_segment*, int len);
+TestSturdyRefObjectId_list new_TestSturdyRefObjectId_list(struct capn_segment*, int len);
+TestProvisionId_list new_TestProvisionId_list(struct capn_segment*, int len);
+TestRecipientId_list new_TestRecipientId_list(struct capn_segment*, int len);
+TestThirdPartyCapId_list new_TestThirdPartyCapId_list(struct capn_segment*, int len);
+TestJoinResult_list new_TestJoinResult_list(struct capn_segment*, int len);
+TestNameAnnotation_list new_TestNameAnnotation_list(struct capn_segment*, int len);
+TestNameAnnotation_NestedStruct_list new_TestNameAnnotation_NestedStruct_list(struct capn_segment*, int len);
 
 void read_TestAllTypes(struct TestAllTypes*, TestAllTypes_ptr);
 void read_TestDefaults(struct TestDefaults*, TestDefaults_ptr);
-void read_TestObject(struct TestObject*, TestObject_ptr);
+void read_TestAnyPointer(struct TestAnyPointer*, TestAnyPointer_ptr);
 void read_TestOutOfOrder(struct TestOutOfOrder*, TestOutOfOrder_ptr);
 void read_TestUnion(struct TestUnion*, TestUnion_ptr);
 void read_TestUnnamedUnion(struct TestUnnamedUnion*, TestUnnamedUnion_ptr);
@@ -763,12 +925,25 @@ void read_TestLateUnion(struct TestLateUnion*, TestLateUnion_ptr);
 void read_TestOldVersion(struct TestOldVersion*, TestOldVersion_ptr);
 void read_TestNewVersion(struct TestNewVersion*, TestNewVersion_ptr);
 void read_TestStructUnion(struct TestStructUnion*, TestStructUnion_ptr);
+void read_TestStructUnion_SomeStruct(struct TestStructUnion_SomeStruct*, TestStructUnion_SomeStruct_ptr);
+void read_TestPrintInlineStructs(struct TestPrintInlineStructs*, TestPrintInlineStructs_ptr);
+void read_TestPrintInlineStructs_InlineStruct(struct TestPrintInlineStructs_InlineStruct*, TestPrintInlineStructs_InlineStruct_ptr);
+void read_TestWholeFloatDefault(struct TestWholeFloatDefault*, TestWholeFloatDefault_ptr);
 void read_TestEmptyStruct(struct TestEmptyStruct*, TestEmptyStruct_ptr);
 void read_TestConstants(struct TestConstants*, TestConstants_ptr);
+void read_TestSturdyRef(struct TestSturdyRef*, TestSturdyRef_ptr);
+void read_TestSturdyRefHostId(struct TestSturdyRefHostId*, TestSturdyRefHostId_ptr);
+void read_TestSturdyRefObjectId(struct TestSturdyRefObjectId*, TestSturdyRefObjectId_ptr);
+void read_TestProvisionId(struct TestProvisionId*, TestProvisionId_ptr);
+void read_TestRecipientId(struct TestRecipientId*, TestRecipientId_ptr);
+void read_TestThirdPartyCapId(struct TestThirdPartyCapId*, TestThirdPartyCapId_ptr);
+void read_TestJoinResult(struct TestJoinResult*, TestJoinResult_ptr);
+void read_TestNameAnnotation(struct TestNameAnnotation*, TestNameAnnotation_ptr);
+void read_TestNameAnnotation_NestedStruct(struct TestNameAnnotation_NestedStruct*, TestNameAnnotation_NestedStruct_ptr);
 
 void write_TestAllTypes(const struct TestAllTypes*, TestAllTypes_ptr);
 void write_TestDefaults(const struct TestDefaults*, TestDefaults_ptr);
-void write_TestObject(const struct TestObject*, TestObject_ptr);
+void write_TestAnyPointer(const struct TestAnyPointer*, TestAnyPointer_ptr);
 void write_TestOutOfOrder(const struct TestOutOfOrder*, TestOutOfOrder_ptr);
 void write_TestUnion(const struct TestUnion*, TestUnion_ptr);
 void write_TestUnnamedUnion(const struct TestUnnamedUnion*, TestUnnamedUnion_ptr);
@@ -800,12 +975,25 @@ void write_TestLateUnion(const struct TestLateUnion*, TestLateUnion_ptr);
 void write_TestOldVersion(const struct TestOldVersion*, TestOldVersion_ptr);
 void write_TestNewVersion(const struct TestNewVersion*, TestNewVersion_ptr);
 void write_TestStructUnion(const struct TestStructUnion*, TestStructUnion_ptr);
+void write_TestStructUnion_SomeStruct(const struct TestStructUnion_SomeStruct*, TestStructUnion_SomeStruct_ptr);
+void write_TestPrintInlineStructs(const struct TestPrintInlineStructs*, TestPrintInlineStructs_ptr);
+void write_TestPrintInlineStructs_InlineStruct(const struct TestPrintInlineStructs_InlineStruct*, TestPrintInlineStructs_InlineStruct_ptr);
+void write_TestWholeFloatDefault(const struct TestWholeFloatDefault*, TestWholeFloatDefault_ptr);
 void write_TestEmptyStruct(const struct TestEmptyStruct*, TestEmptyStruct_ptr);
 void write_TestConstants(const struct TestConstants*, TestConstants_ptr);
+void write_TestSturdyRef(const struct TestSturdyRef*, TestSturdyRef_ptr);
+void write_TestSturdyRefHostId(const struct TestSturdyRefHostId*, TestSturdyRefHostId_ptr);
+void write_TestSturdyRefObjectId(const struct TestSturdyRefObjectId*, TestSturdyRefObjectId_ptr);
+void write_TestProvisionId(const struct TestProvisionId*, TestProvisionId_ptr);
+void write_TestRecipientId(const struct TestRecipientId*, TestRecipientId_ptr);
+void write_TestThirdPartyCapId(const struct TestThirdPartyCapId*, TestThirdPartyCapId_ptr);
+void write_TestJoinResult(const struct TestJoinResult*, TestJoinResult_ptr);
+void write_TestNameAnnotation(const struct TestNameAnnotation*, TestNameAnnotation_ptr);
+void write_TestNameAnnotation_NestedStruct(const struct TestNameAnnotation_NestedStruct*, TestNameAnnotation_NestedStruct_ptr);
 
 void get_TestAllTypes(struct TestAllTypes*, TestAllTypes_list, int i);
 void get_TestDefaults(struct TestDefaults*, TestDefaults_list, int i);
-void get_TestObject(struct TestObject*, TestObject_list, int i);
+void get_TestAnyPointer(struct TestAnyPointer*, TestAnyPointer_list, int i);
 void get_TestOutOfOrder(struct TestOutOfOrder*, TestOutOfOrder_list, int i);
 void get_TestUnion(struct TestUnion*, TestUnion_list, int i);
 void get_TestUnnamedUnion(struct TestUnnamedUnion*, TestUnnamedUnion_list, int i);
@@ -837,12 +1025,25 @@ void get_TestLateUnion(struct TestLateUnion*, TestLateUnion_list, int i);
 void get_TestOldVersion(struct TestOldVersion*, TestOldVersion_list, int i);
 void get_TestNewVersion(struct TestNewVersion*, TestNewVersion_list, int i);
 void get_TestStructUnion(struct TestStructUnion*, TestStructUnion_list, int i);
+void get_TestStructUnion_SomeStruct(struct TestStructUnion_SomeStruct*, TestStructUnion_SomeStruct_list, int i);
+void get_TestPrintInlineStructs(struct TestPrintInlineStructs*, TestPrintInlineStructs_list, int i);
+void get_TestPrintInlineStructs_InlineStruct(struct TestPrintInlineStructs_InlineStruct*, TestPrintInlineStructs_InlineStruct_list, int i);
+void get_TestWholeFloatDefault(struct TestWholeFloatDefault*, TestWholeFloatDefault_list, int i);
 void get_TestEmptyStruct(struct TestEmptyStruct*, TestEmptyStruct_list, int i);
 void get_TestConstants(struct TestConstants*, TestConstants_list, int i);
+void get_TestSturdyRef(struct TestSturdyRef*, TestSturdyRef_list, int i);
+void get_TestSturdyRefHostId(struct TestSturdyRefHostId*, TestSturdyRefHostId_list, int i);
+void get_TestSturdyRefObjectId(struct TestSturdyRefObjectId*, TestSturdyRefObjectId_list, int i);
+void get_TestProvisionId(struct TestProvisionId*, TestProvisionId_list, int i);
+void get_TestRecipientId(struct TestRecipientId*, TestRecipientId_list, int i);
+void get_TestThirdPartyCapId(struct TestThirdPartyCapId*, TestThirdPartyCapId_list, int i);
+void get_TestJoinResult(struct TestJoinResult*, TestJoinResult_list, int i);
+void get_TestNameAnnotation(struct TestNameAnnotation*, TestNameAnnotation_list, int i);
+void get_TestNameAnnotation_NestedStruct(struct TestNameAnnotation_NestedStruct*, TestNameAnnotation_NestedStruct_list, int i);
 
 void set_TestAllTypes(const struct TestAllTypes*, TestAllTypes_list, int i);
 void set_TestDefaults(const struct TestDefaults*, TestDefaults_list, int i);
-void set_TestObject(const struct TestObject*, TestObject_list, int i);
+void set_TestAnyPointer(const struct TestAnyPointer*, TestAnyPointer_list, int i);
 void set_TestOutOfOrder(const struct TestOutOfOrder*, TestOutOfOrder_list, int i);
 void set_TestUnion(const struct TestUnion*, TestUnion_list, int i);
 void set_TestUnnamedUnion(const struct TestUnnamedUnion*, TestUnnamedUnion_list, int i);
@@ -874,8 +1075,21 @@ void set_TestLateUnion(const struct TestLateUnion*, TestLateUnion_list, int i);
 void set_TestOldVersion(const struct TestOldVersion*, TestOldVersion_list, int i);
 void set_TestNewVersion(const struct TestNewVersion*, TestNewVersion_list, int i);
 void set_TestStructUnion(const struct TestStructUnion*, TestStructUnion_list, int i);
+void set_TestStructUnion_SomeStruct(const struct TestStructUnion_SomeStruct*, TestStructUnion_SomeStruct_list, int i);
+void set_TestPrintInlineStructs(const struct TestPrintInlineStructs*, TestPrintInlineStructs_list, int i);
+void set_TestPrintInlineStructs_InlineStruct(const struct TestPrintInlineStructs_InlineStruct*, TestPrintInlineStructs_InlineStruct_list, int i);
+void set_TestWholeFloatDefault(const struct TestWholeFloatDefault*, TestWholeFloatDefault_list, int i);
 void set_TestEmptyStruct(const struct TestEmptyStruct*, TestEmptyStruct_list, int i);
 void set_TestConstants(const struct TestConstants*, TestConstants_list, int i);
+void set_TestSturdyRef(const struct TestSturdyRef*, TestSturdyRef_list, int i);
+void set_TestSturdyRefHostId(const struct TestSturdyRefHostId*, TestSturdyRefHostId_list, int i);
+void set_TestSturdyRefObjectId(const struct TestSturdyRefObjectId*, TestSturdyRefObjectId_list, int i);
+void set_TestProvisionId(const struct TestProvisionId*, TestProvisionId_list, int i);
+void set_TestRecipientId(const struct TestRecipientId*, TestRecipientId_list, int i);
+void set_TestThirdPartyCapId(const struct TestThirdPartyCapId*, TestThirdPartyCapId_list, int i);
+void set_TestJoinResult(const struct TestJoinResult*, TestJoinResult_list, int i);
+void set_TestNameAnnotation(const struct TestNameAnnotation*, TestNameAnnotation_list, int i);
+void set_TestNameAnnotation_NestedStruct(const struct TestNameAnnotation_NestedStruct*, TestNameAnnotation_NestedStruct_list, int i);
 
 #ifdef __cplusplus
 }
