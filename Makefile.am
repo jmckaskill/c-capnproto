@@ -44,8 +44,8 @@ DIST_SUBDIRS = gtest/googletest
 check_PROGRAMS += \
 	capn-test
 capn_test_SOURCES = \
-	capn-test.cpp \
-	capn-stream-test.cpp \
+	tests/capn-test.cpp \
+	tests/capn-stream-test.cpp \
 	compiler/test.capnp.c \
 	compiler/schema-test.cpp \
 	compiler/schema.capnp.c
