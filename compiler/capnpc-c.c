@@ -631,6 +631,10 @@ struct strings {
 	struct str enums;
 	struct str decl;
 	struct str var;
+	struct str pub_get;
+	struct str pub_get_header;
+	struct str pub_set;
+	struct str pub_set_header;
 };
 
 static const char *field_name(struct field *f) {
@@ -831,6 +835,42 @@ static void define_field(struct strings *s, struct field *f) {
 	}
 }
 
+static void define_getter_functions(struct node* node, struct field* field,
+                        struct strings* s)
+{
+        /**
+         * define getter
+         */
+        str_addf(&s->pub_get_header, "\n%s %s_get_%s(%s_ptr p);\n", field->v.tname, node->name.str,
+                 field_name(field), node->name.str);
+        str_addf(&s->pub_get, "\n%s %s_get_%s(%s_ptr p)\n", field->v.tname, node->name.str,
+                 field_name(field), node->name.str);
+        struct str getter_body = STR_INIT;
+        get_member(&getter_body, field, "p.p", "", field_name(field));
+		str_addf(&s->pub_get, "{\n");
+        str_addf(&s->pub_get, "%s%s %s;\n", s->ftab.str, field->v.tname, field_name(field));
+        str_addf(&s->pub_get, "%s%s", s->ftab.str,
+                 getter_body.str);
+        str_release(&getter_body);
+        str_addf(&s->pub_get, "%sreturn %s;\n}\n", s->ftab.str,
+                 field_name(field));
+}
+
+static void define_setter_functions(struct node* node, struct field* field,
+                        struct strings* s)
+{
+        str_addf(&s->pub_set_header, "\nvoid %s_set_%s(%s_ptr p, %s %s);\n",node->name.str,
+                 field_name(field), node->name.str, field->v.tname,
+                 field_name(field));
+        str_addf(&s->pub_set, "\nvoid %s_set_%s(%s_ptr p, %s %s)\n",node->name.str,
+                 field_name(field), node->name.str, field->v.tname,
+                 field_name(field));
+        struct str setter_body = STR_INIT;
+        set_member(&setter_body, field, "p.p", s->ftab.str, field_name(field));
+        str_addf(&s->pub_set, "{\n%s}\n", setter_body.str);
+        str_release(&setter_body);
+}
+
 static void define_group(struct strings *s, struct node *n, const char *group_name) {
 	struct field *f;
 	int flen = capn_len(n->n._struct.fields);
@@ -855,6 +895,21 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	/* fields before the union members */
 	for (f = n->fields; f < n->fields + flen && !in_union(f); f++) {
 		define_field(s, f);
+
+		if ((n->n.which == Node__struct && n->n._struct.isGroup)) {
+			// Don't emit in-place getters and setters for groups because they
+			// are defined as anonymous structs inside their parent struct.
+			// We could do it, but nested structs shouldn't be accessed
+			// in-place anyway.
+			continue;
+		}
+
+		if (f->v.t.which == Type__void) {
+			continue;
+		}
+
+		define_getter_functions(n, f, s);
+		define_setter_functions(n, f, s);
 	}
 
 	if (ulen > 0) {
@@ -889,6 +944,10 @@ static void define_struct(struct node *n) {
 	str_reset(&s.enums);
 	str_reset(&s.decl);
 	str_reset(&s.var);
+	str_reset(&s.pub_get);
+	str_reset(&s.pub_set);
+	str_reset(&s.pub_get_header);
+	str_reset(&s.pub_set_header);
 
 	str_add(&s.dtab, "\t", -1);
 	str_add(&s.ftab, "\t", -1);
@@ -906,6 +965,22 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
 	str_addf(&SRC, "\tp.p = capn_new_struct(s, %d, %d);\n", 8*n->n._struct.dataWordCount, n->n._struct.pointerCount);
 	str_addf(&SRC, "\treturn p;\n");
+	str_addf(&SRC, "}\n");
+
+	// adding the ability to get the structure size
+	str_addf(&HDR, "\nsize_t get_%s_word_count();\n", n->name.str);
+	str_addf(&SRC, "\nsize_t get_%s_word_count(){\n", n->name.str);
+	str_addf(&SRC, "\treturn %d;\n", n->n._struct.dataWordCount);
+	str_addf(&SRC, "}\n");
+
+	str_addf(&HDR, "\nsize_t get_%s_pointer_count();\n", n->name.str);
+	str_addf(&SRC, "\nsize_t get_%s_pointer_count(){\n", n->name.str);
+	str_addf(&SRC, "\treturn %d;\n", n->n._struct.pointerCount);
+	str_addf(&SRC, "}\n");
+
+	str_addf(&HDR, "\nsize_t get_%s_struct_size_bytes();\n", n->name.str);
+	str_addf(&SRC, "\nsize_t get_%s_struct_size_bytes(){\n", n->name.str);
+	str_addf(&SRC, "\treturn %d;\n", 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
 	str_addf(&SRC, "}\n");
 
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
@@ -935,6 +1010,12 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
 	str_addf(&SRC, "\twrite_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
+
+	str_add(&SRC, s.pub_get.str, s.pub_get.len);
+	str_add(&SRC, s.pub_set.str, s.pub_set.len);
+
+	str_add(&HDR, s.pub_get_header.str, s.pub_get_header.len);
+	str_add(&HDR, s.pub_set_header.str, s.pub_set_header.len);
 }
 
 #if 0
