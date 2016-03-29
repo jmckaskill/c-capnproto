@@ -968,20 +968,9 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "}\n");
 
 	// adding the ability to get the structure size
-	str_addf(&HDR, "\nsize_t get_%s_word_count();\n", n->name.str);
-	str_addf(&SRC, "\nsize_t get_%s_word_count(){\n", n->name.str);
-	str_addf(&SRC, "\treturn %d;\n", n->n._struct.dataWordCount);
-	str_addf(&SRC, "}\n");
-
-	str_addf(&HDR, "\nsize_t get_%s_pointer_count();\n", n->name.str);
-	str_addf(&SRC, "\nsize_t get_%s_pointer_count(){\n", n->name.str);
-	str_addf(&SRC, "\treturn %d;\n", n->n._struct.pointerCount);
-	str_addf(&SRC, "}\n");
-
-	str_addf(&HDR, "\nsize_t get_%s_struct_size_bytes();\n", n->name.str);
-	str_addf(&SRC, "\nsize_t get_%s_struct_size_bytes(){\n", n->name.str);
-	str_addf(&SRC, "\treturn %d;\n", 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
-	str_addf(&SRC, "}\n");
+	str_addf(&HDR, "\nstatic const size_t %s_word_count = %d;\n", n->name.str, n->n._struct.dataWordCount);
+	str_addf(&HDR, "\nstatic const size_t %s_pointer_count = %d;\n", n->name.str, n->n._struct.pointerCount);
+	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
 
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_list p;\n", n->name.str);
