@@ -329,10 +329,10 @@ CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 	if (off >= p.datasz*8) {
 		return -1;
 	} else if (val) {
-		((uint8_t*)p.data)[off/8] |= 1 << (off%8);
+		((uint8_t*)p.data)[off/8] |= (uint8_t)(1 << (off%8));
 		return 0;
 	} else {
-		((uint8_t*)p.data)[off/8] &= ~(1 << (off%8));
+		((uint8_t*)p.data)[off/8] &= (uint8_t)~(1 << (off%8));
 		return 0;
 	}
 }
