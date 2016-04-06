@@ -878,6 +878,18 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	/* named union is where all group members are in the union */
 	int named_union = (group_name && ulen == flen && ulen > 0);
 	int named_struct = (group_name && !named_union);
+	int empty = 1;
+
+	for (f = n->fields; f < n->fields + flen; f++) {
+		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
+		if (f->v.t.which != Type__void)
+			empty = 0;
+	}
+
+	if (named_struct && empty) {
+		str_addf(&s->decl, "%s/* struct { -empty- } %s; */\n", s->dtab.str, group_name);
+		return;
+	}
 
 	if (named_struct) {
 		str_addf(&s->decl, "%sstruct {\n", s->dtab.str);
@@ -886,10 +898,6 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 
 	if (group_name) {
 		str_addf(&s->var, "%s.", group_name);
-	}
-
-	for (f = n->fields; f < n->fields + flen; f++) {
-		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
 	}
 
 	/* fields before the union members */
