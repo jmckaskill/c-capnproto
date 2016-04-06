@@ -1052,7 +1052,8 @@ capn_ptr capn_new_string(struct capn_segment *seg, const char *str, ssize_t sz) 
 	p.datasz = 1;
 	new_object(&p, p.len);
 	if (p.data) {
-		memcpy(p.data, str, p.len-1);
+		memcpy(p.data, str, p.len - 1);
+		p.data[p.len - 1] = '\0';
 	}
 	return p;
 }
