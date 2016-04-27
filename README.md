@@ -38,3 +38,16 @@ Otherwise, you can specify the path to the c plugin:
 `capnp` generates a C struct that corresponds to each capn proto struct, along with read/write functions that convert to/from capn proto form.
 
 TBD whether it will make sense in the future to provide accessor functions for struct members, rather than converting entire structs.
+
+## building on linux
+
+```
+git clone https://github.com/opensourcerouting/c-capnproto
+cd c-capnproto
+git submodule update --init --recursive
+autoreconf -f -i -s 
+./configure
+make
+make check
+```
+
