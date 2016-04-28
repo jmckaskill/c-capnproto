@@ -449,6 +449,8 @@ static const char *xor_member(struct field *f) {
 			return strf(&buf, " ^ %#xu", (uint32_t) f->v.intval);
 
 		case Value_int64:
+			return strf(&buf, " ^ ((int64_t)((uint64_t) %#x << 32) ^ %#x)",
+						(uint32_t) (f->v.intval >> 32), (uint32_t) f->v.intval);
 		case Value_uint64:
 		case Value_float64:
 			return strf(&buf, " ^ ((uint64_t) %#xu << 32) ^ %#xu",
@@ -487,17 +489,17 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "capn_write1(%s, %d, %s != %d);\n", ptr, f->f.slot.offset, var, (int) f->v.intval);
 		break;
 	case Type_int8:
-		str_addf(func, "capn_write8(%s, %d, (uint8_t) %s%s);\n", ptr, f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write8(%s, %d, (uint8_t) (%s%s));\n", ptr, f->f.slot.offset, var, xor);
 		break;
 	case Type_int16:
 	case Type__enum:
-		str_addf(func, "capn_write16(%s, %d, (uint16_t) %s%s);\n", ptr, 2*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write16(%s, %d, (uint16_t) (%s%s));\n", ptr, 2*f->f.slot.offset, var, xor);
 		break;
 	case Type_int32:
-		str_addf(func, "capn_write32(%s, %d, (uint32_t) %s%s);\n", ptr, 4*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write32(%s, %d, (uint32_t) (%s%s));\n", ptr, 4*f->f.slot.offset, var, xor);
 		break;
 	case Type_int64:
-		str_addf(func, "capn_write64(%s, %d, (uint64_t) %s%s);\n", ptr, 8*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write64(%s, %d, (uint64_t) (%s%s));\n", ptr, 8*f->f.slot.offset, var, xor);
 		break;
 	case Type_uint8:
 		str_addf(func, "capn_write8(%s, %d, %s%s);\n", ptr, f->f.slot.offset, var, xor);
@@ -565,16 +567,16 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), (int)f->v.intval);
 		return;
 	case Type_int8:
-		str_addf(func, "%s = (int8_t) capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
+		str_addf(func, "%s = (int8_t) ((int8_t)capn_read8(%s, %d))%s;\n", var, ptr, f->f.slot.offset, xor);
 		return;
 	case Type_int16:
-		str_addf(func, "%s = (int16_t) capn_read16(%s, %d)%s;\n", var, ptr, 2*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int16_t) ((int16_t)capn_read16(%s, %d))%s;\n", var, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_int32:
-		str_addf(func, "%s = (int32_t) capn_read32(%s, %d)%s;\n", var, ptr, 4*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int32_t) ((int32_t)capn_read32(%s, %d))%s;\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
 	case Type_int64:
-		str_addf(func, "%s = (int64_t) capn_read64(%s, %d)%s;\n", var, ptr, 8*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int64_t)((int64_t)(capn_read64(%s, %d))%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
 	case Type_uint8:
 		str_addf(func, "%s = capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
