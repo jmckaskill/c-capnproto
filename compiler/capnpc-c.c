@@ -449,7 +449,7 @@ static const char *xor_member(struct field *f) {
 			return strf(&buf, " ^ %#xu", (uint32_t) f->v.intval);
 
 		case Value_int64:
-			return strf(&buf, " ^ ((int64_t)((uint64_t) %#x << 32) ^ %#x)",
+			return strf(&buf, " ^ ((int64_t)((uint64_t) %#xu << 32) ^ %#xu)",
 						(uint32_t) (f->v.intval >> 32), (uint32_t) f->v.intval);
 		case Value_uint64:
 		case Value_float64:
