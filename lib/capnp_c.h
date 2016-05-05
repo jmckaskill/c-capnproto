@@ -13,6 +13,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <endian.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,8 +24,6 @@ extern "C" {
 #else
 #define CAPN_INLINE static
 #endif
-
-#define IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
 
 #define CAPN_VERSION 1
 
