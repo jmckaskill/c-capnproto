@@ -11,7 +11,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 
 #define STRUCT_PTR 0
 #define LIST_PTR 1

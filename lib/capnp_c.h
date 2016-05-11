@@ -14,6 +14,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// ssize_t is not defined in stdint.h in MSVC. 
+#ifdef _MSC_VER
+typedef intmax_t ssize_t;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
