@@ -44,8 +44,6 @@ AC_SUBST(capnpdir)
 #  AC_MSG_ERROR([capnproto base package (0.5.2 or newer) not found])
 #])
 
-AC_CONFIG_SUBDIRS([gtest/googletest])
-
 AC_CONFIG_FILES([
 	Makefile
 	c-capnproto.pc

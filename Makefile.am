@@ -45,12 +45,6 @@ noinst_HEADERS += \
 	compiler/c++.capnp.h \
 	compiler/test.capnp.h
 
-GTEST_LDADD = gtest/googletest/lib/libgtest.la
-gtest/googletest/lib/libgtest.la:
-	make -C gtest/googletest lib/libgtest.la
-GTEST_CPPFLAGS = -I${srcdir}/gtest/googletest/include
-DIST_SUBDIRS = gtest/googletest
-
 check_PROGRAMS += \
 	capn-test
 capn_test_SOURCES = \
@@ -59,8 +53,8 @@ capn_test_SOURCES = \
 	compiler/test.capnp.c \
 	compiler/schema-test.cpp \
 	compiler/schema.capnp.c
-capn_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_CPPFLAGS)
+capn_test_CPPFLAGS = $(AM_CPPFLAGS)
 capn_test_CXXFLAGS = -std=gnu++11 -pthread
-capn_test_LDADD = libcapnp_c.la $(GTEST_LDADD)
+capn_test_LDADD = libcapnp_c.la -lgtest
 capn_test_LDFLAGS = -pthread
 TESTS = capn-test
