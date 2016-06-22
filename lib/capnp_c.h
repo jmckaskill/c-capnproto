@@ -15,6 +15,11 @@
 #include <stdio.h>
 #include <endian.h>
 
+// ssize_t is not defined in stdint.h in MSVC. 
+#ifdef _MSC_VER
+typedef intmax_t ssize_t;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,6 +101,9 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  * data, len, cap, and user should all set by the user. Other values
  * should be zero initialized.
  */
+#ifdef _MSC_VER
+__declspec(align(64))
+#endif
 struct capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;

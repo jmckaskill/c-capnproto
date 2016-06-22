@@ -11,7 +11,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _MSC_VER
 #include <sys/param.h>
+#endif
 
 #define STRUCT_PTR 0
 #define LIST_PTR 1
@@ -316,7 +318,7 @@ static char *struct_ptr(struct capn_segment *s, char *d, int minsz) {
 static capn_ptr read_ptr(struct capn_segment *s, char *d) {
 	capn_ptr ret = {CAPN_NULL};
 	uint64_t val;
-	char *e;
+	char *e = 0;
 
 	val = capn_flip64(*(uint64_t*) d);
 
