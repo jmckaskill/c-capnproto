@@ -31,6 +31,15 @@ if test x"${enable_werror}" = x"yes" ; then
 fi
 AC_SUBST(WERROR)
 
+AC_ARG_WITH(capnpdir,
+  AS_HELP_STRING([--with-capnpdir=DIR], [directory to install c.capnp file in (default: $includedir/capnp)]))
+if test x"${with_capnpdir}" != x ; then
+  capnpdir="${with_capnpdir}"
+else
+  capnpdir="${includedir}/capnp"
+fi
+AC_SUBST(capnpdir)
+
 #PKG_CHECK_MODULES(CAPNP, [capnp >= 0.5.2], [], [
 #  AC_MSG_ERROR([capnproto base package (0.5.2 or newer) not found])
 #])

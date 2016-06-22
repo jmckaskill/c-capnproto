@@ -1243,6 +1243,7 @@ int main() {
 		struct CodeGeneratorRequest_RequestedFile file_req;
 		static struct str b = STR_INIT;
 		char *p;
+		const char *nameinfix = NULL;
 		FILE *srcf, *hdrf;
 
 		g_valc = 0;
@@ -1258,6 +1259,29 @@ int main() {
 			fprintf(stderr, "invalid file_node specified\n");
 			exit(2);
 		}
+
+		for (j = capn_len(file_node->n.annotations)-1; j >= 0; j--) {
+			struct Annotation a;
+			struct Value v;
+			get_Annotation(&a, file_node->n.annotations, j);
+			read_Value(&v, a.value);
+
+			switch (a.id) {
+			case 0x85a8d86d736ba637UL:	/* $C::nameinfix */
+				if (v.which != Value_text) {
+					fprintf(stderr, "schema breakage on $C::nameinfix annotation\n");
+					exit(2);
+				}
+				if (nameinfix) {
+					fprintf(stderr, "$C::nameinfix annotation appears more than once\n");
+					exit(2);
+				}
+				nameinfix = v.text.str ? v.text.str : "";
+				break;
+			}
+		}
+		if (!nameinfix)
+			nameinfix = "";
 
 		str_reset(&HDR);
 		str_reset(&SRC);
@@ -1311,7 +1335,7 @@ int main() {
 
 		/* write out the header */
 
-		hdrf = fopen(strf(&b, "%s.h", file_node->n.displayName.str), "w");
+		hdrf = fopen(strf(&b, "%s%s.h", file_node->n.displayName.str, nameinfix), "w");
 		if (!hdrf) {
 			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
 			exit(2);
@@ -1321,13 +1345,13 @@ int main() {
 
 		/* write out the source */
 
-		srcf = fopen(strf(&b, "%s.c", file_node->n.displayName.str), "w");
+		srcf = fopen(strf(&b, "%s%s.c", file_node->n.displayName.str, nameinfix), "w");
 		if (!srcf) {
 			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
 			exit(2);
 		}
 		p = strrchr(file_node->n.displayName.str, '/');
-		fprintf(srcf, "#include \"%s.h\"\n", p ? p+1 : file_node->n.displayName.str);
+		fprintf(srcf, "#include \"%s%s.h\"\n", p ? p+1 : file_node->n.displayName.str, nameinfix);
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
 
 		if (g_val0used)

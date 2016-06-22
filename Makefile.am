@@ -15,6 +15,9 @@ EXTRA_DIST += c-capnproto.pc.in
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = c-capnproto.pc
 
+EXTRA_DIST += compiler/c.capnp
+capnp_DATA = compiler/c.capnp
+
 AM_CPPFLAGS = -I${srcdir}/lib
 
 lib_LTLIBRARIES += libcapnp_c.la
