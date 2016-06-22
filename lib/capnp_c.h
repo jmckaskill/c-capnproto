@@ -13,6 +13,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #if defined(unix) && !defined(__APPLE__)
 #include <endian.h>
 #endif
@@ -316,10 +317,12 @@ CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
       defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
 	return __builtin_bswap16(v);
 #else
-	union { uint16_t u; uint8_t v[2]; } s;
-	s.v[0] = (uint8_t)v;
-	s.v[1] = (uint8_t)(v>>8);
-	return s.u;
+	uint8_t sv[2];
+	uint16_t ret;
+	sv[0] = (uint8_t)v;
+	sv[1] = (uint8_t)(v>>8);
+	memcpy(&ret, sv, sizeof(ret));
+	return ret;
 #endif
 }
 CAPN_INLINE uint32_t capn_flip32(uint32_t v) {
@@ -329,12 +332,14 @@ CAPN_INLINE uint32_t capn_flip32(uint32_t v) {
       defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
 	return __builtin_bswap32(v);
 #else
-	union { uint32_t u; uint8_t v[4]; } s;
-	s.v[0] = (uint8_t)v;
-	s.v[1] = (uint8_t)(v>>8);
-	s.v[2] = (uint8_t)(v>>16);
-	s.v[3] = (uint8_t)(v>>24);
-	return s.u;
+	uint8_t sv[4];
+	uint32_t ret;
+	sv[0] = (uint8_t)v;
+	sv[1] = (uint8_t)(v>>8);
+	sv[2] = (uint8_t)(v>>16);
+	sv[3] = (uint8_t)(v>>24);
+	memcpy(&ret, sv, sizeof(ret));
+	return ret;
 #endif
 }
 CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
@@ -344,16 +349,18 @@ CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
       defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
 	return __builtin_bswap64(v);
 #else
-	union { uint64_t u; uint8_t v[8]; } s;
-	s.v[0] = (uint8_t)v;
-	s.v[1] = (uint8_t)(v>>8);
-	s.v[2] = (uint8_t)(v>>16);
-	s.v[3] = (uint8_t)(v>>24);
-	s.v[4] = (uint8_t)(v>>32);
-	s.v[5] = (uint8_t)(v>>40);
-	s.v[6] = (uint8_t)(v>>48);
-	s.v[7] = (uint8_t)(v>>56);
-	return s.u;
+	uint8_t sv[8];
+	uint64_t ret;
+	sv[0] = (uint8_t)v;
+	sv[1] = (uint8_t)(v>>8);
+	sv[2] = (uint8_t)(v>>16);
+	sv[3] = (uint8_t)(v>>24);
+	sv[4] = (uint8_t)(v>>32);
+	sv[5] = (uint8_t)(v>>40);
+	sv[6] = (uint8_t)(v>>48);
+	sv[7] = (uint8_t)(v>>56);
+	memcpy(&ret, sv, sizeof(ret));
+	return ret;
 #endif
 }
 
