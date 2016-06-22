@@ -279,6 +279,140 @@ struct TestAllTypes {
 	capn_ptr interfaceList;
 };
 
+static const size_t TestAllTypes_word_count = 6;
+
+static const size_t TestAllTypes_pointer_count = 20;
+
+static const size_t TestAllTypes_struct_bytes_count = 208;
+
+unsigned TestAllTypes_get_boolField(TestAllTypes_ptr p);
+
+int8_t TestAllTypes_get_int8Field(TestAllTypes_ptr p);
+
+int16_t TestAllTypes_get_int16Field(TestAllTypes_ptr p);
+
+int32_t TestAllTypes_get_int32Field(TestAllTypes_ptr p);
+
+int64_t TestAllTypes_get_int64Field(TestAllTypes_ptr p);
+
+uint8_t TestAllTypes_get_uInt8Field(TestAllTypes_ptr p);
+
+uint16_t TestAllTypes_get_uInt16Field(TestAllTypes_ptr p);
+
+uint32_t TestAllTypes_get_uInt32Field(TestAllTypes_ptr p);
+
+uint64_t TestAllTypes_get_uInt64Field(TestAllTypes_ptr p);
+
+float TestAllTypes_get_float32Field(TestAllTypes_ptr p);
+
+double TestAllTypes_get_float64Field(TestAllTypes_ptr p);
+
+capn_text TestAllTypes_get_textField(TestAllTypes_ptr p);
+
+capn_data TestAllTypes_get_dataField(TestAllTypes_ptr p);
+
+TestAllTypes_ptr TestAllTypes_get_structField(TestAllTypes_ptr p);
+
+enum TestEnum TestAllTypes_get_enumField(TestAllTypes_ptr p);
+
+capn_ptr TestAllTypes_get_voidList(TestAllTypes_ptr p);
+
+capn_list1 TestAllTypes_get_boolList(TestAllTypes_ptr p);
+
+capn_list8 TestAllTypes_get_int8List(TestAllTypes_ptr p);
+
+capn_list16 TestAllTypes_get_int16List(TestAllTypes_ptr p);
+
+capn_list32 TestAllTypes_get_int32List(TestAllTypes_ptr p);
+
+capn_list64 TestAllTypes_get_int64List(TestAllTypes_ptr p);
+
+capn_list8 TestAllTypes_get_uInt8List(TestAllTypes_ptr p);
+
+capn_list16 TestAllTypes_get_uInt16List(TestAllTypes_ptr p);
+
+capn_list32 TestAllTypes_get_uInt32List(TestAllTypes_ptr p);
+
+capn_list64 TestAllTypes_get_uInt64List(TestAllTypes_ptr p);
+
+capn_list32 TestAllTypes_get_float32List(TestAllTypes_ptr p);
+
+capn_list64 TestAllTypes_get_float64List(TestAllTypes_ptr p);
+
+capn_ptr TestAllTypes_get_textList(TestAllTypes_ptr p);
+
+capn_ptr TestAllTypes_get_dataList(TestAllTypes_ptr p);
+
+TestAllTypes_list TestAllTypes_get_structList(TestAllTypes_ptr p);
+
+capn_list16 TestAllTypes_get_enumList(TestAllTypes_ptr p);
+
+capn_ptr TestAllTypes_get_interfaceList(TestAllTypes_ptr p);
+
+void TestAllTypes_set_boolField(TestAllTypes_ptr p, unsigned boolField);
+
+void TestAllTypes_set_int8Field(TestAllTypes_ptr p, int8_t int8Field);
+
+void TestAllTypes_set_int16Field(TestAllTypes_ptr p, int16_t int16Field);
+
+void TestAllTypes_set_int32Field(TestAllTypes_ptr p, int32_t int32Field);
+
+void TestAllTypes_set_int64Field(TestAllTypes_ptr p, int64_t int64Field);
+
+void TestAllTypes_set_uInt8Field(TestAllTypes_ptr p, uint8_t uInt8Field);
+
+void TestAllTypes_set_uInt16Field(TestAllTypes_ptr p, uint16_t uInt16Field);
+
+void TestAllTypes_set_uInt32Field(TestAllTypes_ptr p, uint32_t uInt32Field);
+
+void TestAllTypes_set_uInt64Field(TestAllTypes_ptr p, uint64_t uInt64Field);
+
+void TestAllTypes_set_float32Field(TestAllTypes_ptr p, float float32Field);
+
+void TestAllTypes_set_float64Field(TestAllTypes_ptr p, double float64Field);
+
+void TestAllTypes_set_textField(TestAllTypes_ptr p, capn_text textField);
+
+void TestAllTypes_set_dataField(TestAllTypes_ptr p, capn_data dataField);
+
+void TestAllTypes_set_structField(TestAllTypes_ptr p, TestAllTypes_ptr structField);
+
+void TestAllTypes_set_enumField(TestAllTypes_ptr p, enum TestEnum enumField);
+
+void TestAllTypes_set_voidList(TestAllTypes_ptr p, capn_ptr voidList);
+
+void TestAllTypes_set_boolList(TestAllTypes_ptr p, capn_list1 boolList);
+
+void TestAllTypes_set_int8List(TestAllTypes_ptr p, capn_list8 int8List);
+
+void TestAllTypes_set_int16List(TestAllTypes_ptr p, capn_list16 int16List);
+
+void TestAllTypes_set_int32List(TestAllTypes_ptr p, capn_list32 int32List);
+
+void TestAllTypes_set_int64List(TestAllTypes_ptr p, capn_list64 int64List);
+
+void TestAllTypes_set_uInt8List(TestAllTypes_ptr p, capn_list8 uInt8List);
+
+void TestAllTypes_set_uInt16List(TestAllTypes_ptr p, capn_list16 uInt16List);
+
+void TestAllTypes_set_uInt32List(TestAllTypes_ptr p, capn_list32 uInt32List);
+
+void TestAllTypes_set_uInt64List(TestAllTypes_ptr p, capn_list64 uInt64List);
+
+void TestAllTypes_set_float32List(TestAllTypes_ptr p, capn_list32 float32List);
+
+void TestAllTypes_set_float64List(TestAllTypes_ptr p, capn_list64 float64List);
+
+void TestAllTypes_set_textList(TestAllTypes_ptr p, capn_ptr textList);
+
+void TestAllTypes_set_dataList(TestAllTypes_ptr p, capn_ptr dataList);
+
+void TestAllTypes_set_structList(TestAllTypes_ptr p, TestAllTypes_list structList);
+
+void TestAllTypes_set_enumList(TestAllTypes_ptr p, capn_list16 enumList);
+
+void TestAllTypes_set_interfaceList(TestAllTypes_ptr p, capn_ptr interfaceList);
+
 struct TestDefaults {
 	unsigned boolField : 1;
 	int8_t int8Field;
@@ -314,9 +448,153 @@ struct TestDefaults {
 	capn_ptr interfaceList;
 };
 
+static const size_t TestDefaults_word_count = 6;
+
+static const size_t TestDefaults_pointer_count = 20;
+
+static const size_t TestDefaults_struct_bytes_count = 208;
+
+unsigned TestDefaults_get_boolField(TestDefaults_ptr p);
+
+int8_t TestDefaults_get_int8Field(TestDefaults_ptr p);
+
+int16_t TestDefaults_get_int16Field(TestDefaults_ptr p);
+
+int32_t TestDefaults_get_int32Field(TestDefaults_ptr p);
+
+int64_t TestDefaults_get_int64Field(TestDefaults_ptr p);
+
+uint8_t TestDefaults_get_uInt8Field(TestDefaults_ptr p);
+
+uint16_t TestDefaults_get_uInt16Field(TestDefaults_ptr p);
+
+uint32_t TestDefaults_get_uInt32Field(TestDefaults_ptr p);
+
+uint64_t TestDefaults_get_uInt64Field(TestDefaults_ptr p);
+
+float TestDefaults_get_float32Field(TestDefaults_ptr p);
+
+double TestDefaults_get_float64Field(TestDefaults_ptr p);
+
+capn_text TestDefaults_get_textField(TestDefaults_ptr p);
+
+capn_data TestDefaults_get_dataField(TestDefaults_ptr p);
+
+TestAllTypes_ptr TestDefaults_get_structField(TestDefaults_ptr p);
+
+enum TestEnum TestDefaults_get_enumField(TestDefaults_ptr p);
+
+capn_ptr TestDefaults_get_voidList(TestDefaults_ptr p);
+
+capn_list1 TestDefaults_get_boolList(TestDefaults_ptr p);
+
+capn_list8 TestDefaults_get_int8List(TestDefaults_ptr p);
+
+capn_list16 TestDefaults_get_int16List(TestDefaults_ptr p);
+
+capn_list32 TestDefaults_get_int32List(TestDefaults_ptr p);
+
+capn_list64 TestDefaults_get_int64List(TestDefaults_ptr p);
+
+capn_list8 TestDefaults_get_uInt8List(TestDefaults_ptr p);
+
+capn_list16 TestDefaults_get_uInt16List(TestDefaults_ptr p);
+
+capn_list32 TestDefaults_get_uInt32List(TestDefaults_ptr p);
+
+capn_list64 TestDefaults_get_uInt64List(TestDefaults_ptr p);
+
+capn_list32 TestDefaults_get_float32List(TestDefaults_ptr p);
+
+capn_list64 TestDefaults_get_float64List(TestDefaults_ptr p);
+
+capn_ptr TestDefaults_get_textList(TestDefaults_ptr p);
+
+capn_ptr TestDefaults_get_dataList(TestDefaults_ptr p);
+
+TestAllTypes_list TestDefaults_get_structList(TestDefaults_ptr p);
+
+capn_list16 TestDefaults_get_enumList(TestDefaults_ptr p);
+
+capn_ptr TestDefaults_get_interfaceList(TestDefaults_ptr p);
+
+void TestDefaults_set_boolField(TestDefaults_ptr p, unsigned boolField);
+
+void TestDefaults_set_int8Field(TestDefaults_ptr p, int8_t int8Field);
+
+void TestDefaults_set_int16Field(TestDefaults_ptr p, int16_t int16Field);
+
+void TestDefaults_set_int32Field(TestDefaults_ptr p, int32_t int32Field);
+
+void TestDefaults_set_int64Field(TestDefaults_ptr p, int64_t int64Field);
+
+void TestDefaults_set_uInt8Field(TestDefaults_ptr p, uint8_t uInt8Field);
+
+void TestDefaults_set_uInt16Field(TestDefaults_ptr p, uint16_t uInt16Field);
+
+void TestDefaults_set_uInt32Field(TestDefaults_ptr p, uint32_t uInt32Field);
+
+void TestDefaults_set_uInt64Field(TestDefaults_ptr p, uint64_t uInt64Field);
+
+void TestDefaults_set_float32Field(TestDefaults_ptr p, float float32Field);
+
+void TestDefaults_set_float64Field(TestDefaults_ptr p, double float64Field);
+
+void TestDefaults_set_textField(TestDefaults_ptr p, capn_text textField);
+
+void TestDefaults_set_dataField(TestDefaults_ptr p, capn_data dataField);
+
+void TestDefaults_set_structField(TestDefaults_ptr p, TestAllTypes_ptr structField);
+
+void TestDefaults_set_enumField(TestDefaults_ptr p, enum TestEnum enumField);
+
+void TestDefaults_set_voidList(TestDefaults_ptr p, capn_ptr voidList);
+
+void TestDefaults_set_boolList(TestDefaults_ptr p, capn_list1 boolList);
+
+void TestDefaults_set_int8List(TestDefaults_ptr p, capn_list8 int8List);
+
+void TestDefaults_set_int16List(TestDefaults_ptr p, capn_list16 int16List);
+
+void TestDefaults_set_int32List(TestDefaults_ptr p, capn_list32 int32List);
+
+void TestDefaults_set_int64List(TestDefaults_ptr p, capn_list64 int64List);
+
+void TestDefaults_set_uInt8List(TestDefaults_ptr p, capn_list8 uInt8List);
+
+void TestDefaults_set_uInt16List(TestDefaults_ptr p, capn_list16 uInt16List);
+
+void TestDefaults_set_uInt32List(TestDefaults_ptr p, capn_list32 uInt32List);
+
+void TestDefaults_set_uInt64List(TestDefaults_ptr p, capn_list64 uInt64List);
+
+void TestDefaults_set_float32List(TestDefaults_ptr p, capn_list32 float32List);
+
+void TestDefaults_set_float64List(TestDefaults_ptr p, capn_list64 float64List);
+
+void TestDefaults_set_textList(TestDefaults_ptr p, capn_ptr textList);
+
+void TestDefaults_set_dataList(TestDefaults_ptr p, capn_ptr dataList);
+
+void TestDefaults_set_structList(TestDefaults_ptr p, TestAllTypes_list structList);
+
+void TestDefaults_set_enumList(TestDefaults_ptr p, capn_list16 enumList);
+
+void TestDefaults_set_interfaceList(TestDefaults_ptr p, capn_ptr interfaceList);
+
 struct TestAnyPointer {
 	capn_ptr anyPointerField;
 };
+
+static const size_t TestAnyPointer_word_count = 0;
+
+static const size_t TestAnyPointer_pointer_count = 1;
+
+static const size_t TestAnyPointer_struct_bytes_count = 8;
+
+capn_ptr TestAnyPointer_get_anyPointerField(TestAnyPointer_ptr p);
+
+void TestAnyPointer_set_anyPointerField(TestAnyPointer_ptr p, capn_ptr anyPointerField);
 
 struct TestOutOfOrder {
 	capn_text foo;
@@ -329,6 +607,48 @@ struct TestOutOfOrder {
 	capn_text garply;
 	capn_text waldo;
 };
+
+static const size_t TestOutOfOrder_word_count = 0;
+
+static const size_t TestOutOfOrder_pointer_count = 9;
+
+static const size_t TestOutOfOrder_struct_bytes_count = 72;
+
+capn_text TestOutOfOrder_get_foo(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_bar(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_baz(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_qux(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_quux(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_corge(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_grault(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_garply(TestOutOfOrder_ptr p);
+
+capn_text TestOutOfOrder_get_waldo(TestOutOfOrder_ptr p);
+
+void TestOutOfOrder_set_foo(TestOutOfOrder_ptr p, capn_text foo);
+
+void TestOutOfOrder_set_bar(TestOutOfOrder_ptr p, capn_text bar);
+
+void TestOutOfOrder_set_baz(TestOutOfOrder_ptr p, capn_text baz);
+
+void TestOutOfOrder_set_qux(TestOutOfOrder_ptr p, capn_text qux);
+
+void TestOutOfOrder_set_quux(TestOutOfOrder_ptr p, capn_text quux);
+
+void TestOutOfOrder_set_corge(TestOutOfOrder_ptr p, capn_text corge);
+
+void TestOutOfOrder_set_grault(TestOutOfOrder_ptr p, capn_text grault);
+
+void TestOutOfOrder_set_garply(TestOutOfOrder_ptr p, capn_text garply);
+
+void TestOutOfOrder_set_waldo(TestOutOfOrder_ptr p, capn_text waldo);
 enum TestUnion_union0_which {
 	TestUnion_union0_u0f0s0 = 0,
 	TestUnion_union0_u0f0s1 = 1,
@@ -444,6 +764,44 @@ struct TestUnion {
 	} union3;
 	uint8_t byte0;
 };
+
+static const size_t TestUnion_word_count = 8;
+
+static const size_t TestUnion_pointer_count = 2;
+
+static const size_t TestUnion_struct_bytes_count = 80;
+
+unsigned TestUnion_get_bit0(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit2(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit3(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit4(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit5(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit6(TestUnion_ptr p);
+
+unsigned TestUnion_get_bit7(TestUnion_ptr p);
+
+uint8_t TestUnion_get_byte0(TestUnion_ptr p);
+
+void TestUnion_set_bit0(TestUnion_ptr p, unsigned bit0);
+
+void TestUnion_set_bit2(TestUnion_ptr p, unsigned bit2);
+
+void TestUnion_set_bit3(TestUnion_ptr p, unsigned bit3);
+
+void TestUnion_set_bit4(TestUnion_ptr p, unsigned bit4);
+
+void TestUnion_set_bit5(TestUnion_ptr p, unsigned bit5);
+
+void TestUnion_set_bit6(TestUnion_ptr p, unsigned bit6);
+
+void TestUnion_set_bit7(TestUnion_ptr p, unsigned bit7);
+
+void TestUnion_set_byte0(TestUnion_ptr p, uint8_t byte0);
 enum TestUnnamedUnion_which {
 	TestUnnamedUnion_foo = 0,
 	TestUnnamedUnion_bar = 1
@@ -459,6 +817,16 @@ struct TestUnnamedUnion {
 	uint16_t middle;
 	capn_text after;
 };
+
+static const size_t TestUnnamedUnion_word_count = 2;
+
+static const size_t TestUnnamedUnion_pointer_count = 2;
+
+static const size_t TestUnnamedUnion_struct_bytes_count = 32;
+
+capn_text TestUnnamedUnion_get_before(TestUnnamedUnion_ptr p);
+
+void TestUnnamedUnion_set_before(TestUnnamedUnion_ptr p, capn_text before);
 enum TestUnionInUnion_outer_inner_which {
 	TestUnionInUnion_outer_inner_foo = 0,
 	TestUnionInUnion_outer_inner_bar = 1
@@ -479,6 +847,12 @@ struct TestUnionInUnion {
 		int32_t baz;
 	} outer;
 };
+
+static const size_t TestUnionInUnion_word_count = 2;
+
+static const size_t TestUnionInUnion_pointer_count = 0;
+
+static const size_t TestUnionInUnion_struct_bytes_count = 16;
 enum TestGroups_groups_which {
 	TestGroups_groups_foo = 0,
 	TestGroups_groups_bar = 2,
@@ -505,6 +879,12 @@ struct TestGroups {
 		} baz;
 	} groups;
 };
+
+static const size_t TestGroups_word_count = 2;
+
+static const size_t TestGroups_pointer_count = 2;
+
+static const size_t TestGroups_struct_bytes_count = 32;
 enum TestInterleavedGroups_group1_which {
 	TestInterleavedGroups_group1_qux = 0,
 	TestInterleavedGroups_group1_corge = 1,
@@ -551,6 +931,12 @@ struct TestInterleavedGroups {
 	} group2;
 };
 
+static const size_t TestInterleavedGroups_word_count = 6;
+
+static const size_t TestInterleavedGroups_pointer_count = 6;
+
+static const size_t TestInterleavedGroups_struct_bytes_count = 96;
+
 struct TestUnionDefaults {
 	TestUnion_ptr s16s8s64s8Set;
 	TestUnion_ptr s0sps1s32Set;
@@ -558,21 +944,89 @@ struct TestUnionDefaults {
 	TestUnnamedUnion_ptr unnamed2;
 };
 
+static const size_t TestUnionDefaults_word_count = 0;
+
+static const size_t TestUnionDefaults_pointer_count = 4;
+
+static const size_t TestUnionDefaults_struct_bytes_count = 32;
+
+TestUnion_ptr TestUnionDefaults_get_s16s8s64s8Set(TestUnionDefaults_ptr p);
+
+TestUnion_ptr TestUnionDefaults_get_s0sps1s32Set(TestUnionDefaults_ptr p);
+
+TestUnnamedUnion_ptr TestUnionDefaults_get_unnamed1(TestUnionDefaults_ptr p);
+
+TestUnnamedUnion_ptr TestUnionDefaults_get_unnamed2(TestUnionDefaults_ptr p);
+
+void TestUnionDefaults_set_s16s8s64s8Set(TestUnionDefaults_ptr p, TestUnion_ptr s16s8s64s8Set);
+
+void TestUnionDefaults_set_s0sps1s32Set(TestUnionDefaults_ptr p, TestUnion_ptr s0sps1s32Set);
+
+void TestUnionDefaults_set_unnamed1(TestUnionDefaults_ptr p, TestUnnamedUnion_ptr unnamed1);
+
+void TestUnionDefaults_set_unnamed2(TestUnionDefaults_ptr p, TestUnnamedUnion_ptr unnamed2);
+
 struct TestNestedTypes {
 	TestNestedTypes_NestedStruct_ptr nestedStruct;
 	enum TestNestedTypes_NestedEnum outerNestedEnum;
 	enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum;
 };
 
+static const size_t TestNestedTypes_word_count = 1;
+
+static const size_t TestNestedTypes_pointer_count = 1;
+
+static const size_t TestNestedTypes_struct_bytes_count = 16;
+
+TestNestedTypes_NestedStruct_ptr TestNestedTypes_get_nestedStruct(TestNestedTypes_ptr p);
+
+enum TestNestedTypes_NestedEnum TestNestedTypes_get_outerNestedEnum(TestNestedTypes_ptr p);
+
+enum TestNestedTypes_NestedStruct_NestedEnum TestNestedTypes_get_innerNestedEnum(TestNestedTypes_ptr p);
+
+void TestNestedTypes_set_nestedStruct(TestNestedTypes_ptr p, TestNestedTypes_NestedStruct_ptr nestedStruct);
+
+void TestNestedTypes_set_outerNestedEnum(TestNestedTypes_ptr p, enum TestNestedTypes_NestedEnum outerNestedEnum);
+
+void TestNestedTypes_set_innerNestedEnum(TestNestedTypes_ptr p, enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum);
+
 struct TestNestedTypes_NestedStruct {
 	enum TestNestedTypes_NestedEnum outerNestedEnum;
 	enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum;
 };
 
+static const size_t TestNestedTypes_NestedStruct_word_count = 1;
+
+static const size_t TestNestedTypes_NestedStruct_pointer_count = 0;
+
+static const size_t TestNestedTypes_NestedStruct_struct_bytes_count = 8;
+
+enum TestNestedTypes_NestedEnum TestNestedTypes_NestedStruct_get_outerNestedEnum(TestNestedTypes_NestedStruct_ptr p);
+
+enum TestNestedTypes_NestedStruct_NestedEnum TestNestedTypes_NestedStruct_get_innerNestedEnum(TestNestedTypes_NestedStruct_ptr p);
+
+void TestNestedTypes_NestedStruct_set_outerNestedEnum(TestNestedTypes_NestedStruct_ptr p, enum TestNestedTypes_NestedEnum outerNestedEnum);
+
+void TestNestedTypes_NestedStruct_set_innerNestedEnum(TestNestedTypes_NestedStruct_ptr p, enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum);
+
 struct TestUsing {
 	enum TestNestedTypes_NestedEnum outerNestedEnum;
 	enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum;
 };
+
+static const size_t TestUsing_word_count = 1;
+
+static const size_t TestUsing_pointer_count = 0;
+
+static const size_t TestUsing_struct_bytes_count = 8;
+
+enum TestNestedTypes_NestedEnum TestUsing_get_outerNestedEnum(TestUsing_ptr p);
+
+enum TestNestedTypes_NestedStruct_NestedEnum TestUsing_get_innerNestedEnum(TestUsing_ptr p);
+
+void TestUsing_set_outerNestedEnum(TestUsing_ptr p, enum TestNestedTypes_NestedEnum outerNestedEnum);
+
+void TestUsing_set_innerNestedEnum(TestUsing_ptr p, enum TestNestedTypes_NestedStruct_NestedEnum innerNestedEnum);
 
 struct TestLists {
 	TestLists_Struct0_list list0;
@@ -587,66 +1041,272 @@ struct TestLists {
 	capn_ptr structListList;
 };
 
+static const size_t TestLists_word_count = 0;
+
+static const size_t TestLists_pointer_count = 10;
+
+static const size_t TestLists_struct_bytes_count = 80;
+
+TestLists_Struct0_list TestLists_get_list0(TestLists_ptr p);
+
+TestLists_Struct1_list TestLists_get_list1(TestLists_ptr p);
+
+TestLists_Struct8_list TestLists_get_list8(TestLists_ptr p);
+
+TestLists_Struct16_list TestLists_get_list16(TestLists_ptr p);
+
+TestLists_Struct32_list TestLists_get_list32(TestLists_ptr p);
+
+TestLists_Struct64_list TestLists_get_list64(TestLists_ptr p);
+
+TestLists_StructP_list TestLists_get_listP(TestLists_ptr p);
+
+capn_ptr TestLists_get_int32ListList(TestLists_ptr p);
+
+capn_ptr TestLists_get_textListList(TestLists_ptr p);
+
+capn_ptr TestLists_get_structListList(TestLists_ptr p);
+
+void TestLists_set_list0(TestLists_ptr p, TestLists_Struct0_list list0);
+
+void TestLists_set_list1(TestLists_ptr p, TestLists_Struct1_list list1);
+
+void TestLists_set_list8(TestLists_ptr p, TestLists_Struct8_list list8);
+
+void TestLists_set_list16(TestLists_ptr p, TestLists_Struct16_list list16);
+
+void TestLists_set_list32(TestLists_ptr p, TestLists_Struct32_list list32);
+
+void TestLists_set_list64(TestLists_ptr p, TestLists_Struct64_list list64);
+
+void TestLists_set_listP(TestLists_ptr p, TestLists_StructP_list listP);
+
+void TestLists_set_int32ListList(TestLists_ptr p, capn_ptr int32ListList);
+
+void TestLists_set_textListList(TestLists_ptr p, capn_ptr textListList);
+
+void TestLists_set_structListList(TestLists_ptr p, capn_ptr structListList);
+
 struct TestLists_Struct0 {
 };
+
+static const size_t TestLists_Struct0_word_count = 0;
+
+static const size_t TestLists_Struct0_pointer_count = 0;
+
+static const size_t TestLists_Struct0_struct_bytes_count = 0;
 
 struct TestLists_Struct1 {
 	unsigned f : 1;
 };
 
+static const size_t TestLists_Struct1_word_count = 1;
+
+static const size_t TestLists_Struct1_pointer_count = 0;
+
+static const size_t TestLists_Struct1_struct_bytes_count = 8;
+
+unsigned TestLists_Struct1_get_f(TestLists_Struct1_ptr p);
+
+void TestLists_Struct1_set_f(TestLists_Struct1_ptr p, unsigned f);
+
 struct TestLists_Struct8 {
 	uint8_t f;
 };
+
+static const size_t TestLists_Struct8_word_count = 1;
+
+static const size_t TestLists_Struct8_pointer_count = 0;
+
+static const size_t TestLists_Struct8_struct_bytes_count = 8;
+
+uint8_t TestLists_Struct8_get_f(TestLists_Struct8_ptr p);
+
+void TestLists_Struct8_set_f(TestLists_Struct8_ptr p, uint8_t f);
 
 struct TestLists_Struct16 {
 	uint16_t f;
 };
 
+static const size_t TestLists_Struct16_word_count = 1;
+
+static const size_t TestLists_Struct16_pointer_count = 0;
+
+static const size_t TestLists_Struct16_struct_bytes_count = 8;
+
+uint16_t TestLists_Struct16_get_f(TestLists_Struct16_ptr p);
+
+void TestLists_Struct16_set_f(TestLists_Struct16_ptr p, uint16_t f);
+
 struct TestLists_Struct32 {
 	uint32_t f;
 };
+
+static const size_t TestLists_Struct32_word_count = 1;
+
+static const size_t TestLists_Struct32_pointer_count = 0;
+
+static const size_t TestLists_Struct32_struct_bytes_count = 8;
+
+uint32_t TestLists_Struct32_get_f(TestLists_Struct32_ptr p);
+
+void TestLists_Struct32_set_f(TestLists_Struct32_ptr p, uint32_t f);
 
 struct TestLists_Struct64 {
 	uint64_t f;
 };
 
+static const size_t TestLists_Struct64_word_count = 1;
+
+static const size_t TestLists_Struct64_pointer_count = 0;
+
+static const size_t TestLists_Struct64_struct_bytes_count = 8;
+
+uint64_t TestLists_Struct64_get_f(TestLists_Struct64_ptr p);
+
+void TestLists_Struct64_set_f(TestLists_Struct64_ptr p, uint64_t f);
+
 struct TestLists_StructP {
 	capn_text f;
 };
 
+static const size_t TestLists_StructP_word_count = 0;
+
+static const size_t TestLists_StructP_pointer_count = 1;
+
+static const size_t TestLists_StructP_struct_bytes_count = 8;
+
+capn_text TestLists_StructP_get_f(TestLists_StructP_ptr p);
+
+void TestLists_StructP_set_f(TestLists_StructP_ptr p, capn_text f);
+
 struct TestLists_Struct0c {
 	capn_text pad;
 };
+
+static const size_t TestLists_Struct0c_word_count = 0;
+
+static const size_t TestLists_Struct0c_pointer_count = 1;
+
+static const size_t TestLists_Struct0c_struct_bytes_count = 8;
+
+capn_text TestLists_Struct0c_get_pad(TestLists_Struct0c_ptr p);
+
+void TestLists_Struct0c_set_pad(TestLists_Struct0c_ptr p, capn_text pad);
 
 struct TestLists_Struct1c {
 	unsigned f : 1;
 	capn_text pad;
 };
 
+static const size_t TestLists_Struct1c_word_count = 1;
+
+static const size_t TestLists_Struct1c_pointer_count = 1;
+
+static const size_t TestLists_Struct1c_struct_bytes_count = 16;
+
+unsigned TestLists_Struct1c_get_f(TestLists_Struct1c_ptr p);
+
+capn_text TestLists_Struct1c_get_pad(TestLists_Struct1c_ptr p);
+
+void TestLists_Struct1c_set_f(TestLists_Struct1c_ptr p, unsigned f);
+
+void TestLists_Struct1c_set_pad(TestLists_Struct1c_ptr p, capn_text pad);
+
 struct TestLists_Struct8c {
 	uint8_t f;
 	capn_text pad;
 };
+
+static const size_t TestLists_Struct8c_word_count = 1;
+
+static const size_t TestLists_Struct8c_pointer_count = 1;
+
+static const size_t TestLists_Struct8c_struct_bytes_count = 16;
+
+uint8_t TestLists_Struct8c_get_f(TestLists_Struct8c_ptr p);
+
+capn_text TestLists_Struct8c_get_pad(TestLists_Struct8c_ptr p);
+
+void TestLists_Struct8c_set_f(TestLists_Struct8c_ptr p, uint8_t f);
+
+void TestLists_Struct8c_set_pad(TestLists_Struct8c_ptr p, capn_text pad);
 
 struct TestLists_Struct16c {
 	uint16_t f;
 	capn_text pad;
 };
 
+static const size_t TestLists_Struct16c_word_count = 1;
+
+static const size_t TestLists_Struct16c_pointer_count = 1;
+
+static const size_t TestLists_Struct16c_struct_bytes_count = 16;
+
+uint16_t TestLists_Struct16c_get_f(TestLists_Struct16c_ptr p);
+
+capn_text TestLists_Struct16c_get_pad(TestLists_Struct16c_ptr p);
+
+void TestLists_Struct16c_set_f(TestLists_Struct16c_ptr p, uint16_t f);
+
+void TestLists_Struct16c_set_pad(TestLists_Struct16c_ptr p, capn_text pad);
+
 struct TestLists_Struct32c {
 	uint32_t f;
 	capn_text pad;
 };
+
+static const size_t TestLists_Struct32c_word_count = 1;
+
+static const size_t TestLists_Struct32c_pointer_count = 1;
+
+static const size_t TestLists_Struct32c_struct_bytes_count = 16;
+
+uint32_t TestLists_Struct32c_get_f(TestLists_Struct32c_ptr p);
+
+capn_text TestLists_Struct32c_get_pad(TestLists_Struct32c_ptr p);
+
+void TestLists_Struct32c_set_f(TestLists_Struct32c_ptr p, uint32_t f);
+
+void TestLists_Struct32c_set_pad(TestLists_Struct32c_ptr p, capn_text pad);
 
 struct TestLists_Struct64c {
 	uint64_t f;
 	capn_text pad;
 };
 
+static const size_t TestLists_Struct64c_word_count = 1;
+
+static const size_t TestLists_Struct64c_pointer_count = 1;
+
+static const size_t TestLists_Struct64c_struct_bytes_count = 16;
+
+uint64_t TestLists_Struct64c_get_f(TestLists_Struct64c_ptr p);
+
+capn_text TestLists_Struct64c_get_pad(TestLists_Struct64c_ptr p);
+
+void TestLists_Struct64c_set_f(TestLists_Struct64c_ptr p, uint64_t f);
+
+void TestLists_Struct64c_set_pad(TestLists_Struct64c_ptr p, capn_text pad);
+
 struct TestLists_StructPc {
 	capn_text f;
 	uint64_t pad;
 };
+
+static const size_t TestLists_StructPc_word_count = 1;
+
+static const size_t TestLists_StructPc_pointer_count = 1;
+
+static const size_t TestLists_StructPc_struct_bytes_count = 16;
+
+capn_text TestLists_StructPc_get_f(TestLists_StructPc_ptr p);
+
+uint64_t TestLists_StructPc_get_pad(TestLists_StructPc_ptr p);
+
+void TestLists_StructPc_set_f(TestLists_StructPc_ptr p, capn_text f);
+
+void TestLists_StructPc_set_pad(TestLists_StructPc_ptr p, uint64_t pad);
 
 struct TestFieldZeroIsBit {
 	unsigned bit : 1;
@@ -654,9 +1314,37 @@ struct TestFieldZeroIsBit {
 	uint8_t thirdField;
 };
 
+static const size_t TestFieldZeroIsBit_word_count = 1;
+
+static const size_t TestFieldZeroIsBit_pointer_count = 0;
+
+static const size_t TestFieldZeroIsBit_struct_bytes_count = 8;
+
+unsigned TestFieldZeroIsBit_get_bit(TestFieldZeroIsBit_ptr p);
+
+unsigned TestFieldZeroIsBit_get_secondBit(TestFieldZeroIsBit_ptr p);
+
+uint8_t TestFieldZeroIsBit_get_thirdField(TestFieldZeroIsBit_ptr p);
+
+void TestFieldZeroIsBit_set_bit(TestFieldZeroIsBit_ptr p, unsigned bit);
+
+void TestFieldZeroIsBit_set_secondBit(TestFieldZeroIsBit_ptr p, unsigned secondBit);
+
+void TestFieldZeroIsBit_set_thirdField(TestFieldZeroIsBit_ptr p, uint8_t thirdField);
+
 struct TestListDefaults {
 	TestLists_ptr lists;
 };
+
+static const size_t TestListDefaults_word_count = 0;
+
+static const size_t TestListDefaults_pointer_count = 1;
+
+static const size_t TestListDefaults_struct_bytes_count = 8;
+
+TestLists_ptr TestListDefaults_get_lists(TestListDefaults_ptr p);
+
+void TestListDefaults_set_lists(TestListDefaults_ptr p, TestLists_ptr lists);
 enum TestLateUnion_theUnion_which {
 	TestLateUnion_theUnion_qux = 0,
 	TestLateUnion_theUnion_corge = 1,
@@ -686,11 +1374,47 @@ struct TestLateUnion {
 	} anotherUnion;
 };
 
+static const size_t TestLateUnion_word_count = 3;
+
+static const size_t TestLateUnion_pointer_count = 3;
+
+static const size_t TestLateUnion_struct_bytes_count = 48;
+
+int32_t TestLateUnion_get_foo(TestLateUnion_ptr p);
+
+capn_text TestLateUnion_get_bar(TestLateUnion_ptr p);
+
+int16_t TestLateUnion_get_baz(TestLateUnion_ptr p);
+
+void TestLateUnion_set_foo(TestLateUnion_ptr p, int32_t foo);
+
+void TestLateUnion_set_bar(TestLateUnion_ptr p, capn_text bar);
+
+void TestLateUnion_set_baz(TestLateUnion_ptr p, int16_t baz);
+
 struct TestOldVersion {
 	int64_t old1;
 	capn_text old2;
 	TestOldVersion_ptr old3;
 };
+
+static const size_t TestOldVersion_word_count = 1;
+
+static const size_t TestOldVersion_pointer_count = 2;
+
+static const size_t TestOldVersion_struct_bytes_count = 24;
+
+int64_t TestOldVersion_get_old1(TestOldVersion_ptr p);
+
+capn_text TestOldVersion_get_old2(TestOldVersion_ptr p);
+
+TestOldVersion_ptr TestOldVersion_get_old3(TestOldVersion_ptr p);
+
+void TestOldVersion_set_old1(TestOldVersion_ptr p, int64_t old1);
+
+void TestOldVersion_set_old2(TestOldVersion_ptr p, capn_text old2);
+
+void TestOldVersion_set_old3(TestOldVersion_ptr p, TestOldVersion_ptr old3);
 
 struct TestNewVersion {
 	int64_t old1;
@@ -699,6 +1423,32 @@ struct TestNewVersion {
 	int64_t new1;
 	capn_text new2;
 };
+
+static const size_t TestNewVersion_word_count = 2;
+
+static const size_t TestNewVersion_pointer_count = 3;
+
+static const size_t TestNewVersion_struct_bytes_count = 40;
+
+int64_t TestNewVersion_get_old1(TestNewVersion_ptr p);
+
+capn_text TestNewVersion_get_old2(TestNewVersion_ptr p);
+
+TestNewVersion_ptr TestNewVersion_get_old3(TestNewVersion_ptr p);
+
+int64_t TestNewVersion_get_new1(TestNewVersion_ptr p);
+
+capn_text TestNewVersion_get_new2(TestNewVersion_ptr p);
+
+void TestNewVersion_set_old1(TestNewVersion_ptr p, int64_t old1);
+
+void TestNewVersion_set_old2(TestNewVersion_ptr p, capn_text old2);
+
+void TestNewVersion_set_old3(TestNewVersion_ptr p, TestNewVersion_ptr old3);
+
+void TestNewVersion_set_new1(TestNewVersion_ptr p, int64_t new1);
+
+void TestNewVersion_set_new2(TestNewVersion_ptr p, capn_text new2);
 enum TestStructUnion_un_which {
 	TestStructUnion_un__struct = 0,
 	TestStructUnion_un_object = 1
@@ -712,56 +1462,188 @@ struct TestStructUnion {
 	} un;
 };
 
+static const size_t TestStructUnion_word_count = 1;
+
+static const size_t TestStructUnion_pointer_count = 1;
+
+static const size_t TestStructUnion_struct_bytes_count = 16;
+
 struct TestStructUnion_SomeStruct {
 	capn_text someText;
 	capn_text moreText;
 };
+
+static const size_t TestStructUnion_SomeStruct_word_count = 0;
+
+static const size_t TestStructUnion_SomeStruct_pointer_count = 2;
+
+static const size_t TestStructUnion_SomeStruct_struct_bytes_count = 16;
+
+capn_text TestStructUnion_SomeStruct_get_someText(TestStructUnion_SomeStruct_ptr p);
+
+capn_text TestStructUnion_SomeStruct_get_moreText(TestStructUnion_SomeStruct_ptr p);
+
+void TestStructUnion_SomeStruct_set_someText(TestStructUnion_SomeStruct_ptr p, capn_text someText);
+
+void TestStructUnion_SomeStruct_set_moreText(TestStructUnion_SomeStruct_ptr p, capn_text moreText);
 
 struct TestPrintInlineStructs {
 	capn_text someText;
 	TestPrintInlineStructs_InlineStruct_list structList;
 };
 
+static const size_t TestPrintInlineStructs_word_count = 0;
+
+static const size_t TestPrintInlineStructs_pointer_count = 2;
+
+static const size_t TestPrintInlineStructs_struct_bytes_count = 16;
+
+capn_text TestPrintInlineStructs_get_someText(TestPrintInlineStructs_ptr p);
+
+TestPrintInlineStructs_InlineStruct_list TestPrintInlineStructs_get_structList(TestPrintInlineStructs_ptr p);
+
+void TestPrintInlineStructs_set_someText(TestPrintInlineStructs_ptr p, capn_text someText);
+
+void TestPrintInlineStructs_set_structList(TestPrintInlineStructs_ptr p, TestPrintInlineStructs_InlineStruct_list structList);
+
 struct TestPrintInlineStructs_InlineStruct {
 	int32_t int32Field;
 	capn_text textField;
 };
+
+static const size_t TestPrintInlineStructs_InlineStruct_word_count = 1;
+
+static const size_t TestPrintInlineStructs_InlineStruct_pointer_count = 1;
+
+static const size_t TestPrintInlineStructs_InlineStruct_struct_bytes_count = 16;
+
+int32_t TestPrintInlineStructs_InlineStruct_get_int32Field(TestPrintInlineStructs_InlineStruct_ptr p);
+
+capn_text TestPrintInlineStructs_InlineStruct_get_textField(TestPrintInlineStructs_InlineStruct_ptr p);
+
+void TestPrintInlineStructs_InlineStruct_set_int32Field(TestPrintInlineStructs_InlineStruct_ptr p, int32_t int32Field);
+
+void TestPrintInlineStructs_InlineStruct_set_textField(TestPrintInlineStructs_InlineStruct_ptr p, capn_text textField);
 
 struct TestWholeFloatDefault {
 	float field;
 	float bigField;
 };
 
+static const size_t TestWholeFloatDefault_word_count = 1;
+
+static const size_t TestWholeFloatDefault_pointer_count = 0;
+
+static const size_t TestWholeFloatDefault_struct_bytes_count = 8;
+
+float TestWholeFloatDefault_get_field(TestWholeFloatDefault_ptr p);
+
+float TestWholeFloatDefault_get_bigField(TestWholeFloatDefault_ptr p);
+
+void TestWholeFloatDefault_set_field(TestWholeFloatDefault_ptr p, float field);
+
+void TestWholeFloatDefault_set_bigField(TestWholeFloatDefault_ptr p, float bigField);
+
 struct TestEmptyStruct {
 };
 
+static const size_t TestEmptyStruct_word_count = 0;
+
+static const size_t TestEmptyStruct_pointer_count = 0;
+
+static const size_t TestEmptyStruct_struct_bytes_count = 0;
+
 struct TestConstants {
 };
+
+static const size_t TestConstants_word_count = 0;
+
+static const size_t TestConstants_pointer_count = 0;
+
+static const size_t TestConstants_struct_bytes_count = 0;
 
 struct TestSturdyRef {
 	TestSturdyRefHostId_ptr hostId;
 	capn_ptr objectId;
 };
 
+static const size_t TestSturdyRef_word_count = 0;
+
+static const size_t TestSturdyRef_pointer_count = 2;
+
+static const size_t TestSturdyRef_struct_bytes_count = 16;
+
+TestSturdyRefHostId_ptr TestSturdyRef_get_hostId(TestSturdyRef_ptr p);
+
+capn_ptr TestSturdyRef_get_objectId(TestSturdyRef_ptr p);
+
+void TestSturdyRef_set_hostId(TestSturdyRef_ptr p, TestSturdyRefHostId_ptr hostId);
+
+void TestSturdyRef_set_objectId(TestSturdyRef_ptr p, capn_ptr objectId);
+
 struct TestSturdyRefHostId {
 	capn_text host;
 };
+
+static const size_t TestSturdyRefHostId_word_count = 0;
+
+static const size_t TestSturdyRefHostId_pointer_count = 1;
+
+static const size_t TestSturdyRefHostId_struct_bytes_count = 8;
+
+capn_text TestSturdyRefHostId_get_host(TestSturdyRefHostId_ptr p);
+
+void TestSturdyRefHostId_set_host(TestSturdyRefHostId_ptr p, capn_text host);
 
 struct TestSturdyRefObjectId {
 	enum TestSturdyRefObjectId_Tag tag;
 };
 
+static const size_t TestSturdyRefObjectId_word_count = 1;
+
+static const size_t TestSturdyRefObjectId_pointer_count = 0;
+
+static const size_t TestSturdyRefObjectId_struct_bytes_count = 8;
+
+enum TestSturdyRefObjectId_Tag TestSturdyRefObjectId_get_tag(TestSturdyRefObjectId_ptr p);
+
+void TestSturdyRefObjectId_set_tag(TestSturdyRefObjectId_ptr p, enum TestSturdyRefObjectId_Tag tag);
+
 struct TestProvisionId {
 };
+
+static const size_t TestProvisionId_word_count = 0;
+
+static const size_t TestProvisionId_pointer_count = 0;
+
+static const size_t TestProvisionId_struct_bytes_count = 0;
 
 struct TestRecipientId {
 };
 
+static const size_t TestRecipientId_word_count = 0;
+
+static const size_t TestRecipientId_pointer_count = 0;
+
+static const size_t TestRecipientId_struct_bytes_count = 0;
+
 struct TestThirdPartyCapId {
 };
 
+static const size_t TestThirdPartyCapId_word_count = 0;
+
+static const size_t TestThirdPartyCapId_pointer_count = 0;
+
+static const size_t TestThirdPartyCapId_struct_bytes_count = 0;
+
 struct TestJoinResult {
 };
+
+static const size_t TestJoinResult_word_count = 0;
+
+static const size_t TestJoinResult_pointer_count = 0;
+
+static const size_t TestJoinResult_struct_bytes_count = 0;
 enum TestNameAnnotation_which {
 	TestNameAnnotation_badFieldName = 0,
 	TestNameAnnotation_bar = 1
@@ -780,16 +1662,35 @@ struct TestNameAnnotation {
 	enum TestNameAnnotation_BadlyNamedEnum anotherBadFieldName;
 	enum TestNameAnnotation_badlyNamedUnion_which badlyNamedUnion_which;
 	union {
-		struct {
-		} badlyNamedGroup;
+		/* struct { -empty- } badlyNamedGroup; */
 		TestNameAnnotation_NestedStruct_ptr baz;
 	} badlyNamedUnion;
 };
+
+static const size_t TestNameAnnotation_word_count = 1;
+
+static const size_t TestNameAnnotation_pointer_count = 1;
+
+static const size_t TestNameAnnotation_struct_bytes_count = 16;
 
 struct TestNameAnnotation_NestedStruct {
 	unsigned badNestedFieldName : 1;
 	TestNameAnnotation_NestedStruct_ptr anotherBadNestedFieldName;
 };
+
+static const size_t TestNameAnnotation_NestedStruct_word_count = 1;
+
+static const size_t TestNameAnnotation_NestedStruct_pointer_count = 1;
+
+static const size_t TestNameAnnotation_NestedStruct_struct_bytes_count = 16;
+
+unsigned TestNameAnnotation_NestedStruct_get_badNestedFieldName(TestNameAnnotation_NestedStruct_ptr p);
+
+TestNameAnnotation_NestedStruct_ptr TestNameAnnotation_NestedStruct_get_anotherBadNestedFieldName(TestNameAnnotation_NestedStruct_ptr p);
+
+void TestNameAnnotation_NestedStruct_set_badNestedFieldName(TestNameAnnotation_NestedStruct_ptr p, unsigned badNestedFieldName);
+
+void TestNameAnnotation_NestedStruct_set_anotherBadNestedFieldName(TestNameAnnotation_NestedStruct_ptr p, TestNameAnnotation_NestedStruct_ptr anotherBadNestedFieldName);
 
 TestAllTypes_ptr new_TestAllTypes(struct capn_segment*);
 TestDefaults_ptr new_TestDefaults(struct capn_segment*);
