@@ -576,7 +576,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "%s = (int32_t) ((int32_t)capn_read32(%s, %d))%s;\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
 	case Type_int64:
-		str_addf(func, "%s = (int64_t)((int64_t)(capn_read64(%s, %d))%s);\n", var, ptr, 8*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int64_t) ((int64_t)(capn_read64(%s, %d))%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
 	case Type_uint8:
 		str_addf(func, "%s = capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);

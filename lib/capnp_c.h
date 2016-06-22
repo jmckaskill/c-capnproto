@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <endian.h>
 
-// ssize_t is not defined in stdint.h in MSVC. 
+// ssize_t is not defined in stdint.h in MSVC.
 #ifdef _MSC_VER
 typedef intmax_t ssize_t;
 #endif
@@ -356,12 +356,12 @@ CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 	if (off >= p.datasz*8) {
 		return -1;
 	} else if (val) {
-		uint8_t tmp = (uint8_t)(1 << ( off & 7));
-		( (uint8_t*)p.data )[off>>3] |= tmp;
+		uint8_t tmp = (uint8_t)(1 << (off & 7));
+		((uint8_t*) p.data)[off >> 3] |= tmp;
 		return 0;
 	} else {
-		uint8_t tmp = (uint8_t)(~(1 << ( off & 7)));
-		((uint8_t*)p.data)[off>>3] &= tmp;
+		uint8_t tmp = (uint8_t)(~(1 << (off & 7)));
+		((uint8_t*) p.data)[off >> 3] &= tmp;
 		return 0;
 	}
 }
