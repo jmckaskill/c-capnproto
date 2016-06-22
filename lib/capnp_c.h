@@ -13,7 +13,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#if defined(unix) && !defined(__APPLE__)
 #include <endian.h>
+#endif
 
 // ssize_t is not defined in stdint.h in MSVC.
 #ifdef _MSC_VER
@@ -308,33 +310,29 @@ CAPN_INLINE uint8_t capn_flip8(uint8_t v) {
 	return v;
 }
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(__BYTE_ORDER) || (__BYTE_ORDER != __LITTLE_ENDIAN)
 		union { uint16_t u; uint8_t v[2]; } s;
 		s.v[0] = (uint8_t)v;
 		s.v[1] = (uint8_t)(v>>8);
 		return s.u;
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-		return v;
 #else
-#error "Unable to determine endianess ";
+		return v;
 #endif
 }
 CAPN_INLINE uint32_t capn_flip32(uint32_t v) {
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(__BYTE_ORDER) || (__BYTE_ORDER != __LITTLE_ENDIAN)
 		union { uint32_t u; uint8_t v[4]; } s;
 		s.v[0] = (uint8_t)v;
 		s.v[1] = (uint8_t)(v>>8);
 		s.v[2] = (uint8_t)(v>>16);
 		s.v[3] = (uint8_t)(v>>24);
 		return s.u;
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-		return v;
 #else
-#error "Unable to determine endianess ";
+		return v;
 #endif
 }
 CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(__BYTE_ORDER) || (__BYTE_ORDER != __LITTLE_ENDIAN)
 		union { uint64_t u; uint8_t v[8]; } s;
 			s.v[0] = (uint8_t)v;
 			s.v[1] = (uint8_t)(v>>8);
@@ -345,10 +343,8 @@ CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
 			s.v[6] = (uint8_t)(v>>48);
 			s.v[7] = (uint8_t)(v>>56);
 			return s.u;
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-		return v;
 #else
-#error "Unable to determine endianess ";
+		return v;
 #endif
 }
 
