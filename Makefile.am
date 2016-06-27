@@ -39,7 +39,7 @@ include_HEADERS += \
 	lib/capnp_c.h
 
 noinst_HEADERS += \
-	lib/capnp_int.h \
+	lib/capnp_priv.h \
 	compiler/str.h \
 	compiler/schema.capnp.h \
 	compiler/c++.capnp.h \
