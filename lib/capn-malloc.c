@@ -232,7 +232,7 @@ static int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
 
 	root = capn_root(c);
 	header_calc(c, &headerlen, &headersz);
-	header = (uint32_t*) p + headersz + 2; /* must reserve two bytes for worst case expansion */
+	header = (uint32_t*) (p + headersz + 2); /* must reserve two bytes for worst case expansion */
 
 	if (sz < headersz*2 + 2) /* We must have space for temporary writing of header to deflate */
 		return -1;
