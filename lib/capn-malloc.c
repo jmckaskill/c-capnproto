@@ -9,6 +9,7 @@
  */
 
 #include "capnp_c.h"
+#include "capnp_priv.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>

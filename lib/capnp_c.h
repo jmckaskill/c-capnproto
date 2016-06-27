@@ -273,40 +273,6 @@ int capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed);
 void capn_free(struct capn *c);
 void capn_reset_copy(struct capn *c);
 
-/* capn_stream encapsulates the needed fields for capn_(deflate|inflate) in a
- * similar manner to z_stream from zlib
- *
- * The user should set next_in, avail_in, next_out, avail_out to the
- * available in/out buffers before calling capn_(deflate|inflate).
- *
- * Other fields should be zero initialized.
- */
-struct capn_stream {
-	const uint8_t *next_in;
-	size_t avail_in;
-	uint8_t *next_out;
-	size_t avail_out;
-	unsigned zeros, raw;
-
-	uint8_t inflate_buf[8];
-	size_t avail_buf;
-};
-
-#define CAPN_MISALIGNED -1
-#define CAPN_NEED_MORE -2
-
-/* capn_deflate deflates a stream to the packed format
- * capn_inflate inflates a stream from the packed format
- *
- * Returns:
- * CAPN_MISALIGNED - if the unpacked data is not 8 byte aligned
- * CAPN_NEED_MORE - more packed data/room is required (out for inflate, in for
- * deflate)
- * 0 - success, all output for inflate, all input for deflate processed
- */
-int capn_deflate(struct capn_stream*);
-int capn_inflate(struct capn_stream*);
-
 /* Inline functions */
 
 
