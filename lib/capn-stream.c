@@ -109,14 +109,28 @@ int capn_deflate(struct capn_stream* s) {
 }
 
 int capn_inflate(struct capn_stream* s) {
-	if (s->avail_out % 8) {
-		return CAPN_MISALIGNED;
-	}
-
 	while (s->avail_out) {
 		int i;
 		size_t sz;
 		uint8_t hdr;
+		uint8_t *wr;
+
+		if (s->avail_buf && s->avail_out >= s->avail_buf) {
+			memcpy(s->next_out, s->inflate_buf, s->avail_buf);
+			s->next_out += s->avail_buf;
+			s->avail_out -= s->avail_buf;
+			s->avail_buf = 0;
+			if (!s->avail_out)
+				return 0;
+		}
+		if (s->avail_buf && s->avail_out < s->avail_buf) {
+			memcpy(s->next_out, s->inflate_buf, s->avail_out);
+			memmove(s->inflate_buf, s->inflate_buf + s->avail_out,
+					s->avail_buf - s->avail_out);
+			s->avail_buf -= s->avail_out;
+			s->avail_out = 0;
+			return 0;
+		}
 
 		if (s->zeros > 0) {
 			sz = min(s->avail_out, s->zeros);
@@ -153,12 +167,12 @@ int capn_inflate(struct capn_stream* s) {
 			if (s->avail_in < 10)
 				return CAPN_NEED_MORE;
 
-			memcpy(s->next_out, s->next_in+1, 8);
+			memcpy(s->inflate_buf, s->next_in+1, 8);
+			s->avail_buf = 8;
+
 			s->raw = s->next_in[9] * 8;
 			s->next_in += 10;
 			s->avail_in -= 10;
-			s->next_out += 8;
-			s->avail_out -= 8;
 			continue;
 
 		case 0x00:
@@ -182,15 +196,16 @@ int capn_inflate(struct capn_stream* s) {
 
 			s->next_in += 1;
 
+			wr = s->inflate_buf;
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i)) {
-					*(s->next_out++) = *(s->next_in++);
+					*wr++ = *s->next_in++;
 				} else {
-					*(s->next_out++) = 0;
+					*wr++ = 0;
 				}
 			}
 
-			s->avail_out -= 8;
+			s->avail_buf = 8;
 			s->avail_in -= 1 + sz;
 			continue;
 		}
