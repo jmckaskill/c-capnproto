@@ -46,6 +46,8 @@ static struct capn_segment g_valseg;
 static int g_valc;
 static int g_val0used, g_nullused;
 
+static int g_fieldgetset = 0;
+
 static struct capn_tree *g_node_tree;
 
 static struct node *find_node_mayfail(uint64_t id) {
@@ -908,6 +910,10 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	for (f = n->fields; f < n->fields + flen && !in_union(f); f++) {
 		define_field(s, f);
 
+		if (!g_fieldgetset) {
+			continue;
+		}
+
 		if ((n->n.which == Node__struct && n->n._struct.isGroup)) {
 			// Don't emit in-place getters and setters for groups because they
 			// are defined as anonymous structs inside their parent struct.
@@ -1279,6 +1285,9 @@ int main() {
 					exit(2);
 				}
 				nameinfix = v.text.str ? v.text.str : "";
+				break;
+			case 0xf72bc690355d66deUL:	/* $C::fieldgetset */
+				g_fieldgetset = 1;
 				break;
 			}
 		}

@@ -21,6 +21,7 @@
 
 @0xc0183dd65ffef0f3;
 
+annotation nameinfix @0x85a8d86d736ba637 (file): Text;
 # add an infix (middle insert) for output file names
 #
 # "make" generally has implicit rules for compiling "foo.c" => "foo".  This
@@ -29,4 +30,8 @@
 # before the ".c", so the filename becomes "foo-gen.c"
 #
 # ("foo" is really "foo.capnp", so it's foo.capnp-gen.c)
-annotation nameinfix @0x85a8d86d736ba637 (file): Text;
+
+annotation fieldgetset @0xf72bc690355d66de (file): Void;
+# generate getter & setter functions for accessing fields
+#
+# allows grabbing/putting values without de-/encoding the entire struct.
