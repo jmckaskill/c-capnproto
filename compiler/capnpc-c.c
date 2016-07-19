@@ -1308,7 +1308,7 @@ int main() {
 		for (j = 0; j < capn_len(file_req.imports); j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
-			str_addf(&HDR, "#include \"%s.h\"\n", im.name.str);
+			str_addf(&HDR, "#include \"%s%s.h\"\n", im.name.str, nameinfix);
 		}
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
