@@ -48,7 +48,7 @@ static int g_val0used, g_nullused;
 
 static struct capn_tree *g_node_tree;
 
-static struct node *find_node(uint64_t id) {
+static struct node *find_node_mayfail(uint64_t id) {
 
 	/*
 	 * TODO: an Annotation is technically a node (since it can show up in
@@ -63,14 +63,16 @@ static struct node *find_node(uint64_t id) {
 	 * (but at least don't fail and stop further processing).
 	 */
 
-	if (id == NAME_ANNOTATION_ID || id == NAMESPACE_ANNOTATION_ID) {
-		return NULL;
-	}
-
 	struct node *s = (struct node*) g_node_tree;
 	while (s && s->n.id != id) {
 		s = (struct node*) s->hdr.link[s->n.id < id];
 	}
+	return s;
+}
+
+static struct node *find_node(uint64_t id)
+{
+	struct node *s = find_node_mayfail(id);
 	if (s == NULL) {
 		fprintf(stderr, "cant find node with id 0x%x%x\n", (uint32_t) (id >> 32), (uint32_t) id);
 		exit(2);
@@ -1230,7 +1232,7 @@ int main() {
 		for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
 			get_Node_NestedNode(&nest, n->n.nestedNodes, i);
-			struct node *nn = find_node(nest.id);
+			struct node *nn = find_node_mayfail(nest.id);
 			if (nn) {
 				resolve_names(&b, nn, nest.name, n);
 			}
