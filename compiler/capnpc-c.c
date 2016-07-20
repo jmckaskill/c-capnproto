@@ -36,10 +36,6 @@ struct node {
 	struct field *fields;
 };
 
-// annotation ids introduced via c++.capnp, see comments in find_node()
-static const uint64_t NAMESPACE_ANNOTATION_ID = 0xb9c6f99ebf805f2cull;
-static const uint64_t NAME_ANNOTATION_ID = 0xf264a779fef191ceull;
-
 static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
@@ -51,20 +47,6 @@ static int g_fieldgetset = 0;
 static struct capn_tree *g_node_tree;
 
 static struct node *find_node_mayfail(uint64_t id) {
-
-	/*
-	 * TODO: an Annotation is technically a node (since it can show up in
-	 * a Node's NestedNode list), but a `struct node` is currently configured
-	 * to represent only Nodes. So when processing all nested nodes,
-	 * we need a way to handle entities (like Annotation) which can't be
-	 * represented by a `struct node`.
-	 *
-	 * Current workaround is a hard coded test for the annotations
-	 * introduced via c++.capnp (NAME_ANNOTATION_ID and NAMESPACE_ANNOTATION_ID),
-	 * and to report that we don't have a node associated with them
-	 * (but at least don't fail and stop further processing).
-	 */
-
 	struct node *s = (struct node*) g_node_tree;
 	while (s && s->n.id != id) {
 		s = (struct node*) s->hdr.link[s->n.id < id];
