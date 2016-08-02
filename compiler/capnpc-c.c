@@ -1354,7 +1354,7 @@ int main() {
 
 		if (g_valseg.len > 8) {
 			size_t k;
-			fprintf(srcf, "static const uint8_t capn_buf[%lu] = {", g_valseg.len-8);
+			fprintf(srcf, "static const uint8_t capn_buf[%zu] = {", g_valseg.len-8);
 			for (k = 8; k < g_valseg.len; k++) {
 				if (k > 8)
 					fprintf(srcf, ",");
@@ -1364,7 +1364,7 @@ int main() {
 			}
 			fprintf(srcf, "\n};\n");
 
-			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%lu,%lu};\n",
+			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%zu,%zu};\n",
 					g_valseg.len-8, g_valseg.len-8);
 		}
 
