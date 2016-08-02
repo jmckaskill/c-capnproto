@@ -115,7 +115,11 @@ struct capn_segment {
 	char *data;
 	size_t len, cap;
 	void *user;
-};
+}
+#ifdef __GNUC__
+__attribute__((aligned(8)))
+#endif
+;
 
 enum CAPN_TYPE {
 	CAPN_NULL = 0,
