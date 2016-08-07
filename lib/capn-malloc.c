@@ -304,7 +304,7 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 	return headersz+datasz;
 }
 
-static int _write_fd(ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, void *p, size_t count)
+static int _write_fd(ssize_t (*write_fd)(int fd, const void *p, size_t count), int fd, void *p, size_t count)
 {
 	ssize_t ret;
 	size_t sent = 0;
@@ -323,7 +323,7 @@ static int _write_fd(ssize_t (*write_fd)(int fd, void *p, size_t count), int fd,
 	return 0;
 }
 
-int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, int packed)
+int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, const void *p, size_t count), int fd, int packed)
 {
 	unsigned char buf[4096];
 	struct capn_segment *seg;
