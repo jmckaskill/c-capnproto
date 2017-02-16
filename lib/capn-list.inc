@@ -1,3 +1,10 @@
+/* capn-list.inc
+ *
+ * Copyright (C) 2013 James McKaskill
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
 
 #define CAT2(A,B) A ## B
 #define CAT(A,B) CAT2(A, B)

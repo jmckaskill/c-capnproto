@@ -1,10 +1,26 @@
 /* vim: set sw=8 ts=8 sts=8 noet: */
+/* capnp_c.h
+ *
+ * Copyright (C) 2013 James McKaskill
+ * Copyright (C) 2014 Steve Dee
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
 
-#ifndef CAPN_H
-#define CAPN_H
+#ifndef CAPNP_C_H
+#define CAPNP_C_H
 
 #include <stdint.h>
 #include <stdio.h>
+#if defined(unix) && !defined(__APPLE__)
+#include <endian.h>
+#endif
+
+// ssize_t is not defined in stdint.h in MSVC.
+#ifdef _MSC_VER
+typedef intmax_t ssize_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,6 +103,9 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  * data, len, cap, and user should all set by the user. Other values
  * should be zero initialized.
  */
+#ifdef _MSC_VER
+__declspec(align(64))
+#endif
 struct capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;
@@ -94,9 +113,13 @@ struct capn_segment {
 	uint32_t id;
 	/* user settable */
 	char *data;
-	int len, cap;
+	size_t len, cap;
 	void *user;
-};
+}
+#ifdef __GNUC__
+__attribute__ ((aligned (64)))
+#endif
+;
 
 enum CAPN_TYPE {
 	CAPN_NULL = 0,
@@ -201,6 +224,7 @@ int capn_setv64(capn_list64 p, int off, const uint64_t *data, int sz);
  * datasz is in bytes, ptrs is # of pointers, sz is # of elements in the list
  * On an error a CAPN_NULL pointer is returned
  */
+capn_ptr capn_new_string(struct capn_segment *seg, const char *str, ssize_t sz);
 capn_ptr capn_new_struct(struct capn_segment *seg, int datasz, int ptrs);
 capn_ptr capn_new_interface(struct capn_segment *seg, int datasz, int ptrs);
 capn_ptr capn_new_ptr_list(struct capn_segment *seg, int sz);
@@ -246,41 +270,11 @@ int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed);
  */
 /* TODO */
 /*int capn_write_fp(struct capn *c, FILE *f, int packed);*/
+int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, void *p, size_t count), int fd, int packed);
 int capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed);
 
 void capn_free(struct capn *c);
 void capn_reset_copy(struct capn *c);
-
-/* capn_stream encapsulates the needed fields for capn_(deflate|inflate) in a
- * similar manner to z_stream from zlib
- *
- * The user should set next_in, avail_in, next_out, avail_out to the
- * available in/out buffers before calling capn_(deflate|inflate).
- *
- * Other fields should be zero initialized.
- */
-struct capn_stream {
-	const uint8_t *next_in;
-	int avail_in;
-	uint8_t *next_out;
-	int avail_out;
-	int zeros, raw;
-};
-
-#define CAPN_MISALIGNED -1
-#define CAPN_NEED_MORE -2
-
-/* capn_deflate deflates a stream to the packed format
- * capn_inflate inflates a stream from the packed format
- *
- * Returns:
- * CAPN_MISALIGNED - if the unpacked data is not 8 byte aligned
- * CAPN_NEED_MORE - more packed data/room is required (out for inflate, in for
- * deflate)
- * 0 - success, all output for inflate, all input for deflate processed
- */
-int capn_deflate(struct capn_stream*);
-int capn_inflate(struct capn_stream*);
 
 /* Inline functions */
 
@@ -289,20 +283,40 @@ CAPN_INLINE uint8_t capn_flip8(uint8_t v) {
 	return v;
 }
 CAPN_INLINE uint16_t capn_flip16(uint16_t v) {
+#if defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN)
+	return v;
+#elif defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN) && \
+      defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
+	return __builtin_bswap16(v);
+#else
 	union { uint16_t u; uint8_t v[2]; } s;
 	s.v[0] = (uint8_t)v;
 	s.v[1] = (uint8_t)(v>>8);
 	return s.u;
+#endif
 }
 CAPN_INLINE uint32_t capn_flip32(uint32_t v) {
+#if defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN)
+	return v;
+#elif defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN) && \
+      defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
+	return __builtin_bswap32(v);
+#else
 	union { uint32_t u; uint8_t v[4]; } s;
 	s.v[0] = (uint8_t)v;
 	s.v[1] = (uint8_t)(v>>8);
 	s.v[2] = (uint8_t)(v>>16);
 	s.v[3] = (uint8_t)(v>>24);
 	return s.u;
+#endif
 }
 CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
+#if defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN)
+	return v;
+#elif defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN) && \
+      defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 8
+	return __builtin_bswap64(v);
+#else
 	union { uint64_t u; uint8_t v[8]; } s;
 	s.v[0] = (uint8_t)v;
 	s.v[1] = (uint8_t)(v>>8);
@@ -313,16 +327,19 @@ CAPN_INLINE uint64_t capn_flip64(uint64_t v) {
 	s.v[6] = (uint8_t)(v>>48);
 	s.v[7] = (uint8_t)(v>>56);
 	return s.u;
+#endif
 }
 
 CAPN_INLINE int capn_write1(capn_ptr p, int off, int val) {
 	if (off >= p.datasz*8) {
 		return -1;
 	} else if (val) {
-		((uint8_t*)p.data)[off/8] |= 1 << (off%8);
+		uint8_t tmp = (uint8_t)(1 << (off & 7));
+		((uint8_t*) p.data)[off >> 3] |= tmp;
 		return 0;
 	} else {
-		((uint8_t*)p.data)[off/8] &= ~(1 << (off%8));
+		uint8_t tmp = (uint8_t)(~(1 << (off & 7)));
+		((uint8_t*) p.data)[off >> 3] &= tmp;
 		return 0;
 	}
 }

@@ -1,25 +1,23 @@
-# Copyright (c) 2013, Kenton Varda <temporal@gmail.com>
-# All rights reserved.
+# Copyright (c) 2013-2014 Sandstorm Development Group, Inc. and contributors
+# Licensed under the MIT License:
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
 @0xd508eebdc2dc42b8;
 
@@ -92,7 +90,7 @@ struct TestDefaults {
   float32Field   @10 : Float32 = 1234.5;
   float64Field   @11 : Float64 = -123e45;
   textField      @12 : Text    = "foo";
-  dataField      @13 : Data    = "bar";
+  dataField      @13 : Data    = 0x"62 61 72"; # "bar"
   structField    @14 : TestAllTypes = (
       voidField      = void,
       boolField      = true,
@@ -160,10 +158,10 @@ struct TestDefaults {
   interfaceList @33 : List(Void);  # TODO
 }
 
-struct TestObject {
-  objectField @0 :Object;
+struct TestAnyPointer {
+  anyPointerField @0 :AnyPointer;
 
-  # Do not add any other fields here!  Some tests rely on objectField being the last pointer
+  # Do not add any other fields here!  Some tests rely on anyPointerField being the last pointer
   # in the struct.
 }
 
@@ -476,9 +474,33 @@ struct TestNewVersion {
 
 struct TestStructUnion {
   un @0! :union {
-    allTypes @1 :TestAllTypes;
-    object @2 :TestObject;
+    struct @1 :SomeStruct;
+    object @2 :TestAnyPointer;
   }
+
+  struct SomeStruct {
+    someText @0 :Text;
+    moreText @1 :Text;
+  }
+}
+
+struct TestPrintInlineStructs {
+  someText @0 :Text;
+
+  structList @1 :List(InlineStruct);
+  struct InlineStruct {
+    int32Field @0 :Int32;
+    textField @1 :Text;
+  }
+}
+
+struct TestWholeFloatDefault {
+  # At one point, these failed to compile in C++ because it would produce literals like "123f",
+  # which is not valid; it needs to be "123.0f".
+  field @0 :Float32 = 123;
+  bigField @1 :Float32 = 2e30;
+  const constant :Float32 = 456;
+  const bigConstant :Float32 = 4e30;
 }
 
 struct TestEmptyStruct {}
@@ -566,9 +588,71 @@ struct TestConstants {
 const globalInt :UInt32 = 12345;
 const globalText :Text = "foobar";
 const globalStruct :TestAllTypes = (int32Field = 54321);
+const globalPrintableStruct :TestPrintInlineStructs = (someText = "foo");
 const derivedConstant :TestAllTypes = (
     uInt32Field = .globalInt,
     textField = TestConstants.textConst,
     structField = TestConstants.structConst,
     int16List = TestConstants.int16ListConst,
     structList = TestConstants.structListConst);
+
+struct TestSturdyRef {
+  hostId @0 :TestSturdyRefHostId;
+  objectId @1 :AnyPointer;
+}
+
+struct TestSturdyRefHostId {
+  host @0 :Text;
+}
+
+struct TestSturdyRefObjectId {
+  tag @0 :Tag;
+  enum Tag {
+    testInterface @0;
+    testExtends @1;
+    testPipeline @2;
+    testTailCallee @3;
+    testTailCaller @4;
+    testMoreStuff @5;
+  }
+}
+
+struct TestProvisionId {}
+struct TestRecipientId {}
+struct TestThirdPartyCapId {}
+struct TestJoinResult {}
+
+struct TestNameAnnotation $Cxx.name("RenamedStruct") {
+  union {
+    badFieldName @0 :Bool $Cxx.name("goodFieldName");
+    bar @1 :Int8;
+  }
+
+  enum BadlyNamedEnum $Cxx.name("RenamedEnum") {
+    foo @0;
+    bar @1;
+    baz @2 $Cxx.name("qux");
+  }
+
+  anotherBadFieldName @2 :BadlyNamedEnum $Cxx.name("anotherGoodFieldName");
+
+  struct NestedStruct $Cxx.name("RenamedNestedStruct") {
+    badNestedFieldName @0 :Bool $Cxx.name("goodNestedFieldName");
+    anotherBadNestedFieldName @1 :NestedStruct $Cxx.name("anotherGoodNestedFieldName");
+
+    enum DeeplyNestedEnum $Cxx.name("RenamedDeeplyNestedEnum") {
+      quux @0;
+      corge @1;
+      grault @2 $Cxx.name("garply");
+    }
+  }
+
+  badlyNamedUnion :union $Cxx.name("renamedUnion") {
+    badlyNamedGroup :group $Cxx.name("renamedGroup") {
+      foo @3 :Void;
+      bar @4 :Void;
+    }
+    baz @5 :NestedStruct $Cxx.name("qux");
+  }
+}
+

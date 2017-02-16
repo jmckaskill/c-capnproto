@@ -1,9 +1,18 @@
 /* vim: set sw=8 ts=8 sts=8 noet: */
-#include "capn.h"
+/* capn-stream.c
+ *
+ * Copyright (C) 2013 James McKaskill
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+
+#include "capnp_c.h"
+#include "capnp_priv.h"
 #include <string.h>
 
 #ifndef min
-static int min(int a, int b) { return (a < b) ? a : b; }
+static unsigned min(unsigned a, unsigned b) { return (a < b) ? a : b; }
 #endif
 
 int capn_deflate(struct capn_stream* s) {
@@ -12,7 +21,8 @@ int capn_deflate(struct capn_stream* s) {
 	}
 
 	while (s->avail_in) {
-		int i, sz = 0;
+		int i;
+		size_t sz;
 		uint8_t hdr = 0;
 		uint8_t *p;
 
@@ -33,6 +43,7 @@ int capn_deflate(struct capn_stream* s) {
 		if (s->avail_in < 8)
 			return CAPN_NEED_MORE;
 
+		sz = 0;
 		for (i = 0; i < 8; i++) {
 			if (s->next_in[i]) {
 				sz ++;
@@ -45,7 +56,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 2)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0;
 			for (sz = 1; sz < min(s->avail_in/8, 256); sz++) {
 				if (((uint64_t*) s->next_in)[sz] != 0) {
 					break;
@@ -63,7 +74,7 @@ int capn_deflate(struct capn_stream* s) {
 			if (s->avail_out < 10)
 				return CAPN_NEED_MORE;
 
-			s->next_out[0] = hdr;
+			s->next_out[0] = 0xFF;
 			memcpy(s->next_out+1, s->next_in, 8);
 			s->next_in += 8;
 			s->avail_in -= 8;
@@ -79,7 +90,7 @@ int capn_deflate(struct capn_stream* s) {
 			continue;
 
 		default:
-			if (s->avail_out < 1 + sz)
+			if (s->avail_out < 1U + sz)
 				return CAPN_NEED_MORE;
 
 			*(s->next_out++) = hdr;
@@ -99,13 +110,28 @@ int capn_deflate(struct capn_stream* s) {
 }
 
 int capn_inflate(struct capn_stream* s) {
-	if (s->avail_out % 8) {
-		return CAPN_MISALIGNED;
-	}
-
 	while (s->avail_out) {
-		int i, sz;
+		int i;
+		size_t sz;
 		uint8_t hdr;
+		uint8_t *wr;
+
+		if (s->avail_buf && s->avail_out >= s->avail_buf) {
+			memcpy(s->next_out, s->inflate_buf, s->avail_buf);
+			s->next_out += s->avail_buf;
+			s->avail_out -= s->avail_buf;
+			s->avail_buf = 0;
+			if (!s->avail_out)
+				return 0;
+		}
+		if (s->avail_buf && s->avail_out < s->avail_buf) {
+			memcpy(s->next_out, s->inflate_buf, s->avail_out);
+			memmove(s->inflate_buf, s->inflate_buf + s->avail_out,
+					s->avail_buf - s->avail_out);
+			s->avail_buf -= s->avail_out;
+			s->avail_out = 0;
+			return 0;
+		}
 
 		if (s->zeros > 0) {
 			sz = min(s->avail_out, s->zeros);
@@ -142,45 +168,46 @@ int capn_inflate(struct capn_stream* s) {
 			if (s->avail_in < 10)
 				return CAPN_NEED_MORE;
 
-			memcpy(s->next_out, s->next_in+1, 8);
-			s->raw = (int) s->next_in[9] * 8;
+			memcpy(s->inflate_buf, s->next_in+1, 8);
+			s->avail_buf = 8;
+
+			s->raw = s->next_in[9] * 8;
 			s->next_in += 10;
 			s->avail_in -= 10;
-			s->next_out += 8;
-			s->avail_out -= 8;
 			continue;
 
 		case 0x00:
 			/* 0x00 is followed by a single byte indicating
 			 * the count of consecutive zero value words
 			 * minus 1 */
-			s->zeros = (int) (s->next_in[1] + 1) * 8;
+			s->zeros = (s->next_in[1] + 1) * 8;
 			s->next_in += 2;
 			s->avail_in -= 2;
 			continue;
 
 		default:
+			hdr = s->next_in[0];
 			sz = 0;
-			hdr = s->next_in[1];
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i))
 					sz++;
 			}
-			if (s->avail_in < 2 + sz)
+			if (s->avail_in < 1U + sz)
 				return CAPN_NEED_MORE;
 
-			s->next_in += 2;
+			s->next_in += 1;
 
+			wr = s->inflate_buf;
 			for (i = 0; i < 8; i++) {
 				if (hdr & (1 << i)) {
-					*(s->next_out++) = *(s->next_in++);
+					*wr++ = *s->next_in++;
 				} else {
-					*(s->next_out++) = 0;
+					*wr++ = 0;
 				}
 			}
 
-			s->avail_out -= 8;
-			s->avail_in -= 2 + sz;
+			s->avail_buf = 8;
+			s->avail_in -= 1 + sz;
 			continue;
 		}
 	}

@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Sandstorm Development Group, Inc. and contributors
+# Copyright (c) 2016 NetDEF, Inc. and contributors
 # Licensed under the MIT License:
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,8 +19,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-@0xbdf87d7bb8304e81;
-$namespace("capnp::annotations");
+@0xc0183dd65ffef0f3;
 
-annotation namespace(file): Text;
-annotation name(field, enumerant, struct, enum, interface, method, param, group, union): Text;
+annotation nameinfix @0x85a8d86d736ba637 (file): Text;
+# add an infix (middle insert) for output file names
+#
+# "make" generally has implicit rules for compiling "foo.c" => "foo".  This
+# is very annoying with capnp since the rule will be "foo" => "foo.c", leading
+# to a loop.  $nameinfix (recommended parameter: "-gen") inserts its parameter
+# before the ".c", so the filename becomes "foo-gen.c"
+#
+# ("foo" is really "foo.capnp", so it's foo.capnp-gen.c)
+
+annotation fieldgetset @0xf72bc690355d66de (file): Void;
+# generate getter & setter functions for accessing fields
+#
+# allows grabbing/putting values without de-/encoding the entire struct.
