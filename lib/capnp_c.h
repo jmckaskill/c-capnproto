@@ -13,6 +13,12 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
+// ssize_t is defined in unistd.h in GCC.
+#ifdef __GNUC__
+#include <unistd.h>
+#endif
+
 #if defined(unix) && !defined(__APPLE__)
 #include <endian.h>
 #endif
@@ -20,6 +26,19 @@
 // ssize_t is not defined in stdint.h in MSVC.
 #ifdef _MSC_VER
 typedef intmax_t ssize_t;
+#endif
+
+// Macro UNUSED silences compiler warnings about unused parameters.
+#ifndef UNUSED
+#define UNUSED(x) (void)(x)
+#endif
+
+// Cross-platform macro ALIGNED_(x) aligns a struct by x bits.
+#ifdef _MSC_VER
+#define ALIGNED_(x) __declspec(align(x))
+#endif
+#ifdef __GNUC__
+#define ALIGNED_(x) __attribute__ ((aligned(x)))
 #endif
 
 #ifdef __cplusplus
@@ -103,10 +122,8 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  * data, len, cap, and user should all set by the user. Other values
  * should be zero initialized.
  */
-#ifdef _MSC_VER
-__declspec(align(64))
-#endif
-struct capn_segment {
+
+struct ALIGNED_(64) capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;
 	struct capn *capn;

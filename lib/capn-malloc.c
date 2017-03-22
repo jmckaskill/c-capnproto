@@ -25,6 +25,10 @@ struct check_segment_alignment {
 };
 
 static struct capn_segment *create(void *u, uint32_t id, int sz) {
+	// Silence warnings about unused parameters.
+	UNUSED(u);
+	UNUSED(id);
+
 	struct capn_segment *s;
 	sz += sizeof(*s);
 	if (sz < 4096) {

@@ -7,6 +7,8 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include "capnp_c.h"
 
 #include <stdlib.h>
