@@ -1348,7 +1348,7 @@ int main() {
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
 
 		if (g_val0used)
-			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\"};\n");
+			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\",0};\n");
 		if (g_nullused)
 			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
@@ -1364,7 +1364,7 @@ int main() {
 			}
 			fprintf(srcf, "\n};\n");
 
-			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%lu,%lu};\n",
+			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%lu,%lu,0};\n",
 					g_valseg.len-8, g_valseg.len-8);
 		}
 
