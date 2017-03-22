@@ -28,12 +28,12 @@
 typedef intmax_t ssize_t;
 #endif
 
-// Macro UNUSED silences compiler warnings about unused parameters.
+// Macro UNUSED(x) silences compiler warnings about unused parameter or variable `x`.
 #ifndef UNUSED
 #define UNUSED(x) (void)(x)
 #endif
 
-// Cross-platform macro ALIGNED_(x) aligns a struct by x bits.
+// Cross-platform macro ALIGNED_(x) aligns a struct by `x` bits.
 #ifdef _MSC_VER
 #define ALIGNED_(x) __declspec(align(x))
 #endif
