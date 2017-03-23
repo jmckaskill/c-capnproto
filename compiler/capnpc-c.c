@@ -8,6 +8,7 @@
 
 #include "schema.capnp.h"
 #include "str.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -261,6 +262,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 			v->ptrval = p;
 
+			bool symbol_provided = symbol;
 			if (!symbol) {
 				static struct str buf = STR_INIT;
 				v->intval = ++g_valc;
@@ -268,7 +270,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			}
 
 			str_addf(&SRC, "%scapn_text %s = {%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg};\n",
-					symbol ? "" : "static ",
+					symbol_provided ? "" : "static ",
 					symbol,
 					p.len-1,
 					(int) (p.data-p.seg->data-8));
@@ -291,13 +293,14 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 			v->ptrval = p;
 
+			bool symbol_provided = symbol;
 			if (!symbol) {
 				static struct str buf = STR_INIT;
 				v->intval = ++g_valc;
 				symbol = strf(&buf, "capn_val%d", (int) v->intval);
 			}
 
-			str_addf(&SRC, "%s%s %s = {", symbol ? "" : "static ", v->tname, symbol);
+			str_addf(&SRC, "%s%s %s = {", symbol_provided ? "" : "static ", v->tname, symbol);
 			if (strcmp(v->tname, "capn_ptr"))
 				str_addf(&SRC, "{");
 
