@@ -13,6 +13,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
+
 #if defined(unix) && !defined(__APPLE__)
 #include <endian.h>
 #endif
@@ -20,6 +22,14 @@
 // ssize_t is not defined in stdint.h in MSVC.
 #ifdef _MSC_VER
 typedef intmax_t ssize_t;
+#endif
+
+// Cross-platform macro ALIGNED_(x) aligns a struct by `x` bytes.
+#ifdef _MSC_VER
+#define ALIGNED_(x) __declspec(align(x))
+#endif
+#ifdef __GNUC__
+#define ALIGNED_(x) __attribute__ ((aligned(x)))
 #endif
 
 #ifdef __cplusplus
@@ -93,20 +103,19 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  *
  * cap specifies the segment capacity.
  *
- * When creating new structures len will be incremented until it reaces cap,
+ * When creating new structures len will be incremented until it reaches cap,
  * at which point a new segment will be requested via capn->create. The
  * create callback can either create a new segment or expand an existing
  * one by incrementing cap and returning the expanded segment.
  *
- * data, len, and cap must all by 8 byte aligned
+ * data, len, and cap must all be 8 byte aligned, hence the ALIGNED_(8) macro
+ * on the struct definition.
  *
- * data, len, cap, and user should all set by the user. Other values
+ * data, len, cap, and user should all be set by the user. Other values
  * should be zero initialized.
  */
-#ifdef _MSC_VER
-__declspec(align(64))
-#endif
-struct capn_segment {
+
+struct ALIGNED_(8) capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;
 	struct capn *capn;

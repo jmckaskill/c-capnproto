@@ -11,6 +11,7 @@ Makefile
 Makefile.in
 .deps
 .libs
+.dirstamp
 
 test-driver
 *.log

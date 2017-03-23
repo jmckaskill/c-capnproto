@@ -8,6 +8,10 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include "capnp_c.h"
 #include "capnp_priv.h"
 #include <stdlib.h>
@@ -15,10 +19,15 @@
 #include <limits.h>
 #include <errno.h>
 
-/* Visual Studio notes:
- * Unless capn_segment is defined with __declspec(align(64)), check_segment_alignment
- * Fails to compile in x86 mode, as (sizeof(struct capn_segment)&7) -> (44 & 7) evaluates to 4
- * Compiles in x64 mode, as (sizeof(struct capn_segment)&7) -> (80 & 7) evaluates to 0
+/*
+ * 8 byte alignment is required for struct capn_segment.
+ * This struct check_segment_alignment verifies this at compile time.
+ *
+ * Unless capn_segment is defined with 8 byte alignment, check_segment_alignment
+ * fails to compile in x86 mode (or on another CPU with 32-bit pointers),
+ * as (sizeof(struct capn_segment)&7) -> (44 & 7) evaluates to 4.
+ * It compiles in x64 mode (or on another CPU with 64-bit pointers),
+ * as (sizeof(struct capn_segment)&7) -> (80 & 7) evaluates to 0.
  */
 struct check_segment_alignment {
 	unsigned int foo : (sizeof(struct capn_segment)&7) ? -1 : 1;
