@@ -56,6 +56,8 @@ check_PROGRAMS += \
 capn_test_SOURCES = \
 	tests/capn-test.cpp \
 	tests/capn-stream-test.cpp \
+	tests/example-test.cpp \
+	tests/example.capnp.c \
 	compiler/test.capnp.c \
 	compiler/schema-test.cpp \
 	compiler/schema.capnp.c
