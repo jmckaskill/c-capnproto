@@ -103,18 +103,19 @@ struct capn_tree *capn_tree_insert(struct capn_tree *root, struct capn_tree *n);
  *
  * cap specifies the segment capacity.
  *
- * When creating new structures len will be incremented until it reaces cap,
+ * When creating new structures len will be incremented until it reaches cap,
  * at which point a new segment will be requested via capn->create. The
  * create callback can either create a new segment or expand an existing
  * one by incrementing cap and returning the expanded segment.
  *
- * data, len, and cap must all by 8 byte aligned
+ * data, len, and cap must all be 8 byte aligned, hence the ALIGNED_(8) macro
+ * on the struct definition.
  *
- * data, len, cap, and user should all set by the user. Other values
+ * data, len, cap, and user should all be set by the user. Other values
  * should be zero initialized.
  */
 
-struct ALIGNED_(64) capn_segment {
+struct ALIGNED_(8) capn_segment {
 	struct capn_tree hdr;
 	struct capn_segment *next;
 	struct capn *capn;
