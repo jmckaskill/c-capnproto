@@ -13,11 +13,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
-// ssize_t is defined in unistd.h in GCC.
-#ifdef __GNUC__
 #include <unistd.h>
-#endif
 
 #if defined(unix) && !defined(__APPLE__)
 #include <endian.h>
@@ -33,7 +29,7 @@ typedef intmax_t ssize_t;
 #define UNUSED(x) (void)(x)
 #endif
 
-// Cross-platform macro ALIGNED_(x) aligns a struct by `x` bits.
+// Cross-platform macro ALIGNED_(x) aligns a struct by `x` bytes.
 #ifdef _MSC_VER
 #define ALIGNED_(x) __declspec(align(x))
 #endif

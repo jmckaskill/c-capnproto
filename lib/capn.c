@@ -7,7 +7,9 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 #include "capnp_c.h"
 

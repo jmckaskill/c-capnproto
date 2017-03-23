@@ -8,6 +8,10 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include "capnp_c.h"
 #include "capnp_priv.h"
 #include <stdlib.h>
@@ -25,10 +29,6 @@ struct check_segment_alignment {
 };
 
 static struct capn_segment *create(void *u, uint32_t id, int sz) {
-	// Silence warnings about unused parameters.
-	UNUSED(u);
-	UNUSED(id);
-
 	struct capn_segment *s;
 	sz += sizeof(*s);
 	if (sz < 4096) {
