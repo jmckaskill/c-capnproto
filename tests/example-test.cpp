@@ -23,7 +23,7 @@ TEST(Examples, RoundTrip) {
   {
     // Set initial object in `g`.
     const capn_text capn_val0 = {
-      .len = strlen(s),
+      .len = (int) strlen(s),
       .str = s,
       .seg = NULL
     };
@@ -65,7 +65,7 @@ TEST(Examples, RoundTrip) {
     read_Greeting(&rg, rroot);
 
     // Assert deserialized values in `rg`
-    EXPECT_EQ(rg.timesToSay, 17);
+    EXPECT_EQ(rg.timesToSay, (uint32_t) 17);
     EXPECT_EQ(strlen(s), (uint32_t) rg.text.len);
     EXPECT_EQ(0, strncmp(s, rg.text.str, strlen(s)));
   }
