@@ -80,3 +80,13 @@ capn_test_CXXFLAGS = -std=gnu++11 -pthread
 capn_test_LDADD = libcapnp_c.la $(GTEST_LDADD)
 capn_test_LDFLAGS = -pthread
 TESTS = capn-test
+
+CAPNP_SCHEMA_FILES := $(shell find . -type f -name \*.capnp)
+
+CAPNP ?= capnp
+.PHONY: capnp-compile
+capnp-compile:
+	$(CAPNP) compile \
+		--output=./capnpc-c \
+		-Icompiler \
+		$(CAPNP_SCHEMA_FILES)
