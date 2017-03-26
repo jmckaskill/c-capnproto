@@ -1293,7 +1293,11 @@ int main() {
 		for (j = 0; j < capn_len(file_req.imports); j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
-			str_addf(&HDR, "#include \"%s%s.h\"\n", im.name.str, nameinfix);
+
+			// Ignore leading slashes when generating C file #include's.
+			// This signifies an absolute import in a library directory.
+			const char *base_path = im.name.str[0] == '/' ? &im.name.str[1] : im.name.str;
+			str_addf(&HDR, "#include \"%s%s.h\"\n", base_path, nameinfix);
 		}
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
