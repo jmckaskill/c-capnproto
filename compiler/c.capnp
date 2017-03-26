@@ -29,6 +29,10 @@ annotation nameinfix @0x85a8d86d736ba637 (file): Text;
 # to a loop.  $nameinfix (recommended parameter: "-gen") inserts its parameter
 # before the ".c", so the filename becomes "foo-gen.c"
 #
+# Alternatively, add this Makefile rule to disable compiling "foo.capnp.c" -> "foo.capnp":
+#   %.capnp: ;
+#
+#
 # ("foo" is really "foo.capnp", so it's foo.capnp-gen.c)
 
 annotation fieldgetset @0xf72bc690355d66de (file): Void;

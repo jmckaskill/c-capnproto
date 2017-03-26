@@ -44,6 +44,11 @@ noinst_HEADERS += \
 	compiler/schema.capnp.h \
 	compiler/c++.capnp.h
 
+# Don't try to generate any *.capnp files. Otherwise make wants to compile them
+# from *.capnp.c and fails.
+%.capnp: ;
+
+# googletest
 GTEST_LDADD = gtest/googletest/lib/libgtest.la
 gtest/googletest/lib/libgtest.la:
 	make -C gtest/googletest lib/libgtest.la
@@ -65,6 +70,10 @@ noinst_HEADERS += \
 	compiler/test.capnp.h \
 	tests/example.capnp.h
 EXTRA_DIST += \
+	compiler/c.capnp \
+	compiler/c++.capnp \
+	compiler/schema.capnp \
+	compiler/test.capnp \
 	tests/example.capnp
 capn_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_CPPFLAGS)
 capn_test_CXXFLAGS = -std=gnu++11 -pthread

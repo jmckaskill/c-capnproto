@@ -68,6 +68,11 @@ You need to compile these runtime library files and link them into your own proj
 
 Your include path must contain the runtime library directory [`lib`](lib). Header file [`lib/capnp_c.h`](lib/capnp_c.h) contains the public interfaces of the library.
 
+Using make-based builds, make may try to compile `${x}.capnp` from
+`${x}.capnp.c` using its built-in rule for compiling `${y}` from
+`${y}.c`. You can either disable make's built-in compile rules or just
+this specific case with the no-op rule: `%.capnp: ;`.
+
 For further reference, please see the other unit tests in [`tests`](tests), and header file [`lib/capnp_c.h`](lib/capnp_c.h).
 
 The project [`quagga-capnproto`](https://github.com/opensourcerouting/quagga-capnproto) uses `c-capnproto` and contains some good examples, as found with [this github repository search](https://github.com/opensourcerouting/quagga-capnproto/search?utf8=%E2%9C%93&q=capn&type=):
