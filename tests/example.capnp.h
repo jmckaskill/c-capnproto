@@ -7,6 +7,8 @@
 #error "version mismatch between capnp_c.h and generated code"
 #endif
 
+#include "c.capnp.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

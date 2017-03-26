@@ -1,6 +1,6 @@
 #include "schema.capnp.h"
 /* AUTO GENERATED - DO NOT EDIT */
-static const capn_text capn_val0 = {0,""};
+static const capn_text capn_val0 = {0,"",0};
 uint16_t Field_noDiscriminant = 65535;
 
 Node_ptr new_Node(struct capn_segment *s) {

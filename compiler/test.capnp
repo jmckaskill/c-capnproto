@@ -21,7 +21,10 @@
 
 @0xd508eebdc2dc42b8;
 
+using C = import "c.capnp";
 using Cxx = import "c++.capnp";
+
+$C.fieldgetset;
 
 # Use a namespace likely to cause trouble if the generated code doesn't use fully-qualified
 # names for stuff in the capnproto namespace.

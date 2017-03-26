@@ -1,6 +1,6 @@
 @0xd120e9a4c43868ab;
 
-using C = import "../compiler/c.capnp";
+using C = import "/c.capnp";
 
 $C.fieldgetset;
 
