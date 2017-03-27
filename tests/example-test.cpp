@@ -12,34 +12,63 @@
 #include <cstdint>
 
 #include "capnp_c.h"
-#include "example.capnp.h"
+#include "addressbook.capnp.h"
 
-TEST(Examples, RoundTrip) {
+static capn_text chars_to_text(const char *chars) {
+  return (capn_text) {
+    .len = (int) strlen(chars),
+    .str = chars,
+    .seg = NULL,
+  };
+}
+
+// EXPECT_CAPN_TEXT_EQ arguments:
+//   const char * expected
+//   capn_text t
+#define EXPECT_CAPN_TEXT_EQ(expected, t) \
+  do {                                                  \
+    EXPECT_EQ(strlen((expected)), (uint32_t) (t).len);  \
+    EXPECT_STREQ((expected), (t).str);                  \
+  } while(0);
+
+TEST(Examples, RoundTripPerson) {
   uint8_t buf[4096];
   ssize_t sz = 0;
 
-  const char *s = "Hello.";
+  const char *name = "Firstname Lastname";
+  const char *email = "username@domain.com";
+  const char *school = "of life";
+
+  struct capn c;
+  capn_init_malloc(&c);
+  capn_ptr cr = capn_root(&c);
+  struct capn_segment *cs = cr.seg;
 
   {
-    // Set initial object in `g`.
-    const capn_text capn_val0 = {
-      .len = (int) strlen(s),
-      .str = s,
-      .seg = NULL
+    // Set initial object in `p`.
+    struct Person p = {
+      .id = 17,
+      .name = chars_to_text(name),
+      .email = chars_to_text(email),
     };
-    struct Greeting g = {
-      .text = capn_val0,
-      .timesToSay = 17,
-    };
+    p.employment_which = Person_employment_school;
+    p.employment.school = chars_to_text(school);
 
-    // Serialize `g` to `buf[0..sz-1]`.
-    struct capn c;
-    capn_init_malloc(&c);
-    capn_ptr cr = capn_root(&c);
-    struct capn_segment *cs = cr.seg;
-    Greeting_ptr gp = new_Greeting(cs);
-    write_Greeting(&g, gp);
-    int setp_ret = capn_setp(capn_root(&c), 0, gp.p);
+    p.phones = new_Person_PhoneNumber_list(cs, 2);
+    struct Person_PhoneNumber pn0 = {
+      .number = chars_to_text("123"),
+      .type = Person_PhoneNumber_Type_work,
+    };
+    set_Person_PhoneNumber(&pn0, p.phones, 0);
+    struct Person_PhoneNumber pn1 = {
+      .number = chars_to_text("234"),
+      .type = Person_PhoneNumber_Type_home,
+    };
+    set_Person_PhoneNumber(&pn1, p.phones, 1);
+
+    Person_ptr pp = new_Person(cs);
+    write_Person(&p, pp);
+    int setp_ret = capn_setp(capn_root(&c), 0, pp.p);
     ASSERT_EQ(0, setp_ret);
     sz = capn_write_mem(&c, buf, sizeof(buf), 0 /* packed */);
     capn_free(&c);
@@ -47,7 +76,7 @@ TEST(Examples, RoundTrip) {
 
   {
     // Write serialized object to file system.
-    FILE *f = fopen("tests/example-test.cpp.Greeting.out", "wb");
+    FILE *f = fopen("tests/example-test.cpp.Person.out", "wb");
     ASSERT_NE(f, (void*)0);
     fwrite(buf, 1 /* size */, sz /* count */, f);
     int close_ret = fclose(f);
@@ -55,18 +84,33 @@ TEST(Examples, RoundTrip) {
   }
 
   {
-    // Deserialize `buf[0..sz-1]` to `rg`.
+    // Deserialize `buf[0..sz-1]` to `rp`.
     struct capn rc;
     int init_mem_ret = capn_init_mem(&rc, buf, sz, 0 /* packed */);
     ASSERT_EQ(0, init_mem_ret);
-    Greeting_ptr rroot;
-    struct Greeting rg;
+    Person_ptr rroot;
+    struct Person rp;
     rroot.p = capn_getp(capn_root(&rc), 0 /* off */, 1 /* resolve */);
-    read_Greeting(&rg, rroot);
+    read_Person(&rp, rroot);
 
-    // Assert deserialized values in `rg`
-    EXPECT_EQ(rg.timesToSay, (uint32_t) 17);
-    EXPECT_EQ(strlen(s), (uint32_t) rg.text.len);
-    EXPECT_EQ(0, strncmp(s, rg.text.str, strlen(s)));
+    // Assert deserialized values in `rp`
+    EXPECT_EQ(rp.id, (uint32_t) 17);
+    EXPECT_CAPN_TEXT_EQ(name, rp.name);
+    EXPECT_CAPN_TEXT_EQ(email, rp.email);
+
+    EXPECT_EQ(rp.employment_which, Person_employment_school);
+    EXPECT_CAPN_TEXT_EQ(school, rp.employment.school);
+
+    struct Person_PhoneNumber rpn0;
+    get_Person_PhoneNumber(&rpn0, rp.phones, 0);
+    EXPECT_CAPN_TEXT_EQ("123", rpn0.number);
+    EXPECT_EQ(rpn0.type, Person_PhoneNumber_Type_work);
+
+    struct Person_PhoneNumber rpn1;
+    get_Person_PhoneNumber(&rpn1, rp.phones, 1);
+    EXPECT_CAPN_TEXT_EQ("234", rpn1.number);
+    EXPECT_EQ(rpn1.type, Person_PhoneNumber_Type_home);
   }
 }
+
+// TODO: Accessor read/write vs read_/write_.

@@ -63,19 +63,19 @@ capn_test_SOURCES = \
 	tests/capn-test.cpp \
 	tests/capn-stream-test.cpp \
 	tests/example-test.cpp \
-	tests/example.capnp.c \
+	tests/addressbook.capnp.c \
 	compiler/test.capnp.c \
 	compiler/schema-test.cpp \
 	compiler/schema.capnp.c
 noinst_HEADERS += \
 	compiler/test.capnp.h \
-	tests/example.capnp.h
+	tests/addressbook.capnp.h
 EXTRA_DIST += \
 	compiler/c.capnp \
 	compiler/c++.capnp \
 	compiler/schema.capnp \
 	compiler/test.capnp \
-	tests/example.capnp
+	tests/addressbook.capnp
 capn_test_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_CPPFLAGS)
 capn_test_CXXFLAGS = -std=gnu++11 -pthread
 capn_test_LDADD = libcapnp_c.la $(GTEST_LDADD)

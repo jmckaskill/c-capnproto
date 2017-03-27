@@ -58,7 +58,9 @@ struct MyStruct {}
 
 ### Example C code
 
-See the unit tests in [`tests/example-test.cpp`](tests/example-test.cpp). The example schema file is [`tests/example.capnp`](tests/example.capnp). The tests are written in C++, but only use C features.
+See the unit tests in [`tests/example-test.cpp`](tests/example-test.cpp).
+The example schema file is [`tests/addressbook.capnp`](tests/addressbook.capnp).
+The tests are written in C++, but only use C features.
 
 You need to compile these runtime library files and link them into your own project's binaries:
 
@@ -66,7 +68,9 @@ You need to compile these runtime library files and link them into your own proj
 * [`lib/capn-malloc.c`](lib/capn-malloc.c)
 * [`lib/capn-stream.c`](lib/capn-stream.c)
 
-Your include path must contain the runtime library directory [`lib`](lib). Header file [`lib/capnp_c.h`](lib/capnp_c.h) contains the public interfaces of the library.
+Your include path must contain the runtime library directory
+[`lib`](lib). Header file [`lib/capnp_c.h`](lib/capnp_c.h) contains
+the public interfaces of the library.
 
 Using make-based builds, make may try to compile `${x}.capnp` from
 `${x}.capnp.c` using its built-in rule for compiling `${y}` from
