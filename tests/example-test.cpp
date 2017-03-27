@@ -31,6 +31,12 @@ static capn_text chars_to_text(const char *chars) {
     EXPECT_STREQ((expected), (t).str);                  \
   } while(0);
 
+
+// Demonstrates serializing an object tree to a byte array, then deserializing it
+// back into an object tree and asserting on the expected values therein.
+//
+// This example uses generated  read_*, write_*, get_*, set_* functions
+// to deserialize into structs.
 TEST(Examples, RoundTripPerson) {
   uint8_t buf[4096];
   ssize_t sz = 0;
@@ -113,4 +119,38 @@ TEST(Examples, RoundTripPerson) {
   }
 }
 
-// TODO: Accessor read/write vs read_/write_.
+// Demonstrate accessing serialized objects using accessor functions without
+// first copying values into structs.
+TEST(Examples, PersonWithAccessors) {
+  struct capn c;
+  capn_init_malloc(&c);
+  capn_ptr cr = capn_root(&c);
+  struct capn_segment *cs = cr.seg;
+
+  // Set fields with set_ accessors.
+  Person_ptr pp = new_Person(cs);
+  {
+    Person_set_id(pp, 17);
+
+    capn_text name = chars_to_text("Name");
+    EXPECT_CAPN_TEXT_EQ("Name", name);
+    Person_set_name(pp, name);
+
+    Person_PhoneNumber_list pnl = new_Person_PhoneNumber_list(cs, 1);
+    Person_set_phones(pp, pnl);
+    Person_PhoneNumber_ptr pn0;
+    pn0.p = capn_getp(pnl.p, 0 /* offset */, 0 /* resolve */);
+    Person_PhoneNumber_set_type(pn0, Person_PhoneNumber_Type_home);
+  }
+
+  // Assert field values returned by get_ accessors.
+  {
+    EXPECT_EQ(Person_get_id(pp), 17);
+    EXPECT_CAPN_TEXT_EQ("Name", Person_get_name(pp));
+
+    Person_PhoneNumber_list pnl = Person_get_phones(pp);
+    Person_PhoneNumber_ptr pn0;
+    pn0.p = capn_getp(pnl.p, 0 /* offset */, 0 /* resolve */);
+    EXPECT_EQ(Person_PhoneNumber_Type_home, Person_PhoneNumber_get_type(pn0));
+  }
+}
