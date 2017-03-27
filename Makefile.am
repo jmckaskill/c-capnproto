@@ -43,6 +43,7 @@ noinst_HEADERS += \
 	lib/capnp_priv.h \
 	compiler/str.h \
 	compiler/schema.capnp.h \
+	compiler/c.capnp.h \
 	compiler/c++.capnp.h
 
 # Don't try to generate any *.capnp files. Otherwise make wants to compile them
