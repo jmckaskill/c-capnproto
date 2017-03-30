@@ -45,12 +45,12 @@ TEST(Examples, RoundTripPerson) {
   const char *email = "username@domain.com";
   const char *school = "of life";
 
-  struct capn c;
-  capn_init_malloc(&c);
-  capn_ptr cr = capn_root(&c);
-  struct capn_segment *cs = cr.seg;
-
   {
+    struct capn c;
+    capn_init_malloc(&c);
+    capn_ptr cr = capn_root(&c);
+    struct capn_segment *cs = cr.seg;
+
     // Set initial object in `p`.
     struct Person p = {
       .id = 17,
@@ -116,6 +116,8 @@ TEST(Examples, RoundTripPerson) {
     get_Person_PhoneNumber(&rpn1, rp.phones, 1);
     EXPECT_CAPN_TEXT_EQ("234", rpn1.number);
     EXPECT_EQ(rpn1.type, Person_PhoneNumber_Type_home);
+
+    capn_free(&rc);
   }
 }
 
@@ -153,4 +155,6 @@ TEST(Examples, PersonWithAccessors) {
     pn0.p = capn_getp(pnl.p, 0 /* offset */, 0 /* resolve */);
     EXPECT_EQ(Person_PhoneNumber_Type_home, Person_PhoneNumber_get_type(pn0));
   }
+
+  capn_free(&c);
 }
