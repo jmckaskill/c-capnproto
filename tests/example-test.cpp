@@ -1,6 +1,9 @@
 /* example-test.cpp
  *
- * Some simple examples using c-capnproto
+ * Some simple examples using c-capnproto.
+ *
+ * Based on the addressbook.capnp example in the capnproto C++ project:
+ *  https://github.com/sandstorm-io/capnproto/blob/6816634a08b08bc8f52b4ee809afb58389f19655/c%2B%2B/samples/addressbook.capnp
  *
  * Copyright (C) 2017 Alex Helfet
  *
@@ -106,6 +109,8 @@ TEST(Examples, RoundTripPerson) {
 
     EXPECT_EQ(rp.employment_which, Person_employment_school);
     EXPECT_CAPN_TEXT_EQ(school, rp.employment.school);
+
+    EXPECT_EQ(2, capn_len(rp.phones));
 
     struct Person_PhoneNumber rpn0;
     get_Person_PhoneNumber(&rpn0, rp.phones, 0);

@@ -1,4 +1,5 @@
-# From https://github.com/sandstorm-io/capnproto/blob/6816634a08b08bc8f52b4ee809afb58389f19655/c%2B%2B/samples/addressbook.capnp
+# Based on the addressbook.capnp example in the capnproto C++ project:
+# https://github.com/sandstorm-io/capnproto/blob/6816634a08b08bc8f52b4ee809afb58389f19655/c%2B%2B/samples/addressbook.capnp
 #
 # Copyright (c) 2013-2014 Sandstorm Development Group, Inc. and contributors
 # Licensed under the MIT License:
