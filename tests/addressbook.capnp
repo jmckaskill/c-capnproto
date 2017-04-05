@@ -1,4 +1,7 @@
-# Copyright (c) 2016 NetDEF, Inc. and contributors
+# Based on the addressbook.capnp example in the capnproto C++ project:
+# https://github.com/sandstorm-io/capnproto/blob/6816634a08b08bc8f52b4ee809afb58389f19655/c%2B%2B/samples/addressbook.capnp
+#
+# Copyright (c) 2013-2014 Sandstorm Development Group, Inc. and contributors
 # Licensed under the MIT License:
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,23 +22,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-@0xc0183dd65ffef0f3;
+@0x9eb32e19f86ee174;
 
-annotation nameinfix @0x85a8d86d736ba637 (file): Text;
-# add an infix (middle insert) for output file names
-#
-# "make" generally has implicit rules for compiling "foo.c" => "foo".  This
-# is very annoying with capnp since the rule will be "foo" => "foo.c", leading
-# to a loop.  $nameinfix (recommended parameter: "-gen") inserts its parameter
-# before the ".c", so the filename becomes "foo-gen.c"
-#
-# Alternatively, add this Makefile rule to disable compiling "foo.capnp.c" -> "foo.capnp":
-#   %.capnp: ;
-#
-#
-# ("foo" is really "foo.capnp", so it's foo.capnp-gen.c)
+using C = import "/c.capnp";
+$C.fieldgetset;
 
-annotation fieldgetset @0xf72bc690355d66de (file): Void;
-# generate getter & setter functions for accessing fields
-#
-# allows grabbing/putting values without de-/encoding the entire struct.
+struct Person {
+  id @0 :UInt32;
+  name @1 :Text;
+  email @2 :Text;
+  phones @3 :List(PhoneNumber);
+
+  struct PhoneNumber {
+    number @0 :Text;
+    type @1 :Type;
+
+    enum Type {
+      mobile @0;
+      home @1;
+      work @2;
+    }
+  }
+
+  employment :union {
+    unemployed @4 :Void;
+    employer @5 :Text;
+    school @6 :Text;
+    selfEmployed @7 :Void;
+    # We assume that a person is only one of these.
+  }
+}
+
+struct AddressBook {
+  people @0 :List(Person);
+}
+

@@ -17,6 +17,8 @@ test-driver
 *.log
 *.trs
 
+tests/*.out
+
 *.o
 *.a
 *.so

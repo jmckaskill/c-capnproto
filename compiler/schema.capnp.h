@@ -8,6 +8,7 @@
 #endif
 
 #include "c++.capnp.h"
+#include "c.capnp.h"
 
 #ifdef __cplusplus
 extern "C" {
