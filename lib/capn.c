@@ -1006,9 +1006,7 @@ capn_ptr capn_new_list(struct capn_segment *seg, int sz, int datasz, int ptrs) {
 	p.seg = seg;
 	p.len = sz;
 
-	if (!sz) {
-		/* empty lists may as well be a len=0 void list */
-	} else if (ptrs || datasz > 8) {
+	if (ptrs || datasz > 8) {
 		p.is_composite_list = 1;
 		p.datasz = (datasz + 7) & ~7;
 		p.ptrs = ptrs;
