@@ -193,6 +193,8 @@ int capn_setp(capn_ptr p, int off, capn_ptr tgt);
 capn_text capn_get_text(capn_ptr p, int off, capn_text def);
 capn_data capn_get_data(capn_ptr p, int off);
 int capn_set_text(capn_ptr p, int off, capn_text tgt);
+/* there is no set_data -- use capn_new_list8 + capn_setv8 instead
+ * and set data.p = list.p */
 
 /* capn_get* functions get data from a list
  * The length of the list is given by p->size
