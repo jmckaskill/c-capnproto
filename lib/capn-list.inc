@@ -41,7 +41,9 @@ UINT_T CAT(capn_get,SZ) (LIST_T l, int off) {
 
 int CAT(capn_getv,SZ) (LIST_T l, int off, UINT_T *to, int sz) {
 	int i;
-	capn_ptr p = l.p;
+	capn_ptr p;
+	capn_resolve(&l.p);
+	p = l.p;
 	if (off + sz > p.len) {
 		sz = p.len - off;
 	}
