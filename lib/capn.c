@@ -898,7 +898,9 @@ int capn_set1(capn_list1 l, int off, int val) {
 int capn_getv1(capn_list1 l, int off, uint8_t *data, int sz) {
 	/* Note we only support aligned reads */
 	int bsz;
-	capn_ptr p = l.p;
+	capn_ptr p;
+	capn_resolve(&l.p);
+	p = l.p;
 	if (p.type != CAPN_BIT_LIST || (off & 7) != 0)
 		return -1;
 
