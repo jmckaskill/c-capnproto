@@ -7,6 +7,14 @@
 #error "version mismatch between capnp_c.h and generated code"
 #endif
 
+#ifndef capnp_nowarn
+# ifdef __GNUC__
+#  define capnp_nowarn __extension__
+# else
+#  define capnp_nowarn
+# endif
+#endif
+
 #include "c++.capnp.h"
 #include "c.capnp.h"
 
@@ -705,7 +713,7 @@ enum TestUnion_union3_which {
 
 struct TestUnion {
 	enum TestUnion_union0_which union0_which;
-	union {
+	capnp_nowarn union {
 		unsigned u0f0s1 : 1;
 		int8_t u0f0s8;
 		int16_t u0f0s16;
@@ -721,7 +729,7 @@ struct TestUnion {
 	} union0;
 	unsigned bit0 : 1;
 	enum TestUnion_union1_which union1_which;
-	union {
+	capnp_nowarn union {
 		unsigned u1f0s1 : 1;
 		unsigned u1f1s1 : 1;
 		int8_t u1f0s8;
@@ -748,7 +756,7 @@ struct TestUnion {
 	unsigned bit6 : 1;
 	unsigned bit7 : 1;
 	enum TestUnion_union2_which union2_which;
-	union {
+	capnp_nowarn union {
 		int64_t u2f0s64;
 		int32_t u2f0s32;
 		int16_t u2f0s16;
@@ -756,7 +764,7 @@ struct TestUnion {
 		unsigned u2f0s1 : 1;
 	} union2;
 	enum TestUnion_union3_which union3_which;
-	union {
+	capnp_nowarn union {
 		int64_t u3f0s64;
 		int32_t u3f0s32;
 		int16_t u3f0s16;
@@ -811,7 +819,7 @@ enum TestUnnamedUnion_which {
 struct TestUnnamedUnion {
 	capn_text before;
 	enum TestUnnamedUnion_which which;
-	union {
+	capnp_nowarn union {
 		uint16_t foo;
 		uint32_t bar;
 	};
@@ -839,9 +847,9 @@ enum TestUnionInUnion_outer_which {
 
 struct TestUnionInUnion {
 	enum TestUnionInUnion_outer_which outer_which;
-	union {
+	capnp_nowarn union {
 		enum TestUnionInUnion_outer_inner_which inner_which;
-		union {
+		capnp_nowarn union {
 			int32_t foo;
 			int32_t bar;
 		} inner;
@@ -862,18 +870,18 @@ enum TestGroups_groups_which {
 
 struct TestGroups {
 	enum TestGroups_groups_which groups_which;
-	union {
-		struct {
+	capnp_nowarn union {
+		capnp_nowarn struct {
 			int32_t corge;
 			int64_t grault;
 			capn_text garply;
 		} foo;
-		struct {
+		capnp_nowarn struct {
 			int32_t corge;
 			capn_text grault;
 			int64_t garply;
 		} bar;
-		struct {
+		capnp_nowarn struct {
 			int32_t corge;
 			capn_text grault;
 			capn_text garply;
@@ -898,13 +906,13 @@ enum TestInterleavedGroups_group2_which {
 };
 
 struct TestInterleavedGroups {
-	struct {
+	capnp_nowarn struct {
 		uint32_t foo;
 		uint64_t bar;
 		enum TestInterleavedGroups_group1_which which;
-		union {
+		capnp_nowarn union {
 			uint16_t qux;
-			struct {
+			capnp_nowarn struct {
 				uint64_t grault;
 				uint16_t garply;
 				capn_text plugh;
@@ -914,13 +922,13 @@ struct TestInterleavedGroups {
 		};
 		capn_text waldo;
 	} group1;
-	struct {
+	capnp_nowarn struct {
 		uint32_t foo;
 		uint64_t bar;
 		enum TestInterleavedGroups_group2_which which;
-		union {
+		capnp_nowarn union {
 			uint16_t qux;
-			struct {
+			capnp_nowarn struct {
 				uint64_t grault;
 				uint16_t garply;
 				capn_text plugh;
@@ -1362,13 +1370,13 @@ struct TestLateUnion {
 	capn_text bar;
 	int16_t baz;
 	enum TestLateUnion_theUnion_which theUnion_which;
-	union {
+	capnp_nowarn union {
 		capn_text qux;
 		capn_list32 corge;
 		float grault;
 	} theUnion;
 	enum TestLateUnion_anotherUnion_which anotherUnion_which;
-	union {
+	capnp_nowarn union {
 		capn_text qux;
 		capn_list32 corge;
 		float grault;
@@ -1457,7 +1465,7 @@ enum TestStructUnion_un_which {
 
 struct TestStructUnion {
 	enum TestStructUnion_un_which un_which;
-	union {
+	capnp_nowarn union {
 		TestStructUnion_SomeStruct_ptr _struct;
 		TestAnyPointer_ptr object;
 	} un;
@@ -1656,13 +1664,13 @@ enum TestNameAnnotation_badlyNamedUnion_which {
 
 struct TestNameAnnotation {
 	enum TestNameAnnotation_which which;
-	union {
+	capnp_nowarn union {
 		unsigned badFieldName : 1;
 		int8_t bar;
 	};
 	enum TestNameAnnotation_BadlyNamedEnum anotherBadFieldName;
 	enum TestNameAnnotation_badlyNamedUnion_which badlyNamedUnion_which;
-	union {
+	capnp_nowarn union {
 		/* struct { -empty- } badlyNamedGroup; */
 		TestNameAnnotation_NestedStruct_ptr baz;
 	} badlyNamedUnion;

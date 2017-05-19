@@ -7,6 +7,14 @@
 #error "version mismatch between capnp_c.h and generated code"
 #endif
 
+#ifndef capnp_nowarn
+# ifdef __GNUC__
+#  define capnp_nowarn __extension__
+# else
+#  define capnp_nowarn
+# endif
+#endif
+
 #include "c++.capnp.h"
 #include "c.capnp.h"
 
@@ -95,8 +103,8 @@ struct Node {
 	Node_NestedNode_list nestedNodes;
 	Annotation_list annotations;
 	enum Node_which which;
-	union {
-		struct {
+	capnp_nowarn union {
+		capnp_nowarn struct {
 			uint16_t dataWordCount;
 			uint16_t pointerCount;
 			enum ElementSize preferredListEncoding;
@@ -105,18 +113,18 @@ struct Node {
 			uint32_t discriminantOffset;
 			Field_list fields;
 		} _struct;
-		struct {
+		capnp_nowarn struct {
 			Enumerant_list enumerants;
 		} _enum;
-		struct {
+		capnp_nowarn struct {
 			Method_list methods;
 			Superclass_list superclasses;
 		} _interface;
-		struct {
+		capnp_nowarn struct {
 			Type_ptr type;
 			Value_ptr value;
 		} _const;
-		struct {
+		capnp_nowarn struct {
 			Type_ptr type;
 			unsigned targetsFile : 1;
 			unsigned targetsConst : 1;
@@ -219,19 +227,19 @@ struct Field {
 	Annotation_list annotations;
 	uint16_t discriminantValue;
 	enum Field_which which;
-	union {
-		struct {
+	capnp_nowarn union {
+		capnp_nowarn struct {
 			uint32_t offset;
 			Type_ptr type;
 			Value_ptr defaultValue;
 			unsigned hadExplicitDefault : 1;
 		} slot;
-		struct {
+		capnp_nowarn struct {
 			uint64_t typeId;
 		} group;
 	};
 	enum Field_ordinal_which ordinal_which;
-	union {
+	capnp_nowarn union {
 		uint16_t _explicit;
 	} ordinal;
 };
@@ -378,29 +386,29 @@ enum Type_which {
 
 struct Type {
 	enum Type_which which;
-	union {
-		struct {
+	capnp_nowarn union {
+		capnp_nowarn struct {
 			Type_ptr elementType;
 		} _list;
-		struct {
+		capnp_nowarn struct {
 			uint64_t typeId;
 			Brand_ptr brand;
 		} _enum;
-		struct {
+		capnp_nowarn struct {
 			uint64_t typeId;
 			Brand_ptr brand;
 		} _struct;
-		struct {
+		capnp_nowarn struct {
 			uint64_t typeId;
 			Brand_ptr brand;
 		} _interface;
 		enum Type_anyPointer_which anyPointer_which;
-		union {
-			struct {
+		capnp_nowarn union {
+			capnp_nowarn struct {
 				uint64_t scopeId;
 				uint16_t parameterIndex;
 			} parameter;
-			struct {
+			capnp_nowarn struct {
 				uint16_t parameterIndex;
 			} implicitMethodParameter;
 		} anyPointer;
@@ -434,7 +442,7 @@ enum Brand_Scope_which {
 struct Brand_Scope {
 	uint64_t scopeId;
 	enum Brand_Scope_which which;
-	union {
+	capnp_nowarn union {
 		Brand_Binding_list bind;
 	};
 };
@@ -455,7 +463,7 @@ enum Brand_Binding_which {
 
 struct Brand_Binding {
 	enum Brand_Binding_which which;
-	union {
+	capnp_nowarn union {
 		Type_ptr type;
 	};
 };
@@ -489,7 +497,7 @@ enum Value_which {
 
 struct Value {
 	enum Value_which which;
-	union {
+	capnp_nowarn union {
 		unsigned _bool : 1;
 		int8_t int8;
 		int16_t int16;

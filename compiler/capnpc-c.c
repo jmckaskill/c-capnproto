@@ -758,7 +758,7 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	union_cases(s, n, first_field, (1 << Type_data));
 	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_anyPointer) | (1 << Type__list));
 
-	str_addf(&s->decl, "%sunion {\n", s->dtab.str);
+	str_addf(&s->decl, "%scapnp_nowarn union {\n", s->dtab.str);
 	str_add(&s->dtab, "\t", -1);
 
 	/* when we have defaults or groups we have to emit each case seperately */
@@ -883,7 +883,7 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	}
 
 	if (named_struct) {
-		str_addf(&s->decl, "%sstruct {\n", s->dtab.str);
+		str_addf(&s->decl, "%scapnp_nowarn struct {\n", s->dtab.str);
 		str_add(&s->dtab, "\t", 1);
 	}
 
@@ -1289,6 +1289,13 @@ int main() {
 		str_addf(&HDR, "#if CAPN_VERSION != 1\n");
 		str_addf(&HDR, "#error \"version mismatch between capnp_c.h and generated code\"\n");
 		str_addf(&HDR, "#endif\n\n");
+		str_addf(&HDR, "#ifndef capnp_nowarn\n"
+				"# ifdef __GNUC__\n"
+				"#  define capnp_nowarn __extension__\n"
+				"# else\n"
+				"#  define capnp_nowarn\n"
+				"# endif\n"
+				"#endif\n\n");
 
 		for (j = 0; j < capn_len(file_req.imports); j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
