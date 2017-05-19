@@ -960,7 +960,9 @@ static void define_struct(struct node *n) {
 
 	str_add(&HDR, s.enums.str, s.enums.len);
 
-	str_addf(&HDR, "\nstruct %s {\n", n->name.str);
+	str_addf(&HDR, "\n%sstruct %s {\n",
+			s.decl.len == 0 ? "capnp_nowarn " : "",
+			n->name.str);
 	str_add(&HDR, s.decl.str, s.decl.len);
 	str_addf(&HDR, "};\n");
 

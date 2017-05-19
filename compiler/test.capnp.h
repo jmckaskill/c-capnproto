@@ -1096,7 +1096,7 @@ void TestLists_set_textListList(TestLists_ptr p, capn_ptr textListList);
 
 void TestLists_set_structListList(TestLists_ptr p, capn_ptr structListList);
 
-struct TestLists_Struct0 {
+capnp_nowarn struct TestLists_Struct0 {
 };
 
 static const size_t TestLists_Struct0_word_count = 0;
@@ -1553,7 +1553,7 @@ void TestWholeFloatDefault_set_field(TestWholeFloatDefault_ptr p, float field);
 
 void TestWholeFloatDefault_set_bigField(TestWholeFloatDefault_ptr p, float bigField);
 
-struct TestEmptyStruct {
+capnp_nowarn struct TestEmptyStruct {
 };
 
 static const size_t TestEmptyStruct_word_count = 0;
@@ -1562,7 +1562,7 @@ static const size_t TestEmptyStruct_pointer_count = 0;
 
 static const size_t TestEmptyStruct_struct_bytes_count = 0;
 
-struct TestConstants {
+capnp_nowarn struct TestConstants {
 };
 
 static const size_t TestConstants_word_count = 0;
@@ -1618,7 +1618,7 @@ enum TestSturdyRefObjectId_Tag TestSturdyRefObjectId_get_tag(TestSturdyRefObject
 
 void TestSturdyRefObjectId_set_tag(TestSturdyRefObjectId_ptr p, enum TestSturdyRefObjectId_Tag tag);
 
-struct TestProvisionId {
+capnp_nowarn struct TestProvisionId {
 };
 
 static const size_t TestProvisionId_word_count = 0;
@@ -1627,7 +1627,7 @@ static const size_t TestProvisionId_pointer_count = 0;
 
 static const size_t TestProvisionId_struct_bytes_count = 0;
 
-struct TestRecipientId {
+capnp_nowarn struct TestRecipientId {
 };
 
 static const size_t TestRecipientId_word_count = 0;
@@ -1636,7 +1636,7 @@ static const size_t TestRecipientId_pointer_count = 0;
 
 static const size_t TestRecipientId_struct_bytes_count = 0;
 
-struct TestThirdPartyCapId {
+capnp_nowarn struct TestThirdPartyCapId {
 };
 
 static const size_t TestThirdPartyCapId_word_count = 0;
@@ -1645,7 +1645,7 @@ static const size_t TestThirdPartyCapId_pointer_count = 0;
 
 static const size_t TestThirdPartyCapId_struct_bytes_count = 0;
 
-struct TestJoinResult {
+capnp_nowarn struct TestJoinResult {
 };
 
 static const size_t TestJoinResult_word_count = 0;
