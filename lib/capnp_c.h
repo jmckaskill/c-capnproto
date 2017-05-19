@@ -19,9 +19,13 @@
 #include <endian.h>
 #endif
 
-// ssize_t is not defined in stdint.h in MSVC.
+/* ssize_t is a POSIX type, not an ISO C one...
+ * Windows seems to only have SSIZE_T in BaseTsd.h
+ */
 #ifdef _MSC_VER
 typedef intmax_t ssize_t;
+#else
+#include <stddef.h>
 #endif
 
 // Cross-platform macro ALIGNED_(x) aligns a struct by `x` bytes.
