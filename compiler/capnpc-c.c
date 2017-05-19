@@ -981,13 +981,13 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\treturn p;\n");
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "void read_%s(struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
+	str_addf(&SRC, "void read_%s(struct %s *s capnp_unused, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n\tcapnp_use(s);\n");
 	str_add(&SRC, s.get.str, s.get.len);
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "void write_%s(const struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
+	str_addf(&SRC, "void write_%s(const struct %s *s capnp_unused, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n\tcapnp_use(s);\n");
 	str_add(&SRC, s.set.str, s.set.len);
 	str_addf(&SRC, "}\n");
 
@@ -1360,6 +1360,14 @@ int main() {
 		p = strrchr(file_node->n.displayName.str, '/');
 		fprintf(srcf, "#include \"%s%s.h\"\n", p ? p+1 : file_node->n.displayName.str, nameinfix);
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
+		fprintf(srcf, "#ifdef __GNUC__\n"
+				"# define capnp_unused __attribute__((unused))\n"
+				"# define capnp_use(x) (void) x;\n"
+				"#else\n"
+				"# define capnp_unused\n"
+				"# define capnp_use(x)\n"
+				"#endif\n\n");
+
 
 		if (g_val0used)
 			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\",0};\n");
