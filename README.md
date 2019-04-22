@@ -4,6 +4,12 @@ capnpc-c
 This is a C plugin for [Cap'n Proto](http://kentonv.github.io/capnproto), an
 efficient protocol for sharing data and capabilities.
 
+> ## Security warning!
+
+> The generated code assumes all input to be trusted. Do NOT use with
+> untrusted input! There is currently no code in place to check if
+> structures/pointers are within bounds.
+
 This is only the code generator plugin, to properly make use of it you
 need to download, build and install capnpc and then build and install
 this project and then you can utilize it as:
