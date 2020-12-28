@@ -276,6 +276,12 @@ void capn_init_malloc(struct capn *c);
 int capn_init_fp(struct capn *c, FILE *f, int packed);
 int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed);
 
+/* capn_size calculates the amount of memory required for the buffer passed to
+ * capn_write_mem. It does not calculate the size for packed serialization, but
+ * that will always be less than the unpacked size.
+ */
+int capn_size(struct capn *c);
+
 /* capn_write_(fp|mem) writes segments to the file/memory buffer in
  * serialized form and returns the number of bytes written.
  */

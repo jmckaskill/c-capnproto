@@ -80,6 +80,71 @@ TEST(Stream, ReadStream_Even) {
   capn_free(&ctx);
 }
 
+static struct capn_segment *CreateSmallSegment(void *u, uint32_t id, int sz) {
+  struct capn_segment *s = (struct capn_segment*) calloc(1, sizeof(*s));
+  s->data = (char*) calloc(1, sz);
+  s->cap = sz;
+  return s;
+}
+
+TEST(Stream, SizeEmptyStream) {
+  struct capn ctx;
+  capn_init_malloc(&ctx);
+  struct capn_ptr root = capn_root(&ctx);
+  ASSERT_EQ(CAPN_PTR_LIST, root.type);
+  EXPECT_EQ(2*8, capn_size(&ctx));
+
+  capn_free(&ctx);
+}
+
+TEST(Stream, SizeOneSegment) {
+  struct capn ctx;
+  capn_init_malloc(&ctx);
+  struct capn_ptr root = capn_root(&ctx);
+  struct capn_ptr ptr = capn_new_struct(root.seg, 8, 0);
+  EXPECT_EQ(0, capn_setp(root, 0, ptr));
+  EXPECT_EQ(0, capn_write64(ptr, 0, UINT64_C(0x1011121314151617)));
+  EXPECT_EQ(3*8, capn_size(&ctx));
+
+  capn_free(&ctx);
+}
+
+TEST(Stream, SizeTwoSegments) {
+  struct capn ctx;
+  capn_init_malloc(&ctx);
+  ctx.create = &CreateSmallSegment;
+  struct capn_ptr root = capn_root(&ctx);
+  struct capn_ptr ptr1 = capn_new_struct(root.seg, 8, 0);
+  EXPECT_EQ(0, capn_setp(root, 0, ptr1));
+  EXPECT_EQ(0, capn_write64(ptr1, 0, UINT64_C(0xfffefdfcfbfaf9f8)));
+  EXPECT_EQ(2, ctx.segnum);
+
+  /* 2 words: header
+   * 1 word: segment 1
+   * 2 words: segment 2
+   */
+  EXPECT_EQ(5*8, capn_size(&ctx));
+
+  capn_free(&ctx);
+}
+
+TEST(Stream, SizeThreeSegments) {
+  struct capn ctx;
+  capn_init_malloc(&ctx);
+  ctx.create = &CreateSmallSegment;
+  struct capn_ptr root = capn_root(&ctx);
+  struct capn_ptr ptr1 = capn_new_struct(root.seg, 0, 1);
+  EXPECT_EQ(0, capn_setp(root, 0, ptr1));
+  struct capn_ptr ptr2 = capn_new_struct(ptr1.seg, 4, 0);
+  EXPECT_EQ(0, capn_setp(ptr1, 0, ptr2));
+  EXPECT_EQ(0, capn_write32(ptr2, 0, 0x12345678));
+  EXPECT_EQ(3, ctx.segnum);
+
+  EXPECT_EQ(7*8, capn_size(&ctx));
+
+  capn_free(&ctx);
+}
+
 TEST(Stream, WriteEmptyStream) {
   uint8_t buf[2048];
 
@@ -162,13 +227,6 @@ TEST(Stream, WriteOneSegmentPacked) {
 
   capn_free(&ctx1);
   capn_free(&ctx2);
-}
-
-static struct capn_segment *CreateSmallSegment(void *u, uint32_t id, int sz) {
-  struct capn_segment *s = (struct capn_segment*) calloc(1, sizeof(*s));
-  s->data = (char*) calloc(1, sz);
-  s->cap = sz;
-  return s;
 }
 
 TEST(Stream, WriteTwoSegments) {
