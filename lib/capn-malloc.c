@@ -410,7 +410,6 @@ int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, const void *p, siz
 
 int capn_size(struct capn *c)
 {
-	uint32_t headerlen;
 	size_t headersz, datasz = 0;
 	struct capn_ptr root;
 	struct capn_segment *seg;
@@ -421,7 +420,8 @@ int capn_size(struct capn *c)
 
 	root = capn_root(c);
 	seg = root.seg;
-	header_calc(c, &headerlen, &headersz);
+
+    headersz = 8 * ((2 + c->segnum) / 2);
 
 	for (i = 0; i < c->segnum; i++, seg = seg->next) {
 		if (0 == seg)
