@@ -236,8 +236,10 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		break;
 	case Value_int16:
 	case Value_uint16:
-	case Value__enum:
 		v->intval = v->v.int16;
+		break;
+	case Value__enum:
+		v->intval = v->v._enum;
 		break;
 	case Value_int32:
 	case Value_uint32:
@@ -750,8 +752,9 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	 * only need to emit one switch block as the layout will line up
 	 * in the C union */
 	union_cases(s, n, first_field, (1 << Type__bool));
+	union_cases(s, n, first_field, (1 << Type__enum));
 	union_cases(s, n, first_field, (1 << Type_int8) | (1 << Type_uint8));
-	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16) | (1 << Type__enum));
+	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16));
 	union_cases(s, n, first_field, (1 << Type_int32) | (1 << Type_uint32) | (1 << Type_float32));
 	union_cases(s, n, first_field, (1 << Type_int64) | (1 << Type_uint64) | (1 << Type_float64));
 	union_cases(s, n, first_field, (1 << Type_text));
