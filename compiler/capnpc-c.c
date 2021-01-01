@@ -37,6 +37,12 @@ struct node {
 	struct field *fields;
 };
 
+struct id_bst {
+	uint64_t id;
+	struct id_bst *left;
+	struct id_bst *right;
+};
+
 static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
@@ -74,6 +80,68 @@ static void insert_node(struct node *s) {
 	*x = &s->hdr;
 	g_node_tree = capn_tree_insert(g_node_tree, &s->hdr);
 }
+
+static struct id_bst * insert_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst ** current = &bst;
+
+	while (*current)
+	{
+		if (id > (*current)->id)
+		{
+			current = &(*current)->right;
+		}
+		else if (id < (*current)->id)
+		{
+			current = &(*current)->left;
+		}
+		else
+		{
+			return bst;
+		}
+	}
+
+	*current = malloc(sizeof **current);
+	(*current)->id = id;
+	(*current)->left = NULL;
+	(*current)->right = NULL;
+
+	return bst;
+}
+
+static bool contains_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst * current = bst;
+
+	while (current)
+	{
+		if (id == current->id)
+		{
+			return true;
+		}
+		else if (id < current->id)
+		{
+			current = current->left;
+		}
+		else
+		{
+			current = current->right;
+		}
+	}
+
+	return false;
+}
+
+static void free_id_bst(struct id_bst * bst)
+{
+	if (bst)
+	{
+		free_id_bst(bst->left);
+		free_id_bst(bst->right);
+		free(bst);
+	}
+}
+
 
 /* resolve_names recursively follows the nestedNodes tree in order to
  * set node->name.
@@ -1240,6 +1308,7 @@ int main() {
 		char *p;
 		const char *nameinfix = NULL;
 		FILE *srcf, *hdrf;
+		struct id_bst * donotinclude_ids = NULL;
 
 		g_valc = 0;
 		g_valseg.len = 0;
@@ -1276,6 +1345,14 @@ int main() {
 			case 0xf72bc690355d66deUL:	/* $C::fieldgetset */
 				g_fieldgetset = 1;
 				break;
+			case 0x8c99797357b357e9UL:	/* $C::donotinclude */
+				if (v.which != Value_uint64)
+				{
+					fprintf(stderr, "schema breakage on $C::donotinclude annotation\n");
+					exit(2);
+				}
+				donotinclude_ids = insert_id(donotinclude_ids, v.uint64);
+				break;
 			}
 		}
 		if (!nameinfix)
@@ -1303,11 +1380,19 @@ int main() {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
 
+			// Check if this import is in the "do not include" list.
+			if (contains_id(donotinclude_ids, im.id))
+			{
+				continue;
+			}
+
 			// Ignore leading slashes when generating C file #include's.
 			// This signifies an absolute import in a library directory.
 			const char *base_path = im.name.str[0] == '/' ? &im.name.str[1] : im.name.str;
 			str_addf(&HDR, "#include \"%s%s.h\"\n", base_path, nameinfix);
 		}
+
+		free_id_bst(donotinclude_ids);
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
 
