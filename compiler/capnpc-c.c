@@ -1043,7 +1043,7 @@ static void define_struct(struct node *n) {
 	// adding the ability to get the structure size
 	str_addf(&HDR, "\nstatic const size_t %s_word_count = %d;\n", n->name.str, n->n._struct.dataWordCount);
 	str_addf(&HDR, "\nstatic const size_t %s_pointer_count = %d;\n", n->name.str, n->n._struct.pointerCount);
-	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
+	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
 
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_list p;\n", n->name.str);
