@@ -191,6 +191,24 @@ static void define_enum(struct node *n) {
 		str_addf(&HDR, "\n\t%s_%s = %d", n->name.str, e.name.str, i);
 	}
 	str_addf(&HDR, "\n};\n");
+
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef enum %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
 }
 
 static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const char *symbol) {
@@ -1007,6 +1025,7 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 
 static void define_struct(struct node *n) {
 	static struct strings s;
+	int i;
 
 	str_reset(&s.dtab);
 	str_reset(&s.ftab);
@@ -1033,6 +1052,24 @@ static void define_struct(struct node *n) {
 			n->name.str);
 	str_add(&HDR, s.decl.str, s.decl.len);
 	str_addf(&HDR, "};\n");
+
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef struct %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
 
 	str_addf(&SRC, "\n%s_ptr new_%s(struct capn_segment *s) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);

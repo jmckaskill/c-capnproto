@@ -43,3 +43,6 @@ annotation fieldgetset @0xf72bc690355d66de (file): Void;
 annotation donotinclude @0x8c99797357b357e9 (file): UInt64;
 # do not generate an include directive for an import statement for the file with
 # the given ID
+
+annotation typedefto @0xcefaf27713042144 (struct, enum): Text;
+# generate a typedef for the annotated struct or enum declaration
