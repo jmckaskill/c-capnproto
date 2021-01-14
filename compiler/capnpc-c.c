@@ -718,7 +718,7 @@ static void declare_slot(struct strings *s, struct field *f) {
 	}
 }
 
-static void define_group(struct strings *s, struct node *n, const char *group_name);
+static void define_group(struct strings *s, struct node *n, const char *group_name, bool enclose_unions);
 
 static void do_union(struct strings *s, struct node *n, struct field *first_field, const char *union_name) {
 	int tagoff = 2 * n->n._struct.discriminantOffset;
@@ -774,7 +774,10 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 			str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 			str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 			str_add(&s->ftab, "\t", -1);
-			define_group(s, f->group, field_name(f));
+			// When we add a union inside a union, we need to enclose it in its
+			// own struct so that its members do not overwrite its own
+			// discriminant.
+			define_group(s, f->group, field_name(f), true);
 			str_addf(&s->get, "%sbreak;\n", s->ftab.str);
 			str_addf(&s->set, "%sbreak;\n", s->ftab.str);
 			str_setlen(&s->ftab, s->ftab.len-1);
@@ -821,7 +824,7 @@ static void define_field(struct strings *s, struct field *f) {
 		break;
 
 	case Field_group:
-		define_group(s, f->group, field_name(f));
+		define_group(s, f->group, field_name(f), false);
 		break;
 	}
 }
@@ -862,7 +865,7 @@ static void define_setter_functions(struct node* node, struct field* field,
         str_release(&setter_body);
 }
 
-static void define_group(struct strings *s, struct node *n, const char *group_name) {
+static void define_group(struct strings *s, struct node *n, const char *group_name, bool enclose_unions) {
 	struct field *f;
 	int flen = capn_len(n->n._struct.fields);
 	int ulen = n->n._struct.discriminantCount;
@@ -916,7 +919,17 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 	}
 
 	if (ulen > 0) {
-		do_union(s, n, f, named_union ? group_name : NULL);
+		if (enclose_unions)
+		{
+			// When we are already inside a union, so we need to enclose the union
+			// with its disciminant.
+			str_addf(&s->decl, "%scapnp_nowarn struct {\n", s->dtab.str);
+			str_add(&s->dtab, "\t", 1);
+		}
+
+		const bool keep_union_name = named_union && !enclose_unions;
+
+		do_union(s, n, f, keep_union_name ? group_name : NULL);
 
 		while (f < n->fields + flen && in_union(f))
 			f++;
@@ -924,6 +937,12 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 		/* fields after the unnamed union */
 		for (;f < n->fields + flen; f++) {
 			define_field(s, f);
+		}
+
+		if (enclose_unions)
+		{
+			str_setlen(&s->dtab, s->dtab.len-1);
+			str_addf(&s->decl, "%s} %s;\n", s->dtab.str, group_name);
 		}
 	}
 
@@ -956,7 +975,7 @@ static void define_struct(struct node *n) {
 	str_add(&s.ftab, "\t", -1);
 	str_add(&s.var, "s->", -1);
 
-	define_group(&s, n, NULL);
+	define_group(&s, n, NULL, false);
 
 	str_add(&HDR, s.enums.str, s.enums.len);
 
