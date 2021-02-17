@@ -282,7 +282,7 @@ int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed);
 /* TODO */
 /*int capn_write_fp(struct capn *c, FILE *f, int packed);*/
 int capn_write_fd(struct capn *c, ssize_t (*write_fd)(int fd, const void *p, size_t count), int fd, int packed);
-int capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed);
+int64_t capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed);
 
 void capn_free(struct capn *c);
 void capn_reset_copy(struct capn *c);
