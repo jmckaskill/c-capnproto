@@ -276,9 +276,11 @@ void capn_init_malloc(struct capn *c);
 int capn_init_fp(struct capn *c, FILE *f, int packed);
 int capn_init_mem(struct capn *c, const uint8_t *p, size_t sz, int packed);
 
-/* capn_size calculates the amount of memory required for the buffer passed to
- * capn_write_mem. It does not calculate the size for packed serialization, but
- * that will always be less than the unpacked size.
+/* capn_size() calculates the amount of memory required to serialise the given
+ * Cap'n Proto structure in the unpacked format. It does NOT apply to packed
+ * serialisation, as that may (in rare cases) actually become bigger than the
+ * input. A buffer of this size can then be passed to capn_write_mem() without
+ * fear of truncation (again, only in the unpacked case).
  */
 int capn_size(struct capn *c);
 
