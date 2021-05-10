@@ -230,7 +230,7 @@ static int header_render(struct capn *c, struct capn_segment *seg, uint32_t *hea
 	return 0;
 }
 
-static int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
+static int64_t capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
 {
 	struct capn_segment *seg;
 	struct capn_ptr root;
@@ -270,10 +270,10 @@ static int capn_write_mem_packed(struct capn *c, uint8_t *p, size_t sz)
 			return -1;
 	}
 
-	return sz - z.avail_out;
+	return (int64_t)(sz - z.avail_out);
 }
 
-int
+int64_t
 capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 {
 	struct capn_segment *seg;
@@ -310,7 +310,7 @@ capn_write_mem(struct capn *c, uint8_t *p, size_t sz, int packed)
 		p += seg->len;
 	}
 
-	return headersz+datasz;
+	return (int64_t)(headersz + datasz);
 }
 
 static int _write_fd(ssize_t (*write_fd)(int fd, const void *p, size_t count), int fd, void *p, size_t count)
