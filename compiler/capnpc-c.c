@@ -37,6 +37,12 @@ struct node {
 	struct field *fields;
 };
 
+struct id_bst {
+	uint64_t id;
+	struct id_bst *left;
+	struct id_bst *right;
+};
+
 static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
@@ -74,6 +80,68 @@ static void insert_node(struct node *s) {
 	*x = &s->hdr;
 	g_node_tree = capn_tree_insert(g_node_tree, &s->hdr);
 }
+
+static struct id_bst * insert_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst ** current = &bst;
+
+	while (*current)
+	{
+		if (id > (*current)->id)
+		{
+			current = &(*current)->right;
+		}
+		else if (id < (*current)->id)
+		{
+			current = &(*current)->left;
+		}
+		else
+		{
+			return bst;
+		}
+	}
+
+	*current = malloc(sizeof **current);
+	(*current)->id = id;
+	(*current)->left = NULL;
+	(*current)->right = NULL;
+
+	return bst;
+}
+
+static bool contains_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst * current = bst;
+
+	while (current)
+	{
+		if (id == current->id)
+		{
+			return true;
+		}
+		else if (id < current->id)
+		{
+			current = current->left;
+		}
+		else
+		{
+			current = current->right;
+		}
+	}
+
+	return false;
+}
+
+static void free_id_bst(struct id_bst * bst)
+{
+	if (bst)
+	{
+		free_id_bst(bst->left);
+		free_id_bst(bst->right);
+		free(bst);
+	}
+}
+
 
 /* resolve_names recursively follows the nestedNodes tree in order to
  * set node->name.
@@ -123,6 +191,24 @@ static void define_enum(struct node *n) {
 		str_addf(&HDR, "\n\t%s_%s = %d", n->name.str, e.name.str, i);
 	}
 	str_addf(&HDR, "\n};\n");
+
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef enum %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
 }
 
 static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const char *symbol) {
@@ -961,6 +1047,7 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 
 static void define_struct(struct node *n) {
 	static struct strings s;
+	int i;
 
 	str_reset(&s.dtab);
 	str_reset(&s.ftab);
@@ -988,6 +1075,24 @@ static void define_struct(struct node *n) {
 	str_add(&HDR, s.decl.str, s.decl.len);
 	str_addf(&HDR, "};\n");
 
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef struct %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
+
 	str_addf(&SRC, "\n%s_ptr new_%s(struct capn_segment *s) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
 	str_addf(&SRC, "\tp.p = capn_new_struct(s, %d, %d);\n", 8*n->n._struct.dataWordCount, n->n._struct.pointerCount);
@@ -997,7 +1102,7 @@ static void define_struct(struct node *n) {
 	// adding the ability to get the structure size
 	str_addf(&HDR, "\nstatic const size_t %s_word_count = %d;\n", n->name.str, n->n._struct.dataWordCount);
 	str_addf(&HDR, "\nstatic const size_t %s_pointer_count = %d;\n", n->name.str, n->n._struct.pointerCount);
-	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
+	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
 
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_list p;\n", n->name.str);
@@ -1262,6 +1367,7 @@ int main() {
 		char *p;
 		const char *nameinfix = NULL;
 		FILE *srcf, *hdrf;
+		struct id_bst * donotinclude_ids = NULL;
 
 		g_valc = 0;
 		g_valseg.len = 0;
@@ -1298,6 +1404,14 @@ int main() {
 			case 0xf72bc690355d66deUL:	/* $C::fieldgetset */
 				g_fieldgetset = 1;
 				break;
+			case 0x8c99797357b357e9UL:	/* $C::donotinclude */
+				if (v.which != Value_uint64)
+				{
+					fprintf(stderr, "schema breakage on $C::donotinclude annotation\n");
+					exit(2);
+				}
+				donotinclude_ids = insert_id(donotinclude_ids, v.uint64);
+				break;
 			}
 		}
 		if (!nameinfix)
@@ -1325,11 +1439,19 @@ int main() {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
 
+			// Check if this import is in the "do not include" list.
+			if (contains_id(donotinclude_ids, im.id))
+			{
+				continue;
+			}
+
 			// Ignore leading slashes when generating C file #include's.
 			// This signifies an absolute import in a library directory.
 			const char *base_path = im.name.str[0] == '/' ? &im.name.str[1] : im.name.str;
 			str_addf(&HDR, "#include \"%s%s.h\"\n", base_path, nameinfix);
 		}
+
+		free_id_bst(donotinclude_ids);
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
 
