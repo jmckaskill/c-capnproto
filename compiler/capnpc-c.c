@@ -1303,8 +1303,9 @@ int main() {
 	struct capn capn;
 	CodeGeneratorRequest_ptr root;
 	struct CodeGeneratorRequest req;
-	struct node *file_node, *n;
+	struct node *file_node, *n, *f;
 	struct node *all_files = NULL, *all_structs = NULL;
+	struct id_bst *used_import_ids = NULL;
 	int i, j;
 
 	if (capn_init_fp(&capn, stdin, 0)) {
@@ -1359,6 +1360,35 @@ int main() {
 		}
 
 		str_release(&b);
+	}
+
+	/* find all the used imports */
+	for (n = all_structs; n != NULL; n = n->next) {
+		char *display_name = strdup(n->n.displayName.str);
+		char *file_name = strtok(display_name, ":");
+
+		if (!file_name) {
+			fprintf(stderr, "Unable to determine file name for struct node: %s\n",
+				n->n.displayName.str);
+			exit(2);
+		}
+
+		/* find the file node corresponding to the file name */
+		for (f = all_files; f != NULL; f = f->next) {
+			if (!strcmp(file_name, f->n.displayName.str))
+				break;
+		}
+
+		if (!f) {
+			fprintf(stderr, "Unable to find file node with file name: %s\n", file_name);
+			exit(2);
+		}
+
+		/* mark this import as used */
+		if (!contains_id(used_import_ids, f->n.id))
+			used_import_ids = insert_id(used_import_ids, f->n.id);
+
+		free(display_name);
 	}
 
 	for (i = 0; i < capn_len(req.requestedFiles); i++) {
@@ -1445,12 +1475,18 @@ int main() {
 				continue;
 			}
 
+			// Check if this import is used at all.
+			if (!contains_id(used_import_ids, im.id)) {
+				continue;
+			}
+
 			// Ignore leading slashes when generating C file #include's.
 			// This signifies an absolute import in a library directory.
 			const char *base_path = im.name.str[0] == '/' ? &im.name.str[1] : im.name.str;
 			str_addf(&HDR, "#include \"%s%s.h\"\n", base_path, nameinfix);
 		}
 
+		free_id_bst(used_import_ids);
 		free_id_bst(donotinclude_ids);
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
