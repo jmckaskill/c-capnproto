@@ -46,3 +46,6 @@ annotation donotinclude @0x8c99797357b357e9 (file): UInt64;
 
 annotation typedefto @0xcefaf27713042144 (struct, enum): Text;
 # generate a typedef for the annotated struct or enum declaration
+
+annotation namespace @0xf2c035025fec7c2b (file): Text;
+# prefix structs with a name space string

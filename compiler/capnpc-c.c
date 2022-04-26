@@ -147,8 +147,9 @@ static void free_id_bst(struct id_bst * bst)
  * set node->name.
  * It also builds up the list of nodes within a file (file_nodes and
  * next_file_node). */
-static void resolve_names(struct str *b, struct node *n, capn_text name, struct node *file) {
+static void resolve_names(struct str *b, struct node *n, capn_text name, struct node *file, const char *namespace) {
 	int i, sz = b->len;
+	str_add(b, namespace, -1);
 	str_add(b, name.str, name.len);
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
@@ -158,14 +159,14 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 		struct node *nn = find_node(nest.id);
 		if (nn != NULL) {
-			resolve_names(b, nn, nest.name, file);
+			resolve_names(b, nn, nest.name, file, namespace);
 		}
 	}
 
 	if (n->n.which == Node__struct) {
 		for (i = capn_len(n->n._struct.fields)-1; i >= 0; i--) {
 			if (n->fields[i].group) {
-				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
+				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file, namespace);
 			}
 		}
 	}
@@ -1299,6 +1300,8 @@ static void declare(struct node *file_node, const char *format, int num) {
 	}
 }
 
+#define ANNOTATION_NAMESPACE	0xf2c035025fec7c2bUL
+
 int main() {
 	struct capn capn;
 	CodeGeneratorRequest_ptr root;
@@ -1348,13 +1351,39 @@ int main() {
 
 	for (n = all_files; n != NULL; n = n->next) {
 		struct str b = STR_INIT;
+		const char *namespace = NULL;
+
+		/* apply name space if present */
+		for (j = capn_len(n->n.annotations)-1; j >= 0; j--) {
+			struct Annotation a;
+			struct Value v;
+			get_Annotation(&a, n->n.annotations, j);
+			read_Value(&v, a.value);
+
+			if (a.id == ANNOTATION_NAMESPACE) {
+				if (v.which != Value_text) {
+					fprintf(stderr, "%s: schema breakage on $C::namespace annotation\n",
+						n->n.displayName.str);
+					exit(2);
+				}
+				if (namespace) {
+					fprintf(stderr, "%s: $C::namespace annotation appears more than once.\n",
+						n->n.displayName.str);
+					exit(2);
+				}
+				namespace = v.text.str ? v.text.str : "";
+			}
+		}
+
+		if (!namespace)
+			namespace = "";
 
 		for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
 			get_Node_NestedNode(&nest, n->n.nestedNodes, i);
 			struct node *nn = find_node_mayfail(nest.id);
 			if (nn) {
-				resolve_names(&b, nn, nest.name, n);
+				resolve_names(&b, nn, nest.name, n, namespace);
 			}
 		}
 
