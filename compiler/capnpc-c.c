@@ -424,45 +424,45 @@ static void define_const(struct node *n) {
 	case Value_int8:
 	case Value_int16:
 	case Value_int32:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %d;\n", v.tname, n->name.str, (int) v.intval);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = %d;\n", v.tname, n->name.str, (int) v.intval);
 		break;
 
 	case Value_uint8:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint8_t) v.intval);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = %u;\n", v.tname, n->name.str, (uint8_t) v.intval);
 		break;
 
 	case Value_uint16:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint16_t) v.intval);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = %u;\n", v.tname, n->name.str, (uint16_t) v.intval);
 		break;
 
 	case Value_uint32:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);
 		break;
 
 	case Value__enum:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.intval);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.intval);
 		break;
 
 	case Value_int64:
 	case Value_uint64:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "%s %s = ((uint64_t) %#xu << 32) | %#xu;\n", v.tname, n->name.str,
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "const %s %s = ((uint64_t) %#xu << 32) | %#xu;\n", v.tname, n->name.str,
 				(uint32_t) (v.intval >> 32), (uint32_t) v.intval);
 		break;
 
 	case Value_float32:
-		str_addf(&HDR, "extern union capn_conv_f32 %s;\n", n->name.str);
-		str_addf(&SRC, "union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.intval);
+		str_addf(&HDR, "extern const union capn_conv_f32 %s;\n", n->name.str);
+		str_addf(&SRC, "const union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.intval);
 		break;
 
 	case Value_float64:
-		str_addf(&HDR, "extern union capn_conv_f64 %s;\n", n->name.str);
-		str_addf(&SRC, "union capn_conv_f64 %s = {((uint64_t) %#xu << 32) | %#xu};\n",
+		str_addf(&HDR, "extern const union capn_conv_f64 %s;\n", n->name.str);
+		str_addf(&SRC, "const union capn_conv_f64 %s = {((uint64_t) %#xu << 32) | %#xu};\n",
 				n->name.str, (uint32_t) (v.intval >> 32), (uint32_t) v.intval);
 		break;
 
@@ -471,9 +471,9 @@ static void define_const(struct node *n) {
 	case Value__struct:
 	case Value_anyPointer:
 	case Value__list:
-		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
 		if (!v.ptrval.type) {
-			str_addf(&SRC, "%s %s;\n", v.tname, n->name.str);
+			str_addf(&SRC, "const %s %s;\n", v.tname, n->name.str);
 		}
 		break;
 
