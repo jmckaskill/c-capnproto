@@ -413,7 +413,7 @@ int64_t capn_size(struct capn *c)
 	size_t headersz, datasz = 0;
 	struct capn_ptr root;
 	struct capn_segment *seg;
-	int i;
+	uint32_t i;
 
 	if (c->segnum == 0)
 		return -1;
@@ -421,7 +421,7 @@ int64_t capn_size(struct capn *c)
 	root = capn_root(c);
 	seg = root.seg;
 
-    headersz = 8 * ((2 + c->segnum) / 2);
+	headersz = 8 * ((2 + c->segnum) / 2);
 
 	for (i = 0; i < c->segnum; i++, seg = seg->next) {
 		if (0 == seg)

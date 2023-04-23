@@ -5,6 +5,7 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "schema.capnp.h"
 #include "str.h"
@@ -12,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 struct value {
 	struct Type t;
