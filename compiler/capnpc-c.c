@@ -1,8 +1,19 @@
+/* capnpc-c.c
+ *
+ * Copyright (C) 2013 James McKaskill
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+#define _POSIX_C_SOURCE 200809L
+
 #include "schema.capnp.h"
 #include "str.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 struct value {
 	struct Type t;
@@ -28,19 +39,33 @@ struct node {
 	struct field *fields;
 };
 
+struct id_bst {
+	uint64_t id;
+	struct id_bst *left;
+	struct id_bst *right;
+};
+
 static struct str SRC = STR_INIT, HDR = STR_INIT;
 static struct capn g_valcapn;
 static struct capn_segment g_valseg;
 static int g_valc;
 static int g_val0used, g_nullused;
 
+static int g_fieldgetset = 0;
+
 static struct capn_tree *g_node_tree;
 
-struct node *find_node(uint64_t id) {
+static struct node *find_node_mayfail(uint64_t id) {
 	struct node *s = (struct node*) g_node_tree;
 	while (s && s->n.id != id) {
 		s = (struct node*) s->hdr.link[s->n.id < id];
 	}
+	return s;
+}
+
+static struct node *find_node(uint64_t id)
+{
+	struct node *s = find_node_mayfail(id);
 	if (s == NULL) {
 		fprintf(stderr, "cant find node with id 0x%x%x\n", (uint32_t) (id >> 32), (uint32_t) id);
 		exit(2);
@@ -58,12 +83,75 @@ static void insert_node(struct node *s) {
 	g_node_tree = capn_tree_insert(g_node_tree, &s->hdr);
 }
 
+static struct id_bst * insert_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst ** current = &bst;
+
+	while (*current)
+	{
+		if (id > (*current)->id)
+		{
+			current = &(*current)->right;
+		}
+		else if (id < (*current)->id)
+		{
+			current = &(*current)->left;
+		}
+		else
+		{
+			return bst;
+		}
+	}
+
+	*current = malloc(sizeof **current);
+	(*current)->id = id;
+	(*current)->left = NULL;
+	(*current)->right = NULL;
+
+	return bst;
+}
+
+static bool contains_id(struct id_bst * bst, uint64_t id)
+{
+	struct id_bst * current = bst;
+
+	while (current)
+	{
+		if (id == current->id)
+		{
+			return true;
+		}
+		else if (id < current->id)
+		{
+			current = current->left;
+		}
+		else
+		{
+			current = current->right;
+		}
+	}
+
+	return false;
+}
+
+static void free_id_bst(struct id_bst * bst)
+{
+	if (bst)
+	{
+		free_id_bst(bst->left);
+		free_id_bst(bst->right);
+		free(bst);
+	}
+}
+
+
 /* resolve_names recursively follows the nestedNodes tree in order to
  * set node->name.
  * It also builds up the list of nodes within a file (file_nodes and
  * next_file_node). */
-static void resolve_names(struct str *b, struct node *n, capn_text name, struct node *file) {
+static void resolve_names(struct str *b, struct node *n, capn_text name, struct node *file, const char *namespace) {
 	int i, sz = b->len;
+	str_add(b, namespace, -1);
 	str_add(b, name.str, name.len);
 	str_add(&n->name, b->str, b->len);
 	str_add(b, "_", 1);
@@ -71,13 +159,16 @@ static void resolve_names(struct str *b, struct node *n, capn_text name, struct 
 	for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 		struct Node_NestedNode nest;
 		get_Node_NestedNode(&nest, n->n.nestedNodes, i);
-		resolve_names(b, find_node(nest.id), nest.name, file);
+		struct node *nn = find_node(nest.id);
+		if (nn != NULL) {
+			resolve_names(b, nn, nest.name, file, namespace);
+		}
 	}
 
 	if (n->n.which == Node__struct) {
 		for (i = capn_len(n->n._struct.fields)-1; i >= 0; i--) {
 			if (n->fields[i].group) {
-				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file);
+				resolve_names(b, n->fields[i].group, n->fields[i].f.name, file, namespace);
 			}
 		}
 	}
@@ -103,6 +194,24 @@ static void define_enum(struct node *n) {
 		str_addf(&HDR, "\n\t%s_%s = %d", n->name.str, e.name.str, i);
 	}
 	str_addf(&HDR, "\n};\n");
+
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef enum %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
 }
 
 static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const char *symbol) {
@@ -161,7 +270,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 	case Type__interface:
 		v->tname = strf(&v->tname_buf, "%s_ptr", find_node(v->t._struct.typeId)->name.str);
 		break;
-	case Type_object:
+	case Type_anyPointer:
 		v->tname = "capn_ptr";
 		break;
 	case Type__list:
@@ -195,7 +304,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			break;
 		case Type_text:
 		case Type_data:
-		case Type_object:
+		case Type_anyPointer:
 		case Type__list:
 			v->tname = "capn_ptr";
 			break;
@@ -216,8 +325,10 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 		break;
 	case Value_int16:
 	case Value_uint16:
-	case Value__enum:
 		v->intval = v->v.int16;
+		break;
+	case Value__enum:
+		v->intval = v->v._enum;
 		break;
 	case Value_int32:
 	case Value_uint32:
@@ -242,6 +353,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 			v->ptrval = p;
 
+			bool symbol_provided = symbol;
 			if (!symbol) {
 				static struct str buf = STR_INIT;
 				v->intval = ++g_valc;
@@ -249,7 +361,7 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 			}
 
 			str_addf(&SRC, "%scapn_text %s = {%d,(char*)&capn_buf[%d],(struct capn_segment*)&capn_seg};\n",
-					symbol ? "" : "static ",
+					symbol_provided ? "" : "static ",
 					symbol,
 					p.len-1,
 					(int) (p.data-p.seg->data-8));
@@ -258,11 +370,11 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 	case Value_data:
 	case Value__struct:
-	case Value_object:
+	case Value_anyPointer:
 	case Value__list:
-		if (v->v.object.type) {
+		if (v->v.anyPointer.type) {
 			capn_ptr p = capn_root(&g_valcapn);
-			if (capn_setp(p, 0, v->v.object)) {
+			if (capn_setp(p, 0, v->v.anyPointer)) {
 				fprintf(stderr, "failed to copy object\n");
 				exit(2);
 			}
@@ -272,13 +384,14 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 			v->ptrval = p;
 
+			bool symbol_provided = symbol;
 			if (!symbol) {
 				static struct str buf = STR_INIT;
 				v->intval = ++g_valc;
 				symbol = strf(&buf, "capn_val%d", (int) v->intval);
 			}
 
-			str_addf(&SRC, "%s%s %s = {", symbol ? "" : "static ", v->tname, symbol);
+			str_addf(&SRC, "%s%s %s = {", symbol_provided ? "" : "static ", v->tname, symbol);
 			if (strcmp(v->tname, "capn_ptr"))
 				str_addf(&SRC, "{");
 
@@ -359,7 +472,7 @@ static void define_const(struct node *n) {
 	case Value_text:
 	case Value_data:
 	case Value__struct:
-	case Value_object:
+	case Value_anyPointer:
 	case Value__list:
 		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		if (!v.ptrval.type) {
@@ -416,6 +529,8 @@ static const char *xor_member(struct field *f) {
 			return strf(&buf, " ^ %#xu", (uint32_t) f->v.intval);
 
 		case Value_int64:
+			return strf(&buf, " ^ ((int64_t)((uint64_t) %#xu << 32) ^ %#xu)",
+						(uint32_t) (f->v.intval >> 32), (uint32_t) f->v.intval);
 		case Value_uint64:
 		case Value_float64:
 			return strf(&buf, " ^ ((uint64_t) %#xu << 32) ^ %#xu",
@@ -454,17 +569,17 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "capn_write1(%s, %d, %s != %d);\n", ptr, f->f.slot.offset, var, (int) f->v.intval);
 		break;
 	case Type_int8:
-		str_addf(func, "capn_write8(%s, %d, (uint8_t) %s%s);\n", ptr, f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write8(%s, %d, (uint8_t) (%s%s));\n", ptr, f->f.slot.offset, var, xor);
 		break;
 	case Type_int16:
 	case Type__enum:
-		str_addf(func, "capn_write16(%s, %d, (uint16_t) %s%s);\n", ptr, 2*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write16(%s, %d, (uint16_t) (%s%s));\n", ptr, 2*f->f.slot.offset, var, xor);
 		break;
 	case Type_int32:
-		str_addf(func, "capn_write32(%s, %d, (uint32_t) %s%s);\n", ptr, 4*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write32(%s, %d, (uint32_t) (%s%s));\n", ptr, 4*f->f.slot.offset, var, xor);
 		break;
 	case Type_int64:
-		str_addf(func, "capn_write64(%s, %d, (uint64_t) %s%s);\n", ptr, 8*f->f.slot.offset, var, xor);
+		str_addf(func, "capn_write64(%s, %d, (uint64_t) (%s%s));\n", ptr, 8*f->f.slot.offset, var, xor);
 		break;
 	case Type_uint8:
 		str_addf(func, "capn_write8(%s, %d, %s%s);\n", ptr, f->f.slot.offset, var, xor);
@@ -498,7 +613,7 @@ static void set_member(struct str *func, struct field *f, const char *ptr, const
 	case Type__struct:
 	case Type__interface:
 	case Type__list:
-	case Type_object:
+	case Type_anyPointer:
 		if (!f->v.intval) {
 			str_addf(func, "capn_setp(%s, %d, %s);\n",
 					ptr, f->f.slot.offset, pvar);
@@ -529,19 +644,19 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	switch (f->v.t.which) {
 	case Type__bool:
 		str_addf(func, "%s = (capn_read8(%s, %d) & %d) != %d;\n",
-				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), (int)f->v.intval);
+				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), ((int)f->v.intval) << (f->f.slot.offset%8));
 		return;
 	case Type_int8:
-		str_addf(func, "%s = (int8_t) capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
+		str_addf(func, "%s = (int8_t) ((int8_t)capn_read8(%s, %d))%s;\n", var, ptr, f->f.slot.offset, xor);
 		return;
 	case Type_int16:
-		str_addf(func, "%s = (int16_t) capn_read16(%s, %d)%s;\n", var, ptr, 2*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int16_t) ((int16_t)capn_read16(%s, %d))%s;\n", var, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_int32:
-		str_addf(func, "%s = (int32_t) capn_read32(%s, %d)%s;\n", var, ptr, 4*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int32_t) ((int32_t)capn_read32(%s, %d))%s;\n", var, ptr, 4*f->f.slot.offset, xor);
 		return;
 	case Type_int64:
-		str_addf(func, "%s = (int64_t) capn_read64(%s, %d)%s;\n", var, ptr, 8*f->f.slot.offset, xor);
+		str_addf(func, "%s = (int64_t) ((int64_t)(capn_read64(%s, %d))%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
 	case Type_uint8:
 		str_addf(func, "%s = capn_read8(%s, %d)%s;\n", var, ptr, f->f.slot.offset, xor);
@@ -562,7 +677,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		str_addf(func, "%s = capn_to_f64(capn_read64(%s, %d)%s);\n", var, ptr, 8*f->f.slot.offset, xor);
 		return;
 	case Type__enum:
-		str_addf(func, "%s = (%s) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
+		str_addf(func, "%s = (%s)(int) capn_read16(%s, %d)%s;\n", var, f->v.tname, ptr, 2*f->f.slot.offset, xor);
 		return;
 	case Type_text:
 		if (!f->v.intval)
@@ -575,7 +690,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 		break;
 	case Type__struct:
 	case Type__interface:
-	case Type_object:
+	case Type_anyPointer:
 	case Type__list:
 		str_addf(func, "%s = capn_getp(%s, %d, 0);\n", pvar, ptr, f->f.slot.offset);
 		break;
@@ -598,6 +713,10 @@ struct strings {
 	struct str enums;
 	struct str decl;
 	struct str var;
+	struct str pub_get;
+	struct str pub_get_header;
+	struct str pub_set;
+	struct str pub_set_header;
 };
 
 static const char *field_name(struct field *f) {
@@ -629,9 +748,11 @@ static const char *field_name(struct field *f) {
 		"restrict", "_Alignas", "_Alignof", "_Atomic", "_Bool",
 		"_Complex", "_Generic", "_Imaginary", "_Noreturn", "_Static_assert",
 		"_Thread_local",
+		/* capn reserved for parameter names */
+		"p",
 	};
 
-	int i;
+	size_t i;
 	const char *s = f->f.name.str;
 	for (i = 0; i < sizeof(reserved)/sizeof(reserved[0]); i++) {
 		if (!strcmp(s, reserved[i])) {
@@ -690,7 +811,7 @@ static void declare_slot(struct strings *s, struct field *f) {
 	}
 }
 
-static void define_group(struct strings *s, struct node *n, const char *group_name);
+static void define_group(struct strings *s, struct node *n, const char *group_name, bool enclose_unions);
 
 static void do_union(struct strings *s, struct node *n, struct field *first_field, const char *union_name) {
 	int tagoff = 2 * n->n._struct.discriminantOffset;
@@ -704,13 +825,13 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 		str_addf(&tag, "%.*s_which", s->var.len - 1, s->var.str);
 		str_addf(&enums, "enum %s_which {", n->name.str);
 		str_addf(&s->decl, "%senum %s_which %s_which;\n", s->dtab.str, n->name.str, union_name);
-		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+		str_addf(&s->get, "%s%s = (enum %s_which)(int) capn_read16(p.p, %d);\n",
 				s->ftab.str, tag.str, n->name.str, tagoff);
 	} else {
 		str_addf(&tag, "%swhich", s->var.str);
 		str_addf(&enums, "enum %s_which {", n->name.str);
 		str_addf(&s->decl, "%senum %s_which which;\n", s->dtab.str, n->name.str);
-		str_addf(&s->get, "%s%s = (enum %s_which) capn_read16(p.p, %d);\n",
+		str_addf(&s->get, "%s%s = (enum %s_which)(int) capn_read16(p.p, %d);\n",
 				s->ftab.str, tag.str, n->name.str, tagoff);
 	}
 
@@ -722,15 +843,16 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 	 * only need to emit one switch block as the layout will line up
 	 * in the C union */
 	union_cases(s, n, first_field, (1 << Type__bool));
+	union_cases(s, n, first_field, (1 << Type__enum));
 	union_cases(s, n, first_field, (1 << Type_int8) | (1 << Type_uint8));
-	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16) | (1 << Type__enum));
+	union_cases(s, n, first_field, (1 << Type_int16) | (1 << Type_uint16));
 	union_cases(s, n, first_field, (1 << Type_int32) | (1 << Type_uint32) | (1 << Type_float32));
 	union_cases(s, n, first_field, (1 << Type_int64) | (1 << Type_uint64) | (1 << Type_float64));
 	union_cases(s, n, first_field, (1 << Type_text));
 	union_cases(s, n, first_field, (1 << Type_data));
-	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_object) | (1 << Type__list));
+	union_cases(s, n, first_field, (1 << Type__struct) | (1 << Type__interface) | (1 << Type_anyPointer) | (1 << Type__list));
 
-	str_addf(&s->decl, "%sunion {\n", s->dtab.str);
+	str_addf(&s->decl, "%scapnp_nowarn union {\n", s->dtab.str);
 	str_add(&s->dtab, "\t", -1);
 
 	/* when we have defaults or groups we have to emit each case seperately */
@@ -746,7 +868,10 @@ static void do_union(struct strings *s, struct node *n, struct field *first_fiel
 			str_addf(&s->get, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 			str_addf(&s->set, "%scase %s_%s:\n", s->ftab.str, n->name.str, field_name(f));
 			str_add(&s->ftab, "\t", -1);
-			define_group(s, f->group, field_name(f));
+			// When we add a union inside a union, we need to enclose it in its
+			// own struct so that its members do not overwrite its own
+			// discriminant.
+			define_group(s, f->group, field_name(f), true);
 			str_addf(&s->get, "%sbreak;\n", s->ftab.str);
 			str_addf(&s->set, "%sbreak;\n", s->ftab.str);
 			str_setlen(&s->ftab, s->ftab.len-1);
@@ -793,21 +918,69 @@ static void define_field(struct strings *s, struct field *f) {
 		break;
 
 	case Field_group:
-		define_group(s, f->group, field_name(f));
+		define_group(s, f->group, field_name(f), false);
 		break;
 	}
 }
 
-static void define_group(struct strings *s, struct node *n, const char *group_name) {
+static void define_getter_functions(struct node* node, struct field* field,
+                        struct strings* s)
+{
+        /**
+         * define getter
+         */
+        str_addf(&s->pub_get_header, "\n%s %s_get_%s(%s_ptr p);\n", field->v.tname, node->name.str,
+                 field_name(field), node->name.str);
+        str_addf(&s->pub_get, "\n%s %s_get_%s(%s_ptr p)\n", field->v.tname, node->name.str,
+                 field_name(field), node->name.str);
+        struct str getter_body = STR_INIT;
+        get_member(&getter_body, field, "p.p", "", field_name(field));
+		str_addf(&s->pub_get, "{\n");
+        str_addf(&s->pub_get, "%s%s %s;\n", s->ftab.str, field->v.tname, field_name(field));
+        str_addf(&s->pub_get, "%s%s", s->ftab.str,
+                 getter_body.str);
+        str_release(&getter_body);
+        str_addf(&s->pub_get, "%sreturn %s;\n}\n", s->ftab.str,
+                 field_name(field));
+}
+
+static void define_setter_functions(struct node* node, struct field* field,
+                        struct strings* s)
+{
+        str_addf(&s->pub_set_header, "\nvoid %s_set_%s(%s_ptr p, %s %s);\n",node->name.str,
+                 field_name(field), node->name.str, field->v.tname,
+                 field_name(field));
+        str_addf(&s->pub_set, "\nvoid %s_set_%s(%s_ptr p, %s %s)\n",node->name.str,
+                 field_name(field), node->name.str, field->v.tname,
+                 field_name(field));
+        struct str setter_body = STR_INIT;
+        set_member(&setter_body, field, "p.p", s->ftab.str, field_name(field));
+        str_addf(&s->pub_set, "{\n%s}\n", setter_body.str);
+        str_release(&setter_body);
+}
+
+static void define_group(struct strings *s, struct node *n, const char *group_name, bool enclose_unions) {
 	struct field *f;
 	int flen = capn_len(n->n._struct.fields);
 	int ulen = n->n._struct.discriminantCount;
 	/* named union is where all group members are in the union */
 	int named_union = (group_name && ulen == flen && ulen > 0);
 	int named_struct = (group_name && !named_union);
+	int empty = 1;
+
+	for (f = n->fields; f < n->fields + flen; f++) {
+		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
+		if (f->v.t.which != Type__void)
+			empty = 0;
+	}
+
+	if (named_struct && empty) {
+		str_addf(&s->decl, "%s/* struct { -empty- } %s; */\n", s->dtab.str, group_name);
+		return;
+	}
 
 	if (named_struct) {
-		str_addf(&s->decl, "%sstruct {\n", s->dtab.str);
+		str_addf(&s->decl, "%scapnp_nowarn struct {\n", s->dtab.str);
 		str_add(&s->dtab, "\t", 1);
 	}
 
@@ -815,17 +988,42 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 		str_addf(&s->var, "%s.", group_name);
 	}
 
-	for (f = n->fields; f < n->fields + flen; f++) {
-		decode_value(&f->v, f->f.slot.type, f->f.slot.defaultValue, NULL);
-	}
-
 	/* fields before the union members */
 	for (f = n->fields; f < n->fields + flen && !in_union(f); f++) {
 		define_field(s, f);
+
+		if (!g_fieldgetset) {
+			continue;
+		}
+
+		if ((n->n.which == Node__struct && n->n._struct.isGroup)) {
+			// Don't emit in-place getters and setters for groups because they
+			// are defined as anonymous structs inside their parent struct.
+			// We could do it, but nested structs shouldn't be accessed
+			// in-place anyway.
+			continue;
+		}
+
+		if (f->v.t.which == Type__void) {
+			continue;
+		}
+
+		define_getter_functions(n, f, s);
+		define_setter_functions(n, f, s);
 	}
 
 	if (ulen > 0) {
-		do_union(s, n, f, named_union ? group_name : NULL);
+		if (enclose_unions)
+		{
+			// When we are already inside a union, so we need to enclose the union
+			// with its disciminant.
+			str_addf(&s->decl, "%scapnp_nowarn struct {\n", s->dtab.str);
+			str_add(&s->dtab, "\t", 1);
+		}
+
+		const bool keep_union_name = named_union && !enclose_unions;
+
+		do_union(s, n, f, keep_union_name ? group_name : NULL);
 
 		while (f < n->fields + flen && in_union(f))
 			f++;
@@ -833,6 +1031,12 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 		/* fields after the unnamed union */
 		for (;f < n->fields + flen; f++) {
 			define_field(s, f);
+		}
+
+		if (enclose_unions)
+		{
+			str_setlen(&s->dtab, s->dtab.len-1);
+			str_addf(&s->decl, "%s} %s;\n", s->dtab.str, group_name);
 		}
 	}
 
@@ -848,6 +1052,7 @@ static void define_group(struct strings *s, struct node *n, const char *group_na
 
 static void define_struct(struct node *n) {
 	static struct strings s;
+	int i;
 
 	str_reset(&s.dtab);
 	str_reset(&s.ftab);
@@ -856,18 +1061,42 @@ static void define_struct(struct node *n) {
 	str_reset(&s.enums);
 	str_reset(&s.decl);
 	str_reset(&s.var);
+	str_reset(&s.pub_get);
+	str_reset(&s.pub_set);
+	str_reset(&s.pub_get_header);
+	str_reset(&s.pub_set_header);
 
 	str_add(&s.dtab, "\t", -1);
 	str_add(&s.ftab, "\t", -1);
 	str_add(&s.var, "s->", -1);
 
-	define_group(&s, n, NULL);
+	define_group(&s, n, NULL, false);
 
 	str_add(&HDR, s.enums.str, s.enums.len);
 
-	str_addf(&HDR, "\nstruct %s {\n", n->name.str);
+	str_addf(&HDR, "\n%sstruct %s {\n",
+			s.decl.len == 0 ? "capnp_nowarn " : "",
+			n->name.str);
 	str_add(&HDR, s.decl.str, s.decl.len);
 	str_addf(&HDR, "};\n");
+
+	for (i = capn_len(n->n.annotations)-1; i >= 0; i--) {
+		struct Annotation a;
+		struct Value v;
+		get_Annotation(&a, n->n.annotations, i);
+		read_Value(&v, a.value);
+
+		switch (a.id) {
+		case 0xcefaf27713042144UL:
+			if (v.which != Value_text) {
+				fprintf(stderr, "schema breakage on $C::typedefto annotation\n");
+				exit(2);
+			}
+
+			str_addf(&HDR, "\ntypedef struct %s %s;\n", n->name.str, v.text.str);
+			break;
+		}
+	}
 
 	str_addf(&SRC, "\n%s_ptr new_%s(struct capn_segment *s) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_ptr p;\n", n->name.str);
@@ -875,19 +1104,24 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\treturn p;\n");
 	str_addf(&SRC, "}\n");
 
+	// adding the ability to get the structure size
+	str_addf(&HDR, "\nstatic const size_t %s_word_count = %d;\n", n->name.str, n->n._struct.dataWordCount);
+	str_addf(&HDR, "\nstatic const size_t %s_pointer_count = %d;\n", n->name.str, n->n._struct.pointerCount);
+	str_addf(&HDR, "\nstatic const size_t %s_struct_bytes_count = %d;\n\n", n->name.str, 8 * (n->n._struct.pointerCount + n->n._struct.dataWordCount));
+
 	str_addf(&SRC, "%s_list new_%s_list(struct capn_segment *s, int len) {\n", n->name.str, n->name.str);
 	str_addf(&SRC, "\t%s_list p;\n", n->name.str);
 	str_addf(&SRC, "\tp.p = capn_new_list(s, len, %d, %d);\n", 8*n->n._struct.dataWordCount, n->n._struct.pointerCount);
 	str_addf(&SRC, "\treturn p;\n");
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "void read_%s(struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
+	str_addf(&SRC, "void read_%s(struct %s *s capnp_unused, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n\tcapnp_use(s);\n");
 	str_add(&SRC, s.get.str, s.get.len);
 	str_addf(&SRC, "}\n");
 
-	str_addf(&SRC, "void write_%s(const struct %s *s, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
-	str_addf(&SRC, "\tcapn_resolve(&p.p);\n");
+	str_addf(&SRC, "void write_%s(const struct %s *s capnp_unused, %s_ptr p) {\n", n->name.str, n->name.str, n->name.str);
+	str_addf(&SRC, "\tcapn_resolve(&p.p);\n\tcapnp_use(s);\n");
 	str_add(&SRC, s.set.str, s.set.len);
 	str_addf(&SRC, "}\n");
 
@@ -902,10 +1136,16 @@ static void define_struct(struct node *n) {
 	str_addf(&SRC, "\tp.p = capn_getp(l.p, i, 0);\n");
 	str_addf(&SRC, "\twrite_%s(s, p);\n", n->name.str);
 	str_addf(&SRC, "}\n");
+
+	str_add(&SRC, s.pub_get.str, s.pub_get.len);
+	str_add(&SRC, s.pub_set.str, s.pub_set.len);
+
+	str_add(&HDR, s.pub_get_header.str, s.pub_get_header.len);
+	str_add(&HDR, s.pub_set_header.str, s.pub_set_header.len);
 }
 
 #if 0
-Commenting out interfaces until the RPC protocol has been spec'd
+/* Commenting out interfaces until the RPC protocol has been spec'd */
 static int find_offset(struct str *v, int inc, uint64_t mask) {
 	int i, j;
 	union {uint64_t u; char c[8];} umask;
@@ -980,7 +1220,7 @@ static void define_method(struct node *iface, int ord) {
 		case Type__list:
 		case Type__struct:
 		case Type__interface:
-		case Type_object:
+		case Type_anyPointer:
 			m->f.offset = ptrs++;
 			break;
 		}
@@ -1064,21 +1304,32 @@ static void declare(struct node *file_node, const char *format, int num) {
 	}
 }
 
+#define ANNOTATION_NAMESPACE	0xf2c035025fec7c2bUL
+
 int main() {
 	struct capn capn;
 	CodeGeneratorRequest_ptr root;
 	struct CodeGeneratorRequest req;
-	struct node *file_node, *n;
+	struct node *file_node, *n, *f;
 	struct node *all_files = NULL, *all_structs = NULL;
+	struct id_bst *used_import_ids = NULL;
 	int i, j;
+	uint64_t total_len=0;
+	struct capn_segment *current_seg;
 
-	if (capn_init_fp(&capn, stdin, 0)) {
+	if (capn_init_fp(&capn, stdin, 0)==-1) {
 		fprintf(stderr, "failed to read schema from stdin\n");
 		return -1;
 	}
 
-	g_valseg.data = calloc(1, capn.seglist->len);
-	g_valseg.cap = capn.seglist->len;
+	current_seg = capn.seglist;
+	do{
+		total_len+=current_seg->len;
+		current_seg = current_seg->next;
+	}while(current_seg);
+
+	g_valseg.data = calloc(1, total_len);
+	g_valseg.cap = total_len;
 
 	root.p = capn_getp(capn_root(&capn), 0, 1);
 	read_CodeGeneratorRequest(&req, root);
@@ -1113,21 +1364,81 @@ int main() {
 
 	for (n = all_files; n != NULL; n = n->next) {
 		struct str b = STR_INIT;
+		const char *namespace = NULL;
+
+		/* apply name space if present */
+		for (j = capn_len(n->n.annotations)-1; j >= 0; j--) {
+			struct Annotation a;
+			struct Value v;
+			get_Annotation(&a, n->n.annotations, j);
+			read_Value(&v, a.value);
+
+			if (a.id == ANNOTATION_NAMESPACE) {
+				if (v.which != Value_text) {
+					fprintf(stderr, "%s: schema breakage on $C::namespace annotation\n",
+						n->n.displayName.str);
+					exit(2);
+				}
+				if (namespace) {
+					fprintf(stderr, "%s: $C::namespace annotation appears more than once.\n",
+						n->n.displayName.str);
+					exit(2);
+				}
+				namespace = v.text.str ? v.text.str : "";
+			}
+		}
+
+		if (!namespace)
+			namespace = "";
 
 		for (i = capn_len(n->n.nestedNodes)-1; i >= 0; i--) {
 			struct Node_NestedNode nest;
 			get_Node_NestedNode(&nest, n->n.nestedNodes, i);
-			resolve_names(&b, find_node(nest.id), nest.name, n);
+			struct node *nn = find_node_mayfail(nest.id);
+			if (nn) {
+				resolve_names(&b, nn, nest.name, n, namespace);
+			}
 		}
 
 		str_release(&b);
+	}
+
+	/* find all the used imports */
+	for (n = all_structs; n != NULL; n = n->next) {
+		char *display_name = strdup(n->n.displayName.str);
+		char *file_name = strtok(display_name, ":");
+
+		if (!file_name) {
+			fprintf(stderr, "Unable to determine file name for struct node: %s\n",
+				n->n.displayName.str);
+			exit(2);
+		}
+
+		/* find the file node corresponding to the file name */
+		for (f = all_files; f != NULL; f = f->next) {
+			if (!strcmp(file_name, f->n.displayName.str))
+				break;
+		}
+
+		if (!f) {
+			fprintf(stderr, "Unable to find file node with file name: %s\n", file_name);
+			exit(2);
+		}
+
+		/* mark this import as used */
+		if (!contains_id(used_import_ids, f->n.id))
+			used_import_ids = insert_id(used_import_ids, f->n.id);
+
+		free(display_name);
 	}
 
 	for (i = 0; i < capn_len(req.requestedFiles); i++) {
 		struct CodeGeneratorRequest_RequestedFile file_req;
 		static struct str b = STR_INIT;
 		char *p;
+		const char *nameinfix = NULL;
 		FILE *srcf, *hdrf;
+		struct id_bst * donotinclude_ids = NULL;
 
 		g_valc = 0;
 		g_valseg.len = 0;
@@ -1138,6 +1449,44 @@ int main() {
 
 		get_CodeGeneratorRequest_RequestedFile(&file_req, req.requestedFiles, i);
 		file_node = find_node(file_req.id);
+		if (file_node == NULL) {
+			fprintf(stderr, "invalid file_node specified\n");
+			exit(2);
+		}
+
+		for (j = capn_len(file_node->n.annotations)-1; j >= 0; j--) {
+			struct Annotation a;
+			struct Value v;
+			get_Annotation(&a, file_node->n.annotations, j);
+			read_Value(&v, a.value);
+
+			switch (a.id) {
+			case 0x85a8d86d736ba637UL:	/* $C::nameinfix */
+				if (v.which != Value_text) {
+					fprintf(stderr, "schema breakage on $C::nameinfix annotation\n");
+					exit(2);
+				}
+				if (nameinfix) {
+					fprintf(stderr, "$C::nameinfix annotation appears more than once\n");
+					exit(2);
+				}
+				nameinfix = v.text.str ? v.text.str : "";
+				break;
+			case 0xf72bc690355d66deUL:	/* $C::fieldgetset */
+				g_fieldgetset = 1;
+				break;
+			case 0x8c99797357b357e9UL:	/* $C::donotinclude */
+				if (v.which != Value_uint64)
+				{
+					fprintf(stderr, "schema breakage on $C::donotinclude annotation\n");
+					exit(2);
+				}
+				donotinclude_ids = insert_id(donotinclude_ids, v.uint64);
+				break;
+			}
+		}
+		if (!nameinfix)
+			nameinfix = "";
 
 		str_reset(&HDR);
 		str_reset(&SRC);
@@ -1145,16 +1494,41 @@ int main() {
 		str_addf(&HDR, "#ifndef CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
 		str_addf(&HDR, "#define CAPN_%X%X\n", (uint32_t) (file_node->n.id >> 32), (uint32_t) file_node->n.id);
 		str_addf(&HDR, "/* AUTO GENERATED - DO NOT EDIT */\n");
-		str_addf(&HDR, "#include <capn.h>\n\n");
+		str_addf(&HDR, "#include <capnp_c.h>\n\n");
 		str_addf(&HDR, "#if CAPN_VERSION != 1\n");
-		str_addf(&HDR, "#error \"version mismatch between capn.h and generated code\"\n");
+		str_addf(&HDR, "#error \"version mismatch between capnp_c.h and generated code\"\n");
 		str_addf(&HDR, "#endif\n\n");
+		str_addf(&HDR, "#ifndef capnp_nowarn\n"
+				"# ifdef __GNUC__\n"
+				"#  define capnp_nowarn __extension__\n"
+				"# else\n"
+				"#  define capnp_nowarn\n"
+				"# endif\n"
+				"#endif\n\n");
 
 		for (j = 0; j < capn_len(file_req.imports); j++) {
 			struct CodeGeneratorRequest_RequestedFile_Import im;
 			get_CodeGeneratorRequest_RequestedFile_Import(&im, file_req.imports, j);
-			str_addf(&HDR, "#include \"%s.h\"\n", im.name.str);
+
+			// Check if this import is in the "do not include" list.
+			if (contains_id(donotinclude_ids, im.id))
+			{
+				continue;
+			}
+
+			// Check if this import is used at all.
+			if (!contains_id(used_import_ids, im.id)) {
+				continue;
+			}
+
+			// Ignore leading slashes when generating C file #include's.
+			// This signifies an absolute import in a library directory.
+			const char *base_path = im.name.str[0] == '/' ? &im.name.str[1] : im.name.str;
+			str_addf(&HDR, "#include \"%s%s.h\"\n", base_path, nameinfix);
 		}
+
+		free_id_bst(used_import_ids);
+		free_id_bst(donotinclude_ids);
 
 		str_addf(&HDR, "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n");
 
@@ -1191,7 +1565,7 @@ int main() {
 
 		/* write out the header */
 
-		hdrf = fopen(strf(&b, "%s.h", file_node->n.displayName.str), "w");
+		hdrf = fopen(strf(&b, "%s%s.h", file_node->n.displayName.str, nameinfix), "w");
 		if (!hdrf) {
 			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
 			exit(2);
@@ -1201,32 +1575,41 @@ int main() {
 
 		/* write out the source */
 
-		srcf = fopen(strf(&b, "%s.c", file_node->n.displayName.str), "w");
+		srcf = fopen(strf(&b, "%s%s.c", file_node->n.displayName.str, nameinfix), "w");
 		if (!srcf) {
 			fprintf(stderr, "failed to open %s: %s\n", b.str, strerror(errno));
 			exit(2);
 		}
 		p = strrchr(file_node->n.displayName.str, '/');
-		fprintf(srcf, "#include \"%s.h\"\n", p ? p+1 : file_node->n.displayName.str);
+		fprintf(srcf, "#include \"%s%s.h\"\n", p ? p+1 : file_node->n.displayName.str, nameinfix);
 		fprintf(srcf, "/* AUTO GENERATED - DO NOT EDIT */\n");
+		fprintf(srcf, "#ifdef __GNUC__\n"
+				"# define capnp_unused __attribute__((unused))\n"
+				"# define capnp_use(x) (void) x;\n"
+				"#else\n"
+				"# define capnp_unused\n"
+				"# define capnp_use(x)\n"
+				"#endif\n\n");
+
 
 		if (g_val0used)
-			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\"};\n");
+			fprintf(srcf, "static const capn_text capn_val0 = {0,\"\",0};\n");
 		if (g_nullused)
 			fprintf(srcf, "static const capn_ptr capn_null = {CAPN_NULL};\n");
 
 		if (g_valseg.len > 8) {
-			fprintf(srcf, "static const uint8_t capn_buf[%d] = {", g_valseg.len-8);
-			for (j = 8; j < g_valseg.len; j++) {
-				if (j > 8)
+			size_t k;
+			fprintf(srcf, "static const uint8_t capn_buf[%zu] = {", g_valseg.len-8);
+			for (k = 8; k < g_valseg.len; k++) {
+				if (k > 8)
 					fprintf(srcf, ",");
-				if ((j % 8) == 0)
+				if ((k % 8) == 0)
 					fprintf(srcf, "\n\t");
-				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[j]);
+				fprintf(srcf, "%u", ((uint8_t*)g_valseg.data)[k]);
 			}
 			fprintf(srcf, "\n};\n");
 
-			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%d,%d};\n",
+			fprintf(srcf, "static const struct capn_segment capn_seg = {{0},0,0,0,(char*)&capn_buf[0],%zu,%zu,0};\n",
 					g_valseg.len-8, g_valseg.len-8);
 		}
 

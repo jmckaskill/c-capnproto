@@ -1,3 +1,6 @@
+# Based on the addressbook.capnp example in the capnproto C++ project:
+# https://github.com/sandstorm-io/capnproto/blob/6816634a08b08bc8f52b4ee809afb58389f19655/c%2B%2B/samples/addressbook.capnp
+#
 # Copyright (c) 2013-2014 Sandstorm Development Group, Inc. and contributors
 # Licensed under the MIT License:
 #
@@ -19,8 +22,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-@0xbdf87d7bb8304e81;
-$namespace("capnp::annotations");
+@0x9eb32e19f86ee174;
 
-annotation namespace(file): Text;
-annotation name(field, enumerant, struct, enum, interface, method, param, group, union): Text;
+using C = import "/c.capnp";
+$C.fieldgetset;
+
+struct Person {
+  id @0 :UInt32;
+  name @1 :Text;
+  email @2 :Text;
+  phones @3 :List(PhoneNumber);
+
+  struct PhoneNumber {
+    number @0 :Text;
+    type @1 :Type;
+
+    enum Type {
+      mobile @0;
+      home @1;
+      work @2;
+    }
+  }
+
+  employment :union {
+    unemployed @4 :Void;
+    employer @5 :Text;
+    school @6 :Text;
+    selfEmployed @7 :Void;
+    # We assume that a person is only one of these.
+  }
+}
+
+struct AddressBook {
+  people @0 :List(Person);
+}
+

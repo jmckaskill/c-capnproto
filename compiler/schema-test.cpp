@@ -1,3 +1,11 @@
+/* schema-test.cpp
+ *
+ * Copyright (C) 2013 James McKaskill
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
+ */
+
 #include "schema.capnp.h"
 #include <gtest/gtest.h>
 
@@ -189,7 +197,7 @@ TEST(Schema, ReadSimple) {
 
   struct CodeGeneratorRequest req;
   read_CodeGeneratorRequest(&req, root);
-  for (size_t i = 0; i < req.nodes.p.len; i++) {
+  for (int i = 0; i < req.nodes.p.len; i++) {
   }
 }
 
