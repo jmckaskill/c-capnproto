@@ -672,7 +672,7 @@ static void get_member(struct str *func, struct field *f, const char *ptr, const
 	switch (f->v.t.which) {
 	case Type__bool:
 		str_addf(func, "%s = (capn_read8(%s, %d) & %d) != %d;\n",
-				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), (int)f->v.intval);
+				var, ptr, f->f.slot.offset/8, 1 << (f->f.slot.offset%8), ((int)f->v.intval) << (f->f.slot.offset%8));
 		return;
 	case Type_int8:
 		str_addf(func, "%s = (int8_t) ((int8_t)capn_read8(%s, %d))%s;\n", var, ptr, f->f.slot.offset, xor);
