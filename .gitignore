@@ -30,3 +30,6 @@ capnpc-c
 c-capnproto.pc
 
 *.tar.gz
+
+subprojects/googletest-*
+subprojects/packagecache
