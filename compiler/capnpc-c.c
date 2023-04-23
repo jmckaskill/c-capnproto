@@ -420,27 +420,6 @@ static void decode_value(struct value* v, Type_ptr type, Value_ptr value, const 
 
 static void define_const(struct node *n) {
 	struct value v;
-	const char *p;
-	char *name_snake, *s;
-
-	/* convert camelCase name to SCREAMING_SNAKE_CASE */
-	name_snake = malloc(strlen(n->name.str) * 2);
-	s = name_snake;
-	p = n->name.str;
-	while (*p) {
-		const char *next_p = p + 1;
-
-		*s = toupper(*p);
-		s++;
-
-		if (*next_p &&  islower(*p) && isupper(*next_p)) {
-			*s = '_';
-			s++;
-		}
-		p++;
-	}
-	*s = 0;
-
 	decode_value(&v, n->n._const.type, n->n._const.value, n->name.str);
 
 	switch (v.v.which) {
@@ -448,51 +427,45 @@ static void define_const(struct node *n) {
 	case Value_int8:
 	case Value_int16:
 	case Value_int32:
-		str_addf(&HDR, "#define %s (%d)\n", name_snake, (int) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = %s;\n", v.tname, n->name.str, name_snake);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %d;\n", v.tname, n->name.str, (int) v.intval);
 		break;
 
 	case Value_uint8:
-		str_addf(&HDR, "#define %s (%u)\n", name_snake, (uint8_t) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = %s;\n", v.tname, n->name.str, name_snake);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint8_t) v.intval);
 		break;
 
 	case Value_uint16:
-		str_addf(&HDR, "#define %s (%u)\n", name_snake, (uint16_t) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = %s;\n", v.tname, n->name.str, name_snake);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %u;\n", v.tname, n->name.str, (uint16_t) v.intval);
 		break;
 
 	case Value_uint32:
-		str_addf(&HDR, "#define %s (%uu)\n", name_snake, (uint32_t) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = %s;\n", v.tname, n->name.str, name_snake);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = %uu;\n", v.tname, n->name.str, (uint32_t) v.intval);
 		break;
 
 	case Value__enum:
-		str_addf(&HDR, "#define %s (%uu)\n", name_snake, (uint32_t) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = (%s) %s;\n", v.tname, n->name.str, v.tname, name_snake);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = (%s) %uu;\n", v.tname, n->name.str, v.tname, (uint32_t) v.intval);
 		break;
 
 	case Value_int64:
 	case Value_uint64:
-		str_addf(&HDR, "#define %s (((uint64_t) %#xu << 32) | %#xu)\n", name_snake,
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
+		str_addf(&SRC, "%s %s = ((uint64_t) %#xu << 32) | %#xu;\n", v.tname, n->name.str,
 				(uint32_t) (v.intval >> 32), (uint32_t) v.intval);
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
-		str_addf(&SRC, "const %s %s = %s;\n", v.tname, n->name.str, name_snake);
 		break;
 
 	case Value_float32:
-		str_addf(&HDR, "extern const union capn_conv_f32 %s;\n", n->name.str);
-		str_addf(&SRC, "const union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.intval);
+		str_addf(&HDR, "extern union capn_conv_f32 %s;\n", n->name.str);
+		str_addf(&SRC, "union capn_conv_f32 %s = {%#xu};\n", n->name.str, (uint32_t) v.intval);
 		break;
 
 	case Value_float64:
-		str_addf(&HDR, "extern const union capn_conv_f64 %s;\n", n->name.str);
-		str_addf(&SRC, "const union capn_conv_f64 %s = {((uint64_t) %#xu << 32) | %#xu};\n",
+		str_addf(&HDR, "extern union capn_conv_f64 %s;\n", n->name.str);
+		str_addf(&SRC, "union capn_conv_f64 %s = {((uint64_t) %#xu << 32) | %#xu};\n",
 				n->name.str, (uint32_t) (v.intval >> 32), (uint32_t) v.intval);
 		break;
 
@@ -501,9 +474,9 @@ static void define_const(struct node *n) {
 	case Value__struct:
 	case Value_anyPointer:
 	case Value__list:
-		str_addf(&HDR, "extern const %s %s;\n", v.tname, n->name.str);
+		str_addf(&HDR, "extern %s %s;\n", v.tname, n->name.str);
 		if (!v.ptrval.type) {
-			str_addf(&SRC, "const %s %s;\n", v.tname, n->name.str);
+			str_addf(&SRC, "%s %s;\n", v.tname, n->name.str);
 		}
 		break;
 
@@ -513,7 +486,6 @@ static void define_const(struct node *n) {
 	}
 
 	str_release(&v.tname_buf);
-	free(name_snake);
 }
 
 static void decode_field(struct field *fields, Field_list l, int i) {
