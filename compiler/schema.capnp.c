@@ -761,8 +761,8 @@ void read_Type(struct Type *s capnp_unused, Type_ptr p) {
 		s->_interface.brand.p = capn_getp(p.p, 0, 0);
 		break;
 	case Type_anyPointer:
-		s->anyPointer_which = (enum Type_anyPointer_which)(int) capn_read16(p.p, 8);
-		switch (s->anyPointer_which) {
+		s->anyPointer.which = (enum Type_anyPointer_which)(int) capn_read16(p.p, 8);
+		switch (s->anyPointer.which) {
 		case Type_anyPointer_parameter:
 			s->anyPointer.parameter.scopeId = capn_read64(p.p, 16);
 			s->anyPointer.parameter.parameterIndex = capn_read16(p.p, 10);
@@ -799,8 +799,8 @@ void write_Type(const struct Type *s capnp_unused, Type_ptr p) {
 		capn_setp(p.p, 0, s->_interface.brand.p);
 		break;
 	case Type_anyPointer:
-		capn_write16(p.p, 8, s->anyPointer_which);
-		switch (s->anyPointer_which) {
+		capn_write16(p.p, 8, s->anyPointer.which);
+		switch (s->anyPointer.which) {
 		case Type_anyPointer_parameter:
 			capn_write64(p.p, 16, s->anyPointer.parameter.scopeId);
 			capn_write16(p.p, 10, s->anyPointer.parameter.parameterIndex);

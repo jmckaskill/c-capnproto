@@ -15,8 +15,6 @@
 # endif
 #endif
 
-#include "c++.capnp.h"
-#include "c.capnp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -148,6 +146,7 @@ static const size_t Node_pointer_count = 6;
 
 static const size_t Node_struct_bytes_count = 88;
 
+
 uint64_t Node_get_id(Node_ptr p);
 
 capn_text Node_get_displayName(Node_ptr p);
@@ -190,6 +189,7 @@ static const size_t Node_Parameter_pointer_count = 1;
 
 static const size_t Node_Parameter_struct_bytes_count = 8;
 
+
 capn_text Node_Parameter_get_name(Node_Parameter_ptr p);
 
 void Node_Parameter_set_name(Node_Parameter_ptr p, capn_text name);
@@ -204,6 +204,7 @@ static const size_t Node_NestedNode_word_count = 1;
 static const size_t Node_NestedNode_pointer_count = 1;
 
 static const size_t Node_NestedNode_struct_bytes_count = 16;
+
 
 capn_text Node_NestedNode_get_name(Node_NestedNode_ptr p);
 
@@ -250,6 +251,7 @@ static const size_t Field_pointer_count = 4;
 
 static const size_t Field_struct_bytes_count = 56;
 
+
 capn_text Field_get_name(Field_ptr p);
 
 uint16_t Field_get_codeOrder(Field_ptr p);
@@ -278,6 +280,7 @@ static const size_t Enumerant_pointer_count = 2;
 
 static const size_t Enumerant_struct_bytes_count = 24;
 
+
 capn_text Enumerant_get_name(Enumerant_ptr p);
 
 uint16_t Enumerant_get_codeOrder(Enumerant_ptr p);
@@ -300,6 +303,7 @@ static const size_t Superclass_word_count = 1;
 static const size_t Superclass_pointer_count = 1;
 
 static const size_t Superclass_struct_bytes_count = 16;
+
 
 uint64_t Superclass_get_id(Superclass_ptr p);
 
@@ -325,6 +329,7 @@ static const size_t Method_word_count = 3;
 static const size_t Method_pointer_count = 5;
 
 static const size_t Method_struct_bytes_count = 64;
+
 
 capn_text Method_get_name(Method_ptr p);
 
@@ -402,15 +407,17 @@ struct Type {
 			uint64_t typeId;
 			Brand_ptr brand;
 		} _interface;
-		enum Type_anyPointer_which anyPointer_which;
-		capnp_nowarn union {
-			capnp_nowarn struct {
-				uint64_t scopeId;
-				uint16_t parameterIndex;
-			} parameter;
-			capnp_nowarn struct {
-				uint16_t parameterIndex;
-			} implicitMethodParameter;
+		capnp_nowarn struct {
+			enum Type_anyPointer_which which;
+			capnp_nowarn union {
+				capnp_nowarn struct {
+					uint64_t scopeId;
+					uint16_t parameterIndex;
+				} parameter;
+				capnp_nowarn struct {
+					uint16_t parameterIndex;
+				} implicitMethodParameter;
+			};
 		} anyPointer;
 	};
 };
@@ -421,6 +428,7 @@ static const size_t Type_pointer_count = 1;
 
 static const size_t Type_struct_bytes_count = 32;
 
+
 struct Brand {
 	Brand_Scope_list scopes;
 };
@@ -430,6 +438,7 @@ static const size_t Brand_word_count = 0;
 static const size_t Brand_pointer_count = 1;
 
 static const size_t Brand_struct_bytes_count = 8;
+
 
 Brand_Scope_list Brand_get_scopes(Brand_ptr p);
 
@@ -453,6 +462,7 @@ static const size_t Brand_Scope_pointer_count = 1;
 
 static const size_t Brand_Scope_struct_bytes_count = 24;
 
+
 uint64_t Brand_Scope_get_scopeId(Brand_Scope_ptr p);
 
 void Brand_Scope_set_scopeId(Brand_Scope_ptr p, uint64_t scopeId);
@@ -473,6 +483,7 @@ static const size_t Brand_Binding_word_count = 1;
 static const size_t Brand_Binding_pointer_count = 1;
 
 static const size_t Brand_Binding_struct_bytes_count = 16;
+
 enum Value_which {
 	Value__void = 0,
 	Value__bool = 1,
@@ -524,6 +535,7 @@ static const size_t Value_pointer_count = 1;
 
 static const size_t Value_struct_bytes_count = 24;
 
+
 struct Annotation {
 	uint64_t id;
 	Brand_ptr brand;
@@ -535,6 +547,7 @@ static const size_t Annotation_word_count = 1;
 static const size_t Annotation_pointer_count = 2;
 
 static const size_t Annotation_struct_bytes_count = 24;
+
 
 uint64_t Annotation_get_id(Annotation_ptr p);
 
@@ -559,6 +572,7 @@ static const size_t CodeGeneratorRequest_pointer_count = 2;
 
 static const size_t CodeGeneratorRequest_struct_bytes_count = 16;
 
+
 Node_list CodeGeneratorRequest_get_nodes(CodeGeneratorRequest_ptr p);
 
 CodeGeneratorRequest_RequestedFile_list CodeGeneratorRequest_get_requestedFiles(CodeGeneratorRequest_ptr p);
@@ -578,6 +592,7 @@ static const size_t CodeGeneratorRequest_RequestedFile_word_count = 1;
 static const size_t CodeGeneratorRequest_RequestedFile_pointer_count = 2;
 
 static const size_t CodeGeneratorRequest_RequestedFile_struct_bytes_count = 24;
+
 
 uint64_t CodeGeneratorRequest_RequestedFile_get_id(CodeGeneratorRequest_RequestedFile_ptr p);
 
@@ -601,6 +616,7 @@ static const size_t CodeGeneratorRequest_RequestedFile_Import_word_count = 1;
 static const size_t CodeGeneratorRequest_RequestedFile_Import_pointer_count = 1;
 
 static const size_t CodeGeneratorRequest_RequestedFile_Import_struct_bytes_count = 16;
+
 
 uint64_t CodeGeneratorRequest_RequestedFile_Import_get_id(CodeGeneratorRequest_RequestedFile_Import_ptr p);
 

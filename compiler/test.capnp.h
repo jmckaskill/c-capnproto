@@ -15,8 +15,6 @@
 # endif
 #endif
 
-#include "c++.capnp.h"
-#include "c.capnp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -294,6 +292,7 @@ static const size_t TestAllTypes_pointer_count = 20;
 
 static const size_t TestAllTypes_struct_bytes_count = 208;
 
+
 unsigned TestAllTypes_get_boolField(TestAllTypes_ptr p);
 
 int8_t TestAllTypes_get_int8Field(TestAllTypes_ptr p);
@@ -463,6 +462,7 @@ static const size_t TestDefaults_pointer_count = 20;
 
 static const size_t TestDefaults_struct_bytes_count = 208;
 
+
 unsigned TestDefaults_get_boolField(TestDefaults_ptr p);
 
 int8_t TestDefaults_get_int8Field(TestDefaults_ptr p);
@@ -601,6 +601,7 @@ static const size_t TestAnyPointer_pointer_count = 1;
 
 static const size_t TestAnyPointer_struct_bytes_count = 8;
 
+
 capn_ptr TestAnyPointer_get_anyPointerField(TestAnyPointer_ptr p);
 
 void TestAnyPointer_set_anyPointerField(TestAnyPointer_ptr p, capn_ptr anyPointerField);
@@ -622,6 +623,7 @@ static const size_t TestOutOfOrder_word_count = 0;
 static const size_t TestOutOfOrder_pointer_count = 9;
 
 static const size_t TestOutOfOrder_struct_bytes_count = 72;
+
 
 capn_text TestOutOfOrder_get_foo(TestOutOfOrder_ptr p);
 
@@ -780,6 +782,7 @@ static const size_t TestUnion_pointer_count = 2;
 
 static const size_t TestUnion_struct_bytes_count = 80;
 
+
 unsigned TestUnion_get_bit0(TestUnion_ptr p);
 
 unsigned TestUnion_get_bit2(TestUnion_ptr p);
@@ -833,6 +836,7 @@ static const size_t TestUnnamedUnion_pointer_count = 2;
 
 static const size_t TestUnnamedUnion_struct_bytes_count = 32;
 
+
 capn_text TestUnnamedUnion_get_before(TestUnnamedUnion_ptr p);
 
 void TestUnnamedUnion_set_before(TestUnnamedUnion_ptr p, capn_text before);
@@ -848,10 +852,12 @@ enum TestUnionInUnion_outer_which {
 struct TestUnionInUnion {
 	enum TestUnionInUnion_outer_which outer_which;
 	capnp_nowarn union {
-		enum TestUnionInUnion_outer_inner_which inner_which;
-		capnp_nowarn union {
-			int32_t foo;
-			int32_t bar;
+		capnp_nowarn struct {
+			enum TestUnionInUnion_outer_inner_which which;
+			capnp_nowarn union {
+				int32_t foo;
+				int32_t bar;
+			};
 		} inner;
 		int32_t baz;
 	} outer;
@@ -862,6 +868,7 @@ static const size_t TestUnionInUnion_word_count = 2;
 static const size_t TestUnionInUnion_pointer_count = 0;
 
 static const size_t TestUnionInUnion_struct_bytes_count = 16;
+
 enum TestGroups_groups_which {
 	TestGroups_groups_foo = 0,
 	TestGroups_groups_bar = 2,
@@ -894,6 +901,7 @@ static const size_t TestGroups_word_count = 2;
 static const size_t TestGroups_pointer_count = 2;
 
 static const size_t TestGroups_struct_bytes_count = 32;
+
 enum TestInterleavedGroups_group1_which {
 	TestInterleavedGroups_group1_qux = 0,
 	TestInterleavedGroups_group1_corge = 1,
@@ -946,6 +954,7 @@ static const size_t TestInterleavedGroups_pointer_count = 6;
 
 static const size_t TestInterleavedGroups_struct_bytes_count = 96;
 
+
 struct TestUnionDefaults {
 	TestUnion_ptr s16s8s64s8Set;
 	TestUnion_ptr s0sps1s32Set;
@@ -958,6 +967,7 @@ static const size_t TestUnionDefaults_word_count = 0;
 static const size_t TestUnionDefaults_pointer_count = 4;
 
 static const size_t TestUnionDefaults_struct_bytes_count = 32;
+
 
 TestUnion_ptr TestUnionDefaults_get_s16s8s64s8Set(TestUnionDefaults_ptr p);
 
@@ -987,6 +997,7 @@ static const size_t TestNestedTypes_pointer_count = 1;
 
 static const size_t TestNestedTypes_struct_bytes_count = 16;
 
+
 TestNestedTypes_NestedStruct_ptr TestNestedTypes_get_nestedStruct(TestNestedTypes_ptr p);
 
 enum TestNestedTypes_NestedEnum TestNestedTypes_get_outerNestedEnum(TestNestedTypes_ptr p);
@@ -1010,6 +1021,7 @@ static const size_t TestNestedTypes_NestedStruct_pointer_count = 0;
 
 static const size_t TestNestedTypes_NestedStruct_struct_bytes_count = 8;
 
+
 enum TestNestedTypes_NestedEnum TestNestedTypes_NestedStruct_get_outerNestedEnum(TestNestedTypes_NestedStruct_ptr p);
 
 enum TestNestedTypes_NestedStruct_NestedEnum TestNestedTypes_NestedStruct_get_innerNestedEnum(TestNestedTypes_NestedStruct_ptr p);
@@ -1028,6 +1040,7 @@ static const size_t TestUsing_word_count = 1;
 static const size_t TestUsing_pointer_count = 0;
 
 static const size_t TestUsing_struct_bytes_count = 8;
+
 
 enum TestNestedTypes_NestedEnum TestUsing_get_outerNestedEnum(TestUsing_ptr p);
 
@@ -1055,6 +1068,7 @@ static const size_t TestLists_word_count = 0;
 static const size_t TestLists_pointer_count = 10;
 
 static const size_t TestLists_struct_bytes_count = 80;
+
 
 TestLists_Struct0_list TestLists_get_list0(TestLists_ptr p);
 
@@ -1105,6 +1119,7 @@ static const size_t TestLists_Struct0_pointer_count = 0;
 
 static const size_t TestLists_Struct0_struct_bytes_count = 0;
 
+
 struct TestLists_Struct1 {
 	unsigned f : 1;
 };
@@ -1114,6 +1129,7 @@ static const size_t TestLists_Struct1_word_count = 1;
 static const size_t TestLists_Struct1_pointer_count = 0;
 
 static const size_t TestLists_Struct1_struct_bytes_count = 8;
+
 
 unsigned TestLists_Struct1_get_f(TestLists_Struct1_ptr p);
 
@@ -1129,6 +1145,7 @@ static const size_t TestLists_Struct8_pointer_count = 0;
 
 static const size_t TestLists_Struct8_struct_bytes_count = 8;
 
+
 uint8_t TestLists_Struct8_get_f(TestLists_Struct8_ptr p);
 
 void TestLists_Struct8_set_f(TestLists_Struct8_ptr p, uint8_t f);
@@ -1142,6 +1159,7 @@ static const size_t TestLists_Struct16_word_count = 1;
 static const size_t TestLists_Struct16_pointer_count = 0;
 
 static const size_t TestLists_Struct16_struct_bytes_count = 8;
+
 
 uint16_t TestLists_Struct16_get_f(TestLists_Struct16_ptr p);
 
@@ -1157,6 +1175,7 @@ static const size_t TestLists_Struct32_pointer_count = 0;
 
 static const size_t TestLists_Struct32_struct_bytes_count = 8;
 
+
 uint32_t TestLists_Struct32_get_f(TestLists_Struct32_ptr p);
 
 void TestLists_Struct32_set_f(TestLists_Struct32_ptr p, uint32_t f);
@@ -1170,6 +1189,7 @@ static const size_t TestLists_Struct64_word_count = 1;
 static const size_t TestLists_Struct64_pointer_count = 0;
 
 static const size_t TestLists_Struct64_struct_bytes_count = 8;
+
 
 uint64_t TestLists_Struct64_get_f(TestLists_Struct64_ptr p);
 
@@ -1185,6 +1205,7 @@ static const size_t TestLists_StructP_pointer_count = 1;
 
 static const size_t TestLists_StructP_struct_bytes_count = 8;
 
+
 capn_text TestLists_StructP_get_f(TestLists_StructP_ptr p);
 
 void TestLists_StructP_set_f(TestLists_StructP_ptr p, capn_text f);
@@ -1198,6 +1219,7 @@ static const size_t TestLists_Struct0c_word_count = 0;
 static const size_t TestLists_Struct0c_pointer_count = 1;
 
 static const size_t TestLists_Struct0c_struct_bytes_count = 8;
+
 
 capn_text TestLists_Struct0c_get_pad(TestLists_Struct0c_ptr p);
 
@@ -1213,6 +1235,7 @@ static const size_t TestLists_Struct1c_word_count = 1;
 static const size_t TestLists_Struct1c_pointer_count = 1;
 
 static const size_t TestLists_Struct1c_struct_bytes_count = 16;
+
 
 unsigned TestLists_Struct1c_get_f(TestLists_Struct1c_ptr p);
 
@@ -1233,6 +1256,7 @@ static const size_t TestLists_Struct8c_pointer_count = 1;
 
 static const size_t TestLists_Struct8c_struct_bytes_count = 16;
 
+
 uint8_t TestLists_Struct8c_get_f(TestLists_Struct8c_ptr p);
 
 capn_text TestLists_Struct8c_get_pad(TestLists_Struct8c_ptr p);
@@ -1251,6 +1275,7 @@ static const size_t TestLists_Struct16c_word_count = 1;
 static const size_t TestLists_Struct16c_pointer_count = 1;
 
 static const size_t TestLists_Struct16c_struct_bytes_count = 16;
+
 
 uint16_t TestLists_Struct16c_get_f(TestLists_Struct16c_ptr p);
 
@@ -1271,6 +1296,7 @@ static const size_t TestLists_Struct32c_pointer_count = 1;
 
 static const size_t TestLists_Struct32c_struct_bytes_count = 16;
 
+
 uint32_t TestLists_Struct32c_get_f(TestLists_Struct32c_ptr p);
 
 capn_text TestLists_Struct32c_get_pad(TestLists_Struct32c_ptr p);
@@ -1289,6 +1315,7 @@ static const size_t TestLists_Struct64c_word_count = 1;
 static const size_t TestLists_Struct64c_pointer_count = 1;
 
 static const size_t TestLists_Struct64c_struct_bytes_count = 16;
+
 
 uint64_t TestLists_Struct64c_get_f(TestLists_Struct64c_ptr p);
 
@@ -1309,6 +1336,7 @@ static const size_t TestLists_StructPc_pointer_count = 1;
 
 static const size_t TestLists_StructPc_struct_bytes_count = 16;
 
+
 capn_text TestLists_StructPc_get_f(TestLists_StructPc_ptr p);
 
 uint64_t TestLists_StructPc_get_pad(TestLists_StructPc_ptr p);
@@ -1328,6 +1356,7 @@ static const size_t TestFieldZeroIsBit_word_count = 1;
 static const size_t TestFieldZeroIsBit_pointer_count = 0;
 
 static const size_t TestFieldZeroIsBit_struct_bytes_count = 8;
+
 
 unsigned TestFieldZeroIsBit_get_bit(TestFieldZeroIsBit_ptr p);
 
@@ -1350,6 +1379,7 @@ static const size_t TestListDefaults_word_count = 0;
 static const size_t TestListDefaults_pointer_count = 1;
 
 static const size_t TestListDefaults_struct_bytes_count = 8;
+
 
 TestLists_ptr TestListDefaults_get_lists(TestListDefaults_ptr p);
 
@@ -1389,6 +1419,7 @@ static const size_t TestLateUnion_pointer_count = 3;
 
 static const size_t TestLateUnion_struct_bytes_count = 48;
 
+
 int32_t TestLateUnion_get_foo(TestLateUnion_ptr p);
 
 capn_text TestLateUnion_get_bar(TestLateUnion_ptr p);
@@ -1412,6 +1443,7 @@ static const size_t TestOldVersion_word_count = 1;
 static const size_t TestOldVersion_pointer_count = 2;
 
 static const size_t TestOldVersion_struct_bytes_count = 24;
+
 
 int64_t TestOldVersion_get_old1(TestOldVersion_ptr p);
 
@@ -1438,6 +1470,7 @@ static const size_t TestNewVersion_word_count = 2;
 static const size_t TestNewVersion_pointer_count = 3;
 
 static const size_t TestNewVersion_struct_bytes_count = 40;
+
 
 int64_t TestNewVersion_get_old1(TestNewVersion_ptr p);
 
@@ -1477,6 +1510,7 @@ static const size_t TestStructUnion_pointer_count = 1;
 
 static const size_t TestStructUnion_struct_bytes_count = 16;
 
+
 struct TestStructUnion_SomeStruct {
 	capn_text someText;
 	capn_text moreText;
@@ -1487,6 +1521,7 @@ static const size_t TestStructUnion_SomeStruct_word_count = 0;
 static const size_t TestStructUnion_SomeStruct_pointer_count = 2;
 
 static const size_t TestStructUnion_SomeStruct_struct_bytes_count = 16;
+
 
 capn_text TestStructUnion_SomeStruct_get_someText(TestStructUnion_SomeStruct_ptr p);
 
@@ -1507,6 +1542,7 @@ static const size_t TestPrintInlineStructs_pointer_count = 2;
 
 static const size_t TestPrintInlineStructs_struct_bytes_count = 16;
 
+
 capn_text TestPrintInlineStructs_get_someText(TestPrintInlineStructs_ptr p);
 
 TestPrintInlineStructs_InlineStruct_list TestPrintInlineStructs_get_structList(TestPrintInlineStructs_ptr p);
@@ -1525,6 +1561,7 @@ static const size_t TestPrintInlineStructs_InlineStruct_word_count = 1;
 static const size_t TestPrintInlineStructs_InlineStruct_pointer_count = 1;
 
 static const size_t TestPrintInlineStructs_InlineStruct_struct_bytes_count = 16;
+
 
 int32_t TestPrintInlineStructs_InlineStruct_get_int32Field(TestPrintInlineStructs_InlineStruct_ptr p);
 
@@ -1545,6 +1582,7 @@ static const size_t TestWholeFloatDefault_pointer_count = 0;
 
 static const size_t TestWholeFloatDefault_struct_bytes_count = 8;
 
+
 float TestWholeFloatDefault_get_field(TestWholeFloatDefault_ptr p);
 
 float TestWholeFloatDefault_get_bigField(TestWholeFloatDefault_ptr p);
@@ -1562,6 +1600,7 @@ static const size_t TestEmptyStruct_pointer_count = 0;
 
 static const size_t TestEmptyStruct_struct_bytes_count = 0;
 
+
 capnp_nowarn struct TestConstants {
 };
 
@@ -1570,6 +1609,7 @@ static const size_t TestConstants_word_count = 0;
 static const size_t TestConstants_pointer_count = 0;
 
 static const size_t TestConstants_struct_bytes_count = 0;
+
 
 struct TestSturdyRef {
 	TestSturdyRefHostId_ptr hostId;
@@ -1581,6 +1621,7 @@ static const size_t TestSturdyRef_word_count = 0;
 static const size_t TestSturdyRef_pointer_count = 2;
 
 static const size_t TestSturdyRef_struct_bytes_count = 16;
+
 
 TestSturdyRefHostId_ptr TestSturdyRef_get_hostId(TestSturdyRef_ptr p);
 
@@ -1600,6 +1641,7 @@ static const size_t TestSturdyRefHostId_pointer_count = 1;
 
 static const size_t TestSturdyRefHostId_struct_bytes_count = 8;
 
+
 capn_text TestSturdyRefHostId_get_host(TestSturdyRefHostId_ptr p);
 
 void TestSturdyRefHostId_set_host(TestSturdyRefHostId_ptr p, capn_text host);
@@ -1614,6 +1656,7 @@ static const size_t TestSturdyRefObjectId_pointer_count = 0;
 
 static const size_t TestSturdyRefObjectId_struct_bytes_count = 8;
 
+
 enum TestSturdyRefObjectId_Tag TestSturdyRefObjectId_get_tag(TestSturdyRefObjectId_ptr p);
 
 void TestSturdyRefObjectId_set_tag(TestSturdyRefObjectId_ptr p, enum TestSturdyRefObjectId_Tag tag);
@@ -1627,6 +1670,7 @@ static const size_t TestProvisionId_pointer_count = 0;
 
 static const size_t TestProvisionId_struct_bytes_count = 0;
 
+
 capnp_nowarn struct TestRecipientId {
 };
 
@@ -1635,6 +1679,7 @@ static const size_t TestRecipientId_word_count = 0;
 static const size_t TestRecipientId_pointer_count = 0;
 
 static const size_t TestRecipientId_struct_bytes_count = 0;
+
 
 capnp_nowarn struct TestThirdPartyCapId {
 };
@@ -1645,6 +1690,7 @@ static const size_t TestThirdPartyCapId_pointer_count = 0;
 
 static const size_t TestThirdPartyCapId_struct_bytes_count = 0;
 
+
 capnp_nowarn struct TestJoinResult {
 };
 
@@ -1653,6 +1699,7 @@ static const size_t TestJoinResult_word_count = 0;
 static const size_t TestJoinResult_pointer_count = 0;
 
 static const size_t TestJoinResult_struct_bytes_count = 0;
+
 enum TestNameAnnotation_which {
 	TestNameAnnotation_badFieldName = 0,
 	TestNameAnnotation_bar = 1
@@ -1682,6 +1729,7 @@ static const size_t TestNameAnnotation_pointer_count = 1;
 
 static const size_t TestNameAnnotation_struct_bytes_count = 16;
 
+
 struct TestNameAnnotation_NestedStruct {
 	unsigned badNestedFieldName : 1;
 	TestNameAnnotation_NestedStruct_ptr anotherBadNestedFieldName;
@@ -1692,6 +1740,7 @@ static const size_t TestNameAnnotation_NestedStruct_word_count = 1;
 static const size_t TestNameAnnotation_NestedStruct_pointer_count = 1;
 
 static const size_t TestNameAnnotation_NestedStruct_struct_bytes_count = 16;
+
 
 unsigned TestNameAnnotation_NestedStruct_get_badNestedFieldName(TestNameAnnotation_NestedStruct_ptr p);
 
