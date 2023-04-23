@@ -23,13 +23,22 @@ capnpc compiler/test.capnp -oc
 ## Building on Linux
 
 ```sh
-git clone https://github.com/opensourcerouting/c-capnproto
+git clone --recurse-submodules https://github.com/opensourcerouting/c-capnproto
 cd c-capnproto
-git submodule update --init --recursive
 autoreconf -f -i -s
 ./configure
 make
 make check
+```
+
+## Building with Meson
+
+```sh
+git clone --recurse-submodules https://github.com/opensourcerouting/c-capnproto
+cd c-capnproto
+meson setup build
+meson compile -C build
+build/capn-test
 ```
 
 ## Usage
